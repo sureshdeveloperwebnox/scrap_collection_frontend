@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DashboardStats } from '@/types';
+import { DashboardStats as DashboardStatsType } from '@/types';
 import { 
   Users, 
   ShoppingCart, 
@@ -11,11 +11,17 @@ import {
   Calendar
 } from 'lucide-react';
 
-interface DashboardStatsProps {
-  stats: DashboardStats;
-}
+export const DashboardStats = () => {
+  // Mock data for now - you can replace with actual data later
+  const stats: DashboardStatsType = {
+    totalLeads: 150,
+    totalOrders: 89,
+    activeCollectors: 12,
+    todayRevenue: 2500,
+    weeklyOrders: 45,
+    monthlyRevenue: 15000,
+  };
 
-export function DashboardStatsCards({ stats }: DashboardStatsProps) {
   const statCards = [
     {
       title: 'Total Leads',
@@ -62,10 +68,10 @@ export function DashboardStatsCards({ stats }: DashboardStatsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {statCards.map((stat, index) => (
         <Card key={index}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row justify-between items-center pb-2 space-y-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {stat.title}
             </CardTitle>
@@ -80,4 +86,4 @@ export function DashboardStatsCards({ stats }: DashboardStatsProps) {
       ))}
     </div>
   );
-}
+};

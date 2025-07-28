@@ -7,3 +7,4 @@ export { scrapYardsApi } from './scrap-yards';
 export { paymentsApi } from './payments';
 export { dashboardApi } from './dashboard';
 export { apiClient } from './client';
+export * from './auth';
