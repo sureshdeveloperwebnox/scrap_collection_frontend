@@ -3,6 +3,7 @@ import { apiClient } from './client';
 export interface SignInRequest {
   email: string;
   password: string;
+  role: string;
 }
 
 export interface SignUpRequest {
@@ -13,6 +14,7 @@ export interface SignUpRequest {
 }
 
 export interface AuthResponse {
+  data: {
   user: {
     id: string;
     email: string;
@@ -20,6 +22,7 @@ export interface AuthResponse {
     role: string;
   };
   token: string;
+  }
 }
 
 export const authApi = {

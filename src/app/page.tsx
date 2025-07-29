@@ -40,7 +40,7 @@ export default function HomePage() {
     
     if (!validateForm()) return;
 
-    signInMutation.mutate({ email, password });
+    signInMutation.mutate({ email, password, role: "USER" });
   };
 
   return (

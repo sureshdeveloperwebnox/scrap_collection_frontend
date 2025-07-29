@@ -9,9 +9,10 @@ export const useSignIn = () => {
   return useMutation({
     mutationFn: (data: SignInRequest) => authApi.signIn(data),
     onSuccess: (response) => {
+      console.log("response", response  );
       // Store token in localStorage or cookie
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem('token', response?.data?.token);
+      localStorage.setItem('user', JSON.stringify(response?.data?.user));
       
       // Redirect to dashboard
       router.push('/dashboard');
@@ -30,8 +31,8 @@ export const useSignUp = () => {
     mutationFn: (data: SignUpRequest) => authApi.signUp(data),
     onSuccess: (response) => {
       // Store token in localStorage or cookie
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem('token', response?.data?.token);
+      localStorage.setItem('user', JSON.stringify(response?.data?.user));
       
       // Redirect to dashboard
       router.push('/dashboard');

@@ -16,7 +16,7 @@ export default function SignInPage() {
   const signInMutation = useSignIn();
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: { email?: string; password?: string; role?: string } = {};
 
     if (!email) {
       newErrors.email = 'Email is required';
@@ -39,7 +39,7 @@ export default function SignInPage() {
     
     if (!validateForm()) return;
 
-    signInMutation.mutate({ email, password });
+    signInMutation.mutate({ email, password, role: "USER" });
   };
 
   return (
