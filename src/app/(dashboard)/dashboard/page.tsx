@@ -1,0 +1,78 @@
+'use client';
+
+import { DashboardStats } from '@/components/dashboard-stats';
+
+export default function DashboardPage() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Welcome back, !</h1>
+          <p className="text-gray-600">Here's what's happening with your scrap collection service today.</p>
+        </div>
+      </div>
+      
+      <DashboardStats />
+      
+      {/* Quick Actions */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <span className="text-blue-600">📄</span>
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900">New Order</h3>
+                <p className="text-sm text-gray-500">Create a new collection order</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <span className="text-green-600">👥</span>
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900">Add Lead</h3>
+                <p className="text-sm text-gray-500">Add a new potential customer</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <span className="text-yellow-600">🚛</span>
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900">Manage Collectors</h3>
+                <p className="text-sm text-gray-500">View and manage collectors</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <span className="text-purple-600">📊</span>
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900">View Reports</h3>
+                <p className="text-sm text-gray-500">Generate business reports</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Recent Activity */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
+        {/* Add recent activity content here */}
+      </div>
+    </div>
+  );
+} 

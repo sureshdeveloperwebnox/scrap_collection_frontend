@@ -43,74 +43,79 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="flex justify-center items-center px-4 py-12 min-h-screen bg-gray-50 sm:px-6 lg:px-8">
-      <div className="space-y-8 w-full max-w-md">
-        <div>
-          <h2 className="mt-6 text-3xl font-extrabold text-center text-gray-900">
-            Sign in to your account
-          </h2>
+    <div className="flex min-h-screen">
+      {/* Left side - Welcome Section */}
+      <div className="flex overflow-hidden relative flex-1 justify-center items-center p-12 bg-gradient-to-br from-purple-600 via-purple-700 to-purple-900">
+        {/* Decorative shapes */}
+        <div className="absolute top-20 left-20 w-32 h-8 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full transform rotate-45"></div>
+        <div className="absolute top-32 right-40 w-24 h-6 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full transform -rotate-12"></div>
+        <div className="absolute left-32 bottom-40 w-28 h-7 bg-gradient-to-r from-orange-300 to-yellow-400 rounded-full transform rotate-12"></div>
+        <div className="absolute right-20 bottom-20 w-36 h-8 bg-gradient-to-r from-pink-300 to-orange-400 rounded-full transform -rotate-45"></div>
+        
+        <div className="z-10 text-center text-white">
+          <h1 className="mb-6 text-6xl font-bold">
+            Welcome to<br />
+            Scrap Collection<br />
+            Service System
+          </h1>
+          <p className="max-w-2xl text-xl opacity-90">
+            A Scrap Collection Service System connects users with collectors to schedule and manage waste pickups efficiently.
+          </p>
         </div>
         
-        <Card className="p-8">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+        <div className="absolute bottom-8 left-1/2 text-sm text-white opacity-75 transform -translate-x-1/2">
+          © 2025 All rights reserved
+        </div>
+      </div>
+
+      {/* Right side - Login Form */}
+      <div className="flex justify-center items-center p-8 w-96 bg-white">
+        <div className="w-full max-w-sm">
+          <h2 className="mb-8 text-2xl font-bold text-center text-gray-900">LOGIN</h2>
+          
+          <form className="space-y-6">
             <div>
-              <Label htmlFor="email">Email address</Label>
-              <Input
-                id="email"
-                name="email"
+              <input
                 type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={errors.email ? 'border-red-500' : ''}
+                placeholder="1actdrivingdev@gmail.com"
+                className="px-4 py-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-              )}
             </div>
-
+            
             <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
+              <input
                 type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={errors.password ? 'border-red-500' : ''}
+                placeholder="••••"
+                className="px-4 py-3 w-full rounded-lg border border-red-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-              )}
+              <p className="mt-1 text-sm text-red-500">Password must be at least 6 characters</p>
             </div>
-
-            {signInMutation.error && (
-              <div className="text-sm text-red-600">
-                {signInMutation.error.message || 'Sign in failed. Please try again.'}
-              </div>
-            )}
-
-            <div>
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={signInMutation.isPending}
-              >
-                {signInMutation.isPending ? 'Signing in...' : 'Sign in'}
-              </Button>
+            
+            <div className="flex justify-between items-center">
+              <label className="flex items-center">
+                <input type="checkbox" className="rounded border-gray-300" />
+                <span className="ml-2 text-sm text-gray-600">Remember</span>
+              </label>
+              <a href="#" className="text-sm text-purple-600 hover:underline">
+                Forgot password?
+              </a>
             </div>
-
-            <div className="text-center">
-              <span className="text-sm text-gray-600">
-                Don't have an account?{' '}
-                <Link href="/auth/signup" className="font-medium text-blue-600 hover:text-blue-500">
-                  Sign up
-                </Link>
-              </span>
-            </div>
+            
+            <button
+              type="submit"
+              className="py-3 w-full font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg transition-colors hover:from-purple-700 hover:to-pink-700"
+            >
+              LOGIN
+            </button>
           </form>
-        </Card>
+          
+          <p className="mt-6 text-sm text-center text-gray-600">
+            Don't have an account?{' '}
+            <a href="/auth/signup" className="text-purple-600 hover:underline">
+              Sign up
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
