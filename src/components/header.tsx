@@ -4,7 +4,7 @@ import { Search, Bell, Grid3X3, Maximize } from 'lucide-react';
 
 export function Header() {
   return (
-    <header className="bg-gradient-to-r from-[#d3bfff] to-[#a48be0] shadow-md rounded-b-2xl h-16 flex items-center justify-between px-4 lg:px-6 mx-4 lg:mx-6 mt-4">
+    <header className="bg-gradient-to-r from-[#a280ed] to-[#a280ed] shadow-md rounded-b-2xl h-16 flex items-center justify-between px-4 lg:px-6 mx-4 lg:mx-6 mt-4">
       <div className="flex flex-1 items-center">
         <h1 className="text-lg lg:text-xl font-semibold text-[#1F1F1F] ml-12 lg:ml-0">
           Scrap Collection Admin

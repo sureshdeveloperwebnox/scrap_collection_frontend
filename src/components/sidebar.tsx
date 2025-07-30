@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 import {
   LayoutDashboard,
   Users,
@@ -64,7 +65,7 @@ export function Sidebar({ isOpen = false, onToggle, onCollapse }: SidebarProps) 
       
       {/* Sidebar */}
       <div className={cn(
-        "fixed left-0 top-0 flex flex-col bg-gradient-to-b from-[#d3bfff] to-[#a48be0] text-[#1F1F1F] transition-all duration-300 ease-in-out shadow-md rounded-r-2xl",
+        "fixed left-0 top-0 flex flex-col bg-gradient-to-b from-[#a280ed] to-[#a280ed] text-[#1F1F1F] transition-all duration-300 ease-in-out shadow-md rounded-r-2xl",
         // Mobile styles
         "z-40 w-80 h-screen lg:z-50",
         // Desktop styles
@@ -76,35 +77,40 @@ export function Sidebar({ isOpen = false, onToggle, onCollapse }: SidebarProps) 
         <div className="flex flex-shrink-0 justify-between items-center px-4 h-16 border-b border-white/20">
           <div className={cn(
             "flex items-center space-x-2 transition-opacity duration-200",
-            isCollapsed ? "lg:opacity-0" : "opacity-100"
+            isCollapsed ? "lg:justify-center lg:space-x-0" : "opacity-100"
           )}>
-            <ClipboardList className="h-8 w-8 text-[#1F1F1F] flex-shrink-0" />
+            {/* Logo - Always visible, centered when collapsed */}
+            <div className="flex flex-shrink-0 justify-center items-center w-10 h-8">
+              <Image src="/images/logo/logo.png" alt="Logo" width={50} height={50} />
+            </div>
             <span className={cn(
               "text-xl font-bold whitespace-nowrap transition-opacity duration-200 text-[#1F1F1F]",
               isCollapsed ? "lg:hidden" : "block"
             )}>
-              Scrap Admin
+              AussieScrapX 
             </span>
           </div>
           
-          {/* Collapse Toggle Button - Desktop only */}
-          <button
-            onClick={toggleCollapse}
-            className="hidden justify-center items-center w-8 h-8 rounded-lg transition-all duration-300 lg:flex hover:bg-white/20 hover:scale-105"
-          >
-            <ChevronLeft className={cn(
-              "h-5 w-5 text-[#1F1F1F] transition-transform duration-200",
-              isCollapsed ? "rotate-180" : ""
-            )} />
-          </button>
+          {/* Header Controls */}
+          <div className="flex items-center space-x-2">
+            {/* Burger Menu Button - Desktop only */}
+            <button
+              onClick={toggleCollapse}
+              className="hidden justify-center items-center w-8 h-8 rounded-lg transition-all duration-300 lg:flex hover:bg-white/20 hover:scale-105"
+              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              <Menu className="h-5 w-5 text-[#1F1F1F]" />
+            </button>
 
-          {/* Mobile Close Button */}
-          <button
-            onClick={onToggle}
-            className="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-300 lg:hidden hover:bg-white/20 hover:scale-105"
-          >
-            <X className="h-5 w-5 text-[#1F1F1F]" />
-          </button>
+            {/* Mobile Close Button */}
+            <button
+              onClick={onToggle}
+              className="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-300 lg:hidden hover:bg-white/20 hover:scale-105"
+              title="Close sidebar"
+            >
+              <X className="h-5 w-5 text-[#1F1F1F]" />
+            </button>
+          </div>
         </div>
         
         {/* Navigation - Scrollable with hidden scrollbar */}
@@ -173,14 +179,15 @@ export function Sidebar({ isOpen = false, onToggle, onCollapse }: SidebarProps) 
   );
 }
 
-// Mobile Menu Button Component
+// Mobile Menu Button Component - Remove the fixed positioning
 export function MobileMenuButton({ onToggle }: { onToggle: () => void }) {
   return (
     <button
       onClick={onToggle}
-      className="lg:hidden fixed top-4 left-4 z-50 flex items-center justify-center w-10 h-10 bg-gradient-to-r from-[#d3bfff] to-[#a48be0] text-[#1F1F1F] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+      className="lg:hidden flex items-center justify-center w-10 h-10 bg-gradient-to-r from-[#a280ed] to-[#8b6fd8] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 border border-white/20"
+      title="Open menu"
     >
-      <Menu className="w-6 h-6" />
+      <Menu className="w-5 h-5" />
     </button>
   );
 }
