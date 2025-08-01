@@ -1,38 +1,36 @@
 'use client';
 
 import { useState } from 'react';
-import { Sidebar, MobileMenuButton } from '@/components/sidebar';
+import { Sidebar } from '@/components/sidebar';
 import { Header } from '@/components/header';
+import { cn } from '@/lib/utils';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const handleSidebarCollapse = (collapsed: boolean) => {
-    setSidebarCollapsed(collapsed);
+    setSidebarCollapsed(prevState => !prevState);
   };
 
   return (
     <div className="flex relative h-screen bg-gray-50">
       <Sidebar 
-        isOpen={sidebarOpen} 
+        isOpen={true} 
         onToggle={toggleSidebar}
-        onCollapse={handleSidebarCollapse}
+        onCollapse={setSidebarCollapsed}
+        isCollapsed={sidebarCollapsed}
       />
-      <MobileMenuButton onToggle={toggleSidebar} />
       
-      <div className={`flex-1 flex flex-col transition-all duration-300 min-w-0 ${
-        sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
-      } ml-0`}>
-        <Header />
+      <div className={cn(
+        "flex-1 flex flex-col transition-all duration-300 min-w-0",
+        // Adjust main content based on sidebar collapse state
+        sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"
+      )}>
+        <Header onToggleSidebar={toggleSidebar} isSidebarOpen={!sidebarCollapsed} />
         <main className="overflow-y-auto overflow-x-hidden flex-1 p-4 lg:p-6">
           <div className="min-h-full">
             {children}

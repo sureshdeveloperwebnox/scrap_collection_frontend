@@ -1,12 +1,46 @@
 'use client';
 
-import { Search, Bell, Grid3X3, Maximize } from 'lucide-react';
+import { Search, Bell, Grid3X3, Maximize, Menu } from 'lucide-react';
 
-export function Header() {
+interface HeaderProps {
+  onToggleSidebar?: () => void;
+  isSidebarOpen?: boolean;
+}
+
+export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) {
   return (
     <header className="bg-gradient-to-r from-[#a280ed] to-[#a280ed] shadow-md rounded-b-2xl h-16 flex items-center justify-between px-4 lg:px-6 mx-4 lg:mx-6 mt-4">
       <div className="flex flex-1 items-center">
-        <h1 className="text-lg lg:text-xl font-semibold text-[#1F1F1F] ml-12 lg:ml-0">
+        {/* Burger Menu Button - Mobile and Desktop */}
+        <button
+          onClick={onToggleSidebar}
+          className="flex items-center justify-center w-10 h-10 bg-white/30 text-[#1F1F1F] rounded-lg hover:bg-white/50 transition-all duration-300 hover:scale-105 mr-3 lg:mr-4 border border-white/20"
+          title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+        >
+          {/* Animated burger menu icon */}
+          <div className="w-5 h-5 flex flex-col justify-center items-center">
+            {/* Top line */}
+            <span 
+              className={`block w-5 h-0.5 bg-[#1F1F1F] transform transition-all duration-300 ease-in-out ${
+                isSidebarOpen ? 'rotate-45 translate-y-1.5' : 'translate-y-0'
+              }`}
+            />
+            {/* Middle line */}
+            <span 
+              className={`block w-5 h-0.5 bg-[#1F1F1F] transform transition-all duration-300 ease-in-out mt-1 ${
+                isSidebarOpen ? 'opacity-0' : 'opacity-100'
+              }`}
+            />
+            {/* Bottom line */}
+            <span 
+              className={`block w-5 h-0.5 bg-[#1F1F1F] transform transition-all duration-300 ease-in-out mt-1 ${
+                isSidebarOpen ? '-rotate-45 -translate-y-1.5' : 'translate-y-0'
+              }`}
+            />
+          </div>
+        </button>
+        
+        <h1 className="text-lg lg:text-xl font-semibold text-[#1F1F1F]">
           Scrap Collection Admin
         </h1>
       </div>

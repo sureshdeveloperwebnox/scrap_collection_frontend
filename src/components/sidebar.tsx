@@ -37,47 +37,30 @@ interface SidebarProps {
   isOpen?: boolean;
   onToggle?: () => void;
   onCollapse?: (collapsed: boolean) => void;
+  isCollapsed?: boolean;
 }
 
-export function Sidebar({ isOpen = false, onToggle, onCollapse }: SidebarProps) {
+export function Sidebar({ isOpen = true, onToggle, onCollapse, isCollapsed = false }: SidebarProps) {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const toggleCollapse = () => {
-    const newCollapsed = !isCollapsed;
-    setIsCollapsed(newCollapsed);
-    onCollapse?.(newCollapsed);
-  };
-
+  // Remove internal collapse functionality since header controls everything
   useEffect(() => {
     onCollapse?.(isCollapsed);
   }, [isCollapsed, onCollapse]);
 
   return (
-    <>
-      {/* Mobile Overlay */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 z-30 bg-black bg-opacity-50 lg:hidden"
-          onClick={onToggle}
-        />
-      )}
-      
-      {/* Sidebar */}
-      <div className={cn(
-        "fixed left-0 top-0 flex flex-col bg-gradient-to-b from-[#a280ed] to-[#a280ed] text-[#1F1F1F] transition-all duration-300 ease-in-out shadow-md rounded-r-2xl",
-        // Mobile styles
-        "z-40 w-80 h-screen lg:z-50",
-        // Desktop styles
-        isCollapsed ? "lg:w-16" : "lg:w-64",
-        // Show/hide logic
-        isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-      )}>
+    <div className={cn(
+      "fixed left-0 top-0 flex flex-col bg-gradient-to-b from-[#a280ed] to-[#a280ed] text-[#1F1F1F] transition-all duration-300 ease-in-out shadow-md rounded-r-2xl",
+      // Base styles
+      "z-40 h-screen",
+      // Width styles - responsive collapse
+      isCollapsed ? "w-16 lg:w-16" : "w-64 lg:w-64"
+    )}>
         {/* Header */}
         <div className="flex flex-shrink-0 justify-between items-center px-4 h-16 border-b border-white/20">
           <div className={cn(
-            "flex items-center space-x-2 transition-opacity duration-200",
-            isCollapsed ? "lg:justify-center lg:space-x-0" : "opacity-100"
+            "flex items-center transition-all duration-200",
+            isCollapsed ? "lg:justify-center lg:w-full" : "space-x-2"
           )}>
             {/* Logo - Always visible, centered when collapsed */}
             <div className="flex flex-shrink-0 justify-center items-center w-10 h-8">
@@ -93,23 +76,7 @@ export function Sidebar({ isOpen = false, onToggle, onCollapse }: SidebarProps) 
           
           {/* Header Controls */}
           <div className="flex items-center space-x-2">
-            {/* Burger Menu Button - Desktop only */}
-            <button
-              onClick={toggleCollapse}
-              className="hidden justify-center items-center w-8 h-8 rounded-lg transition-all duration-300 lg:flex hover:bg-white/20 hover:scale-105"
-              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              <Menu className="h-5 w-5 text-[#1F1F1F]" />
-            </button>
-
-            {/* Mobile Close Button */}
-            <button
-              onClick={onToggle}
-              className="flex justify-center items-center w-8 h-8 rounded-lg transition-all duration-300 lg:hidden hover:bg-white/20 hover:scale-105"
-              title="Close sidebar"
-            >
-              <X className="h-5 w-5 text-[#1F1F1F]" />
-            </button>
+            {/* No controls needed - header burger controls everything */}
           </div>
         </div>
         
@@ -136,10 +103,15 @@ export function Sidebar({ isOpen = false, onToggle, onCollapse }: SidebarProps) 
                   )}
                   title={isCollapsed ? item.name : undefined}
                 >
-                  <item.icon className="flex-shrink-0 w-5 h-5" />
+                  <div className={cn(
+                    "flex items-center justify-center w-5 h-5 flex-shrink-0",
+                    isCollapsed ? "lg:mx-auto" : ""
+                  )}>
+                    <item.icon className="w-5 h-5" />
+                  </div>
                   <span className={cn(
                     "ml-3 transition-all duration-200",
-                    isCollapsed ? "lg:opacity-0 lg:w-0" : "opacity-100"
+                    isCollapsed ? "lg:opacity-0 lg:w-0 lg:ml-0" : "opacity-100"
                   )}>
                     {item.name}
                   </span>
@@ -160,7 +132,7 @@ export function Sidebar({ isOpen = false, onToggle, onCollapse }: SidebarProps) 
         <div className="flex-shrink-0 p-4 border-t border-white/20">
           <div className={cn(
             "flex items-center transition-all duration-200",
-            isCollapsed ? "lg:justify-center" : "space-x-3"
+            isCollapsed ? "lg:justify-center lg:w-full" : "space-x-3"
           )}>
             <div className="w-8 h-8 bg-gradient-to-r from-[#1F1F1F] to-[#2d2d2d] rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
               <span className="text-sm font-medium text-white">A</span>
@@ -175,19 +147,38 @@ export function Sidebar({ isOpen = false, onToggle, onCollapse }: SidebarProps) 
           </div>
         </div>
       </div>
-    </>
   );
 }
 
-// Mobile Menu Button Component - Remove the fixed positioning
-export function MobileMenuButton({ onToggle }: { onToggle: () => void }) {
+// Mobile Menu Button Component - Authentic animated burger menu
+export function MobileMenuButton({ onToggle, isOpen }: { onToggle: () => void; isOpen: boolean }) {
   return (
     <button
       onClick={onToggle}
-      className="lg:hidden flex items-center justify-center w-10 h-10 bg-gradient-to-r from-[#a280ed] to-[#8b6fd8] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 border border-white/20"
-      title="Open menu"
+      className="lg:hidden flex items-center justify-center w-10 h-10 bg-gradient-to-r from-[#a280ed] to-[#8b6fd8] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 border border-white/20 relative"
+      title={isOpen ? "Close menu" : "Open menu"}
     >
-      <Menu className="w-5 h-5" />
+      {/* Authentic hamburger menu with 3 lines that animate to X */}
+      <div className="w-5 h-5 flex flex-col justify-center items-center">
+        {/* Top line */}
+        <span 
+          className={`block w-5 h-0.5 bg-white transform transition-all duration-300 ease-in-out ${
+            isOpen ? 'rotate-45 translate-y-1.5' : 'translate-y-0'
+          }`}
+        />
+        {/* Middle line */}
+        <span 
+          className={`block w-5 h-0.5 bg-white transform transition-all duration-300 ease-in-out mt-1 ${
+            isOpen ? 'opacity-0' : 'opacity-100'
+          }`}
+        />
+        {/* Bottom line */}
+        <span 
+          className={`block w-5 h-0.5 bg-white transform transition-all duration-300 ease-in-out mt-1 ${
+            isOpen ? '-rotate-45 -translate-y-1.5' : 'translate-y-0'
+          }`}
+        />
+      </div>
     </button>
   );
 }
