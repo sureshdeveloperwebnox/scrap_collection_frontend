@@ -18,7 +18,7 @@ export const usePayments = (params?: {
   return useQuery({
     queryKey: queryKeys.payments.list(params),
     queryFn: () => paymentsApi.getPayments(params),
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 };
 

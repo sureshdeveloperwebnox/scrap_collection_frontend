@@ -15,7 +15,7 @@ export const useScrapYards = (params?: {
   return useQuery({
     queryKey: queryKeys.scrapYards.list(params),
     queryFn: () => scrapYardsApi.getScrapYards(params),
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 };
 

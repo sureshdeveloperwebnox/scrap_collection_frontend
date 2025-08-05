@@ -5,22 +5,22 @@ import { DashboardStats } from '@/components/dashboard-stats';
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Welcome back, !</h1>
-          <p className="text-gray-600">Here's what's happening with your scrap collection service today.</p>
+                     <p className="text-gray-600">Here&apos;s what&apos;s happening with your scrap collection service today.</p>
         </div>
       </div>
       
       <DashboardStats />
       
       {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+      <div className="p-6 bg-white rounded-lg shadow">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">Quick Actions</h2>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="p-4 rounded-lg border border-gray-200 transition-shadow cursor-pointer hover:shadow-md">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <div className="flex justify-center items-center w-10 h-10 bg-blue-100 rounded-lg">
                 <span className="text-blue-600">📄</span>
               </div>
               <div>
@@ -30,9 +30,9 @@ export default function DashboardPage() {
             </div>
           </div>
           
-          <div className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+          <div className="p-4 rounded-lg border border-gray-200 transition-shadow cursor-pointer hover:shadow-md">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <div className="flex justify-center items-center w-10 h-10 bg-green-100 rounded-lg">
                 <span className="text-green-600">👥</span>
               </div>
               <div>
@@ -42,9 +42,9 @@ export default function DashboardPage() {
             </div>
           </div>
           
-          <div className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+          <div className="p-4 rounded-lg border border-gray-200 transition-shadow cursor-pointer hover:shadow-md">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <div className="flex justify-center items-center w-10 h-10 bg-yellow-100 rounded-lg">
                 <span className="text-yellow-600">🚛</span>
               </div>
               <div>
@@ -54,9 +54,9 @@ export default function DashboardPage() {
             </div>
           </div>
           
-          <div className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+          <div className="p-4 rounded-lg border border-gray-200 transition-shadow cursor-pointer hover:shadow-md">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+              <div className="flex justify-center items-center w-10 h-10 bg-purple-100 rounded-lg">
                 <span className="text-purple-600">📊</span>
               </div>
               <div>
@@ -69,8 +69,8 @@ export default function DashboardPage() {
       </div>
       
       {/* Recent Activity */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
+      <div className="p-6 bg-white rounded-lg shadow">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">Recent Activity</h2>
         {/* Add recent activity content here */}
       </div>
     </div>

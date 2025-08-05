@@ -15,7 +15,7 @@ export const useEmployees = (params?: {
   return useQuery({
     queryKey: queryKeys.employees.list(params),
     queryFn: () => employeesApi.getEmployees(params),
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 };
 

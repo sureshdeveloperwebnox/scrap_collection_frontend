@@ -15,7 +15,7 @@ export const useOrders = (params?: {
   return useQuery({
     queryKey: queryKeys.orders.list(params),
     queryFn: () => ordersApi.getOrders(params),
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 };
 

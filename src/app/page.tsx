@@ -2,44 +2,21 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useSignIn } from '@/hooks/use-auth';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
-
+import { useRouter } from 'next/navigation';
 export default function SignInPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-
-  const signInMutation = useSignIn();
-
-  const validateForm = () => {
-    const newErrors: { email?: string; password?: string } = {};
-
-    if (!email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Email is invalid';
-    }
-
-    if (!password) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    if (!validateForm()) return;
-
-    signInMutation.mutate({ email, password, role: "USER" });
+    // Simulate loading
+    setTimeout(() => {
+      setIsLoading(false);
+      router.push('/dashboard');
+    }, 1000);
   };
 
   return (
@@ -77,31 +54,21 @@ export default function SignInPage() {
             <div>
               <input
                 type="email"
-                placeholder="1actdrivingdev@gmail.com"
+                placeholder="scrapcollection@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className={`px-4 py-3 w-full rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                  errors.email ? 'border-red-300' : 'border-gray-300'
-                }`}
+                className="px-4 py-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
-              )}
             </div>
             
             <div>
               <input
                 type="password"
-                placeholder="••••"
+                placeholder="scrapadmin123"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={`px-4 py-3 w-full rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                  errors.password ? 'border-red-300' : 'border-gray-300'
-                }`}
+                className="px-4 py-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
-              )}
             </div>
             
             <div className="flex justify-between items-center">
@@ -116,21 +83,15 @@ export default function SignInPage() {
             
             <button
               type="submit"
-              disabled={signInMutation.isPending}
+              disabled={isLoading}
               className="py-3 w-full font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg transition-colors hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {signInMutation.isPending ? 'SIGNING IN...' : 'LOGIN'}
+              {isLoading ? 'SIGNING IN...' : 'LOGIN'}
             </button>
-            
-            {signInMutation.isError && (
-              <p className="text-sm text-center text-red-500">
-                {signInMutation.error?.message || 'Sign in failed. Please try again.'}
-              </p>
-            )}
           </form>
           
           <p className="mt-6 text-sm text-center text-gray-600">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/auth/signup" className="text-purple-600 hover:underline">
               Sign up
             </Link>

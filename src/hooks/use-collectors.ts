@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { collectorsApi } from '@/lib/api';
 import { queryKeys } from '@/lib/query-client';
 import { Collector } from '@/types';
@@ -15,7 +15,7 @@ export const useCollectors = (params?: {
   return useQuery({
     queryKey: queryKeys.collectors.list(params),
     queryFn: () => collectorsApi.getCollectors(params),
-    placeholderData: keepPreviousData,
+    placeholderData: (previousData) => previousData,
   });
 };
 

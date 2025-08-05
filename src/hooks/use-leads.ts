@@ -14,7 +14,7 @@ export const useLeads = (params?: {
   return useQuery({
     queryKey: queryKeys.leads.list(params),
     queryFn: () => leadsApi.getLeads(params),
-    keepPreviousData: true, // Keep previous data while fetching new data
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching new data
   });
 };
 

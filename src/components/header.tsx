@@ -1,13 +1,18 @@
 'use client';
 
-import { Search, Bell, Grid3X3, Maximize, Menu } from 'lucide-react';
-
+import { Search, Bell, Grid3X3, Maximize } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 interface HeaderProps {
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
 }
-
-export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) {
+  export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) {
+  const router = useRouter();
+  const signOut = () => {
+    router.push('/');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    }
   return (
     <header className="bg-gradient-to-r from-[#a280ed] to-[#a280ed] shadow-md rounded-b-2xl h-16 flex items-center justify-between px-4 lg:px-6 mx-4 lg:mx-6 mt-4">
       <div className="flex flex-1 items-center">
@@ -18,7 +23,7 @@ export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) 
           title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
         >
           {/* Animated burger menu icon */}
-          <div className="w-5 h-5 flex flex-col justify-center items-center">
+          <div className="flex flex-col justify-center items-center w-5 h-5">
             {/* Top line */}
             <span 
               className={`block w-5 h-0.5 bg-[#1F1F1F] transform transition-all duration-300 ease-in-out ${
@@ -79,7 +84,7 @@ export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) 
           <div className="w-8 h-8 bg-gradient-to-r from-[#1F1F1F] to-[#2d2d2d] rounded-full flex items-center justify-center shadow-md">
             <span className="text-sm font-medium text-white">A</span>
           </div>
-          <button className="hidden sm:block text-sm text-[#1F1F1F] hover:text-[#1F1F1F]/80 transition-all duration-300 hover:scale-105">
+          <button onClick={signOut} className="hidden sm:block text-sm text-[#1F1F1F] hover:text-[#1F1F1F]/80 transition-all duration-300 hover:scale-105">
             Sign Out
           </button>
         </div>

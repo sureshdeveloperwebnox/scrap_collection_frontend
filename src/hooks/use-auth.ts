@@ -58,7 +58,7 @@ export const useSignOut = () => {
       queryClient.clear();
       
       // Redirect to sign in
-      router.push('/auth/signin');
+      router.push('/');
     },
   });
 }; 
