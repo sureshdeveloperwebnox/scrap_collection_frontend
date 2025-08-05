@@ -49,13 +49,26 @@ export function Sidebar({ isOpen = true, onToggle, onCollapse, isCollapsed = fal
   }, [isCollapsed, onCollapse]);
 
   return (
-    <div className={cn(
-      "fixed left-0 top-0 flex flex-col bg-gradient-to-b from-[#a280ed] to-[#a280ed] text-[#1F1F1F] transition-all duration-300 ease-in-out shadow-md rounded-r-2xl",
-      // Base styles
-      "z-40 h-screen",
-      // Width styles - responsive collapse
-      isCollapsed ? "w-16 lg:w-16" : "w-64 lg:w-64"
-    )}>
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={onToggle}
+        />
+      )}
+      
+      <div className={cn(
+        "fixed left-0 top-0 flex flex-col bg-gradient-to-b from-[#a280ed] to-[#a280ed] text-[#1F1F1F] transition-all duration-300 ease-in-out shadow-md rounded-r-2xl",
+        // Base styles
+        "z-50 h-screen",
+        // Mobile responsive width
+        "w-64", // Default width for mobile
+        // Desktop responsive width
+        isCollapsed ? "lg:w-16" : "lg:w-64",
+        // Mobile slide in/out
+        isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      )}>
         {/* Header */}
         <div className="flex flex-shrink-0 justify-between items-center px-4 h-16 border-b border-white/20">
           <div className={cn(
@@ -74,10 +87,13 @@ export function Sidebar({ isOpen = true, onToggle, onCollapse, isCollapsed = fal
             </span>
           </div>
           
-          {/* Header Controls */}
-          <div className="flex items-center space-x-2">
-            {/* No controls needed - header burger controls everything */}
-          </div>
+          {/* Close button for mobile */}
+          <button
+            onClick={onToggle}
+            className="lg:hidden flex items-center justify-center w-8 h-8 bg-white/20 text-[#1F1F1F] rounded-lg hover:bg-white/30 transition-all duration-300"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
         
         {/* Navigation - Scrollable with hidden scrollbar */}
@@ -104,7 +120,7 @@ export function Sidebar({ isOpen = true, onToggle, onCollapse, isCollapsed = fal
                   title={isCollapsed ? item.name : undefined}
                 >
                   <div className={cn(
-                    "flex items-center justify-center w-5 h-5 flex-shrink-0",
+                    "flex flex-shrink-0 justify-center items-center w-5 h-5",
                     isCollapsed ? "lg:mx-auto" : ""
                   )}>
                     <item.icon className="w-5 h-5" />
@@ -147,6 +163,7 @@ export function Sidebar({ isOpen = true, onToggle, onCollapse, isCollapsed = fal
           </div>
         </div>
       </div>
+    </>
   );
 }
 
@@ -159,7 +176,7 @@ export function MobileMenuButton({ onToggle, isOpen }: { onToggle: () => void; i
       title={isOpen ? "Close menu" : "Open menu"}
     >
       {/* Authentic hamburger menu with 3 lines that animate to X */}
-      <div className="w-5 h-5 flex flex-col justify-center items-center">
+      <div className="flex flex-col justify-center items-center w-5 h-5">
         {/* Top line */}
         <span 
           className={`block w-5 h-0.5 bg-white transform transition-all duration-300 ease-in-out ${
