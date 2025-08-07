@@ -1,103 +1,39 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-export default function SignInPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+import { useAuthStore } from '@/lib/store/auth-store';
+
+export default function HomePage() {
   const router = useRouter();
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulate loading
-    setTimeout(() => {
-      setIsLoading(false);
-      router.push('/dashboard');
-    }, 1000);
-  };
+  const { isAuthenticated, isLoading, isHydrated } = useAuthStore();
 
+  useEffect(() => {
+    // Only run on client side and after hydration
+    if (typeof window !== 'undefined' && isHydrated) {
+      // Redirect authenticated users to dashboard
+      if (!isLoading && isAuthenticated) {
+        router.push('/dashboard');
+      } else if (!isLoading && !isAuthenticated) {
+        // Redirect to signin if not authenticated
+        router.push('/auth/signin');
+      }
+    }
+  }, [isAuthenticated, isLoading, isHydrated, router]);
+
+  // Show loading while checking authentication or during hydration
+  if (isLoading || !isHydrated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
+
+  // Show loading while redirecting
   return (
-    <div className="flex min-h-screen">
-      {/* Left side - Welcome Section */}
-      <div className="flex overflow-hidden relative flex-1 justify-center items-center p-12 bg-gradient-to-br from-purple-600 via-purple-700 to-purple-900">
-        {/* Decorative shapes */}
-        <div className="absolute top-20 left-20 w-32 h-8 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full transform rotate-45"></div>
-        <div className="absolute top-32 right-40 w-24 h-6 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full transform -rotate-12"></div>
-        <div className="absolute left-32 bottom-40 w-28 h-7 bg-gradient-to-r from-orange-300 to-yellow-400 rounded-full transform rotate-12"></div>
-        <div className="absolute right-20 bottom-20 w-36 h-8 bg-gradient-to-r from-pink-300 to-orange-400 rounded-full transform -rotate-45"></div>
-        
-        <div className="z-10 text-center text-white">
-          <h1 className="mb-6 text-6xl font-bold">
-            Welcome to<br />
-            Scrap Collection<br />
-            Service System
-          </h1>
-          <p className="max-w-2xl text-xl opacity-90">
-            A Scrap Collection Service System connects users with collectors to schedule and manage waste pickups efficiently.
-          </p>
-        </div>
-        
-        <div className="absolute bottom-8 left-1/2 text-sm text-white opacity-75 transform -translate-x-1/2">
-          © 2025 All rights reserved
-        </div>
-      </div>
-
-      {/* Right side - Login Form */}
-      <div className="flex justify-center items-center p-8 w-96 bg-white">
-        <div className="w-full max-w-sm">
-          <h2 className="mb-8 text-2xl font-bold text-center text-gray-900">LOGIN</h2>
-          
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <input
-                type="email"
-                placeholder="scrapcollection@gmail.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="px-4 py-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-            </div>
-            
-            <div>
-              <input
-                type="password"
-                placeholder="scrapadmin123"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="px-4 py-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <label className="flex items-center">
-                <input type="checkbox" className="rounded border-gray-300" />
-                <span className="ml-2 text-sm text-gray-600">Remember</span>
-              </label>
-              <a href="#" className="text-sm text-purple-600 hover:underline">
-                Forgot password?
-              </a>
-            </div>
-            
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="py-3 w-full font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg transition-colors hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'SIGNING IN...' : 'LOGIN'}
-            </button>
-          </form>
-          
-          <p className="mt-6 text-sm text-center text-gray-600">
-            Don&apos;t have an account?{' '}
-            <Link href="/auth/signup" className="text-purple-600 hover:underline">
-              Sign up
-            </Link>
-          </p>
-        </div>
-      </div>
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
     </div>
   );
 } 

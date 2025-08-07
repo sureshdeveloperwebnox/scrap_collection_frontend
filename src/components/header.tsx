@@ -1,7 +1,9 @@
 'use client';
 
-import { Search, Bell, Grid3X3, Maximize } from 'lucide-react';
+import { Search, Bell, Grid3X3, Maximize, LogOut, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/lib/store/auth-store';
+import { useSignOut } from '@/hooks/use-auth';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -10,12 +12,12 @@ interface HeaderProps {
 
 export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) {
   const router = useRouter();
+  const { user, logout } = useAuthStore();
+  const signOutMutation = useSignOut();
   
-  const signOut = () => {
-    router.push('/');
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-  }
+  const handleSignOut = () => {
+    signOutMutation.mutate();
+  };
   
   return (
     <header className="bg-gradient-to-r from-[#a280ed] to-[#a280ed] shadow-md rounded-b-2xl h-16 flex items-center justify-between px-3 sm:px-4 lg:px-6 mx-2 sm:mx-4 lg:mx-6 mt-2 sm:mt-4">
@@ -86,13 +88,23 @@ export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) 
         {/* User Avatar - Responsive */}
         <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3">
           <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-[#1F1F1F] to-[#2d2d2d] rounded-full flex items-center justify-center shadow-md flex-shrink-0">
-            <span className="text-xs font-medium text-white sm:text-sm">A</span>
+            <User className="w-4 h-4 text-white" />
+          </div>
+          <div className="hidden sm:flex flex-col">
+            <span className="text-xs font-medium text-[#1F1F1F]">
+              {user?.name || 'User'}
+            </span>
+            <span className="text-xs text-[#1F1F1F]/70">
+              {user?.role || 'Admin'}
+            </span>
           </div>
           <button 
-            onClick={signOut} 
-            className="hidden sm:block text-xs sm:text-sm text-[#1F1F1F] hover:text-[#1F1F1F]/80 transition-all duration-300 hover:scale-105 whitespace-nowrap"
+            onClick={handleSignOut}
+            disabled={signOutMutation.isPending}
+            className="hidden sm:flex items-center space-x-1 text-xs sm:text-sm text-[#1F1F1F] hover:text-[#1F1F1F]/80 transition-all duration-300 hover:scale-105 whitespace-nowrap disabled:opacity-50"
           >
-            Sign Out
+            <LogOut className="w-3 h-3" />
+            <span>{signOutMutation.isPending ? 'Signing out...' : 'Sign Out'}</span>
           </button>
         </div>
       </div>
