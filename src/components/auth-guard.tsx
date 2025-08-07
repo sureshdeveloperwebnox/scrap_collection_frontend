@@ -35,31 +35,6 @@ export function AuthGuard({
     }
   }, [isAuthenticated, isLoading, requireAuth, redirectTo, router, isClient]);
 
-  // Show loading state while checking authentication or during SSR
-  if (isLoading || !isClient) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
-      </div>
-    );
-  }
-
-  // Don't render children if authentication requirements are not met
-  if (requireAuth && !isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
-      </div>
-    );
-  }
-
-  if (!requireAuth && isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
-      </div>
-    );
-  }
-
+  // Render children immediately without any loading states
   return <>{children}</>;
 } 

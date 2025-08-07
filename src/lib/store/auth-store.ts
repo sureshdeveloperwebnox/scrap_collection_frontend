@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-export interface User {
+interface User {
   id: string;
-  email: string;
   name: string;
+  email: string;
   role: string;
 }
 
@@ -14,121 +14,94 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   isHydrated: boolean;
-}
-
-interface AuthActions {
   login: (user: User, token: string) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
-  clearAuth: () => void;
   setHydrated: (hydrated: boolean) => void;
   initializeFromStorage: () => void;
 }
 
-type AuthStore = AuthState & AuthActions;
+// Custom storage for SSR safety
+const createSafeStorage = () => {
+  if (typeof window === 'undefined') {
+    return {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+    };
+  }
+  return localStorage;
+};
 
-export const useAuthStore = create<AuthStore>()(
+export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      // Initial state
       user: null,
       token: null,
       isAuthenticated: false,
       isLoading: false,
       isHydrated: false,
-
-      // Actions
-      login: (user: User, token: string) =>
+      
+      login: (user: User, token: string) => {
         set({
           user,
           token,
           isAuthenticated: true,
           isLoading: false,
-        }),
-
-      logout: () =>
+        });
+      },
+      
+      logout: () => {
         set({
           user: null,
           token: null,
           isAuthenticated: false,
           isLoading: false,
-        }),
-
-      setLoading: (loading: boolean) =>
-        set({
-          isLoading: loading,
-        }),
-
-      clearAuth: () =>
-        set({
-          user: null,
-          token: null,
-          isAuthenticated: false,
-          isLoading: false,
-        }),
-
-      setHydrated: (hydrated: boolean) =>
-        set({
-          isHydrated: hydrated,
-        }),
-
+        });
+      },
+      
+      setLoading: (loading: boolean) => {
+        set({ isLoading: loading });
+      },
+      
+      setHydrated: (hydrated: boolean) => {
+        set({ isHydrated: hydrated });
+      },
+      
       initializeFromStorage: () => {
-        if (typeof window !== 'undefined') {
-          try {
+        try {
+          if (typeof window !== 'undefined') {
             const stored = localStorage.getItem('auth-storage');
             if (stored) {
               const parsed = JSON.parse(stored);
-              const state = parsed.state;
-              
-              if (state?.user && state?.token) {
+              if (parsed?.state) {
                 set({
-                  user: state.user,
-                  token: state.token,
-                  isAuthenticated: true,
+                  user: parsed.state.user,
+                  token: parsed.state.token,
+                  isAuthenticated: parsed.state.isAuthenticated,
                   isHydrated: true,
                 });
-              } else {
-                set({
-                  isHydrated: true,
-                });
+                return;
               }
-            } else {
-              set({
-                isHydrated: true,
-              });
             }
-          } catch (error) {
-            console.error('Error initializing from storage:', error);
-            set({
-              isHydrated: true,
-            });
           }
+          set({ isHydrated: true });
+        } catch (error) {
+          console.error('Error initializing auth from storage:', error);
+          set({ isHydrated: true });
         }
       },
     }),
     {
       name: 'auth-storage',
-      storage: createJSONStorage(() => {
-        // Only use localStorage on client side
-        if (typeof window !== 'undefined') {
-          return localStorage;
-        }
-        return {
-          getItem: () => null,
-          setItem: () => {},
-          removeItem: () => {},
-        };
-      }),
-      partialize: (state) => ({
-        user: state.user,
-        token: state.token,
-        isAuthenticated: state.isAuthenticated,
-      }),
+      storage: createJSONStorage(() => createSafeStorage()),
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.setHydrated(true);
         }
       },
+      // Skip hydration on server side
+      skipHydration: typeof window === 'undefined',
     }
   )
 ); 

@@ -2,28 +2,34 @@
 
 import { useEffect } from 'react';
 import { useAuthStore } from '@/lib/store/auth-store';
-import { useAuthInit } from '@/hooks/use-auth';
 
 interface AuthProviderProps {
   children: React.ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { initializeFromStorage, isHydrated } = useAuthStore();
+  const { initializeFromStorage } = useAuthStore();
   
   // Initialize authentication state from localStorage
   useEffect(() => {
-    initializeFromStorage();
+    // Quick initialization without blocking
+    const initAuth = () => {
+      try {
+        initializeFromStorage();
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+      }
+    };
+
+    // Use requestIdleCallback for non-blocking initialization
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(initAuth);
+    } else {
+      // Fallback for browsers without requestIdleCallback
+      setTimeout(initAuth, 0);
+    }
   }, [initializeFromStorage]);
 
-  // Show loading while initializing
-  if (!isHydrated) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
-      </div>
-    );
-  }
-
+  // Render children immediately without any loading state
   return <>{children}</>;
 } 

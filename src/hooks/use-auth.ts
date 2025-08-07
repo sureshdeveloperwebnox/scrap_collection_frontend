@@ -74,7 +74,7 @@ export const useSignIn = () => {
       toast.error('Login failed', {
         description: error?.message || 'Please check your credentials and try again',
       });
-      setLoading(false);
+      // setLoading(false);
     },
     onSettled: () => {
       setLoading(false);
