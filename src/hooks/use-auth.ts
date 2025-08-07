@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { getAuthenticatedClient } from '@/lib/api/client';
 import { useEffect } from 'react';
+import { toast } from 'sonner';
 
 // Hook to initialize authentication state
 export const useAuthInit = () => {
@@ -56,6 +57,10 @@ export const useSignIn = () => {
       if (response?.data?.user && response?.data?.token) {
         // Store in Zustand store
         login(response.data.user, response.data.token);
+
+        toast.success('Login successful!', {
+          description: 'You are now logged in',
+        });
         
         // Redirect to dashboard
         router.push('/dashboard');
@@ -64,8 +69,11 @@ export const useSignIn = () => {
         queryClient.invalidateQueries();
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Sign in error:', error);
+      toast.error('Login failed', {
+        description: error?.message || 'Please check your credentials and try again',
+      });
       setLoading(false);
     },
     onSettled: () => {
@@ -89,6 +97,10 @@ export const useSignUp = () => {
         // Store in Zustand store
         login(response.data.user, response.data.token);
         
+        toast.success('Registration successful!', {
+          description: 'Your account has been created and you are now logged in',
+        });
+        
         // Redirect to dashboard
         router.push('/dashboard');
         
@@ -96,8 +108,11 @@ export const useSignUp = () => {
         queryClient.invalidateQueries();
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Sign up error:', error);
+      toast.error('Registration failed', {
+        description: error?.message || 'Please check your information and try again',
+      });
       setLoading(false);
     },
     onSettled: () => {
@@ -123,16 +138,25 @@ export const useSignOut = () => {
       // Clear Zustand store
       logout();
       
+      toast.success('Logged out successfully', {
+        description: 'You have been logged out',
+      });
+      
       // Clear all cached data
       queryClient.clear();
       
       // Redirect to sign in
       router.push('/auth/signin');
     },
-    onError: () => {
+    onError: (error: any) => {
       // Even if API call fails, clear local state
       logout();
       queryClient.clear();
+      
+      toast.error('Logout failed', {
+        description: error?.message || 'You have been logged out locally',
+      });
+      
       router.push('/auth/signin');
     },
   });

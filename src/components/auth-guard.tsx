@@ -15,7 +15,7 @@ export function AuthGuard({
   requireAuth = true, 
   redirectTo = '/auth/signin' 
 }: AuthGuardProps) {
-  const { isAuthenticated, isLoading, isHydrated } = useAuthStore();
+  const { isAuthenticated, isLoading } = useAuthStore();
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
 
@@ -24,7 +24,7 @@ export function AuthGuard({
   }, []);
 
   useEffect(() => {
-    if (isClient && isHydrated && !isLoading) {
+    if (isClient && !isLoading) {
       if (requireAuth && !isAuthenticated) {
         // Redirect to login if authentication is required but user is not authenticated
         router.push(redirectTo);
@@ -33,10 +33,10 @@ export function AuthGuard({
         router.push('/dashboard');
       }
     }
-  }, [isAuthenticated, isLoading, isHydrated, requireAuth, redirectTo, router, isClient]);
+  }, [isAuthenticated, isLoading, requireAuth, redirectTo, router, isClient]);
 
   // Show loading state while checking authentication or during SSR
-  if (isLoading || !isClient || !isHydrated) {
+  if (isLoading || !isClient) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>

@@ -6,11 +6,11 @@ import { useAuthStore } from '@/lib/store/auth-store';
 
 export default function HomePage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading, isHydrated } = useAuthStore();
+  const { isAuthenticated, isLoading } = useAuthStore();
 
   useEffect(() => {
-    // Only run on client side and after hydration
-    if (typeof window !== 'undefined' && isHydrated) {
+    // Only run on client side
+    if (typeof window !== 'undefined') {
       // Redirect authenticated users to dashboard
       if (!isLoading && isAuthenticated) {
         router.push('/dashboard');
@@ -19,10 +19,10 @@ export default function HomePage() {
         router.push('/auth/signin');
       }
     }
-  }, [isAuthenticated, isLoading, isHydrated, router]);
+  }, [isAuthenticated, isLoading, router]);
 
-  // Show loading while checking authentication or during hydration
-  if (isLoading || !isHydrated) {
+  // Show loading while checking authentication
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>

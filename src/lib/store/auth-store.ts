@@ -22,13 +22,14 @@ interface AuthActions {
   setLoading: (loading: boolean) => void;
   clearAuth: () => void;
   setHydrated: (hydrated: boolean) => void;
+  initializeFromStorage: () => void;
 }
 
 type AuthStore = AuthState & AuthActions;
 
 export const useAuthStore = create<AuthStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // Initial state
       user: null,
       token: null,
@@ -70,6 +71,40 @@ export const useAuthStore = create<AuthStore>()(
         set({
           isHydrated: hydrated,
         }),
+
+      initializeFromStorage: () => {
+        if (typeof window !== 'undefined') {
+          try {
+            const stored = localStorage.getItem('auth-storage');
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              const state = parsed.state;
+              
+              if (state?.user && state?.token) {
+                set({
+                  user: state.user,
+                  token: state.token,
+                  isAuthenticated: true,
+                  isHydrated: true,
+                });
+              } else {
+                set({
+                  isHydrated: true,
+                });
+              }
+            } else {
+              set({
+                isHydrated: true,
+              });
+            }
+          } catch (error) {
+            console.error('Error initializing from storage:', error);
+            set({
+              isHydrated: true,
+            });
+          }
+        }
+      },
     }),
     {
       name: 'auth-storage',
