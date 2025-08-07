@@ -87,7 +87,7 @@ export default function SignInPage() {
                 <div>
                   <input
                     type="email"
-                    placeholder="admin@scrapc.com"
+                    placeholder="johncena@gmail.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className={`px-3 py-2 w-full rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm ${
