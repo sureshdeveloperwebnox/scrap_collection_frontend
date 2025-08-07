@@ -8,7 +8,8 @@ import { toast } from 'sonner';
 
 // Hook to initialize authentication state
 export const useAuthInit = () => {
-  const { token, user, isAuthenticated, setLoading, setHydrated } = useAuthStore();
+  const { token, user, isAuthenticated, setLoading, setHydrated, logout } = useAuthStore();
+  const router = useRouter();
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -24,9 +25,9 @@ export const useAuthInit = () => {
             console.log('Token is valid, user is authenticated');
           } catch (error) {
             console.log('Token is invalid, clearing auth state');
-            // Token is invalid, clear auth state
-            localStorage.removeItem('auth-storage');
-            window.location.reload();
+            // Token is invalid, clear auth state and redirect
+            logout();
+            router.push('/auth/signin');
           }
         }
       } catch (error) {
@@ -38,7 +39,7 @@ export const useAuthInit = () => {
     };
 
     initializeAuth();
-  }, [token, user, isAuthenticated, setLoading, setHydrated]);
+  }, [token, user, isAuthenticated, setLoading, setHydrated, logout, router]);
 };
 
 export const useSignIn = () => {
@@ -62,19 +63,41 @@ export const useSignIn = () => {
           description: 'You are now logged in',
         });
         
-        // Redirect to dashboard
+        // Use Next.js router for navigation instead of page refresh
         router.push('/dashboard');
         
         // Invalidate all queries to refresh with authenticated state
         queryClient.invalidateQueries();
+      } else {
+        // Handle case where response doesn't have expected data
+        toast.error('Login failed', {
+          description: 'Invalid response from server',
+        });
       }
     },
     onError: (error: any) => {
       console.error('Sign in error:', error);
+      
+      // Extract error message from different possible error structures
+      let errorMessage = 'Please check your credentials and try again';
+      
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.response?.status === 401) {
+        errorMessage = 'Invalid email or password';
+      } else if (error?.response?.status === 400) {
+        errorMessage = 'Invalid credentials provided';
+      } else if (error?.response?.status === 500) {
+        errorMessage = 'Server error. Please try again later';
+      }
+      
       toast.error('Login failed', {
-        description: error?.message || 'Please check your credentials and try again',
+        description: errorMessage,
       });
-      // setLoading(false);
     },
     onSettled: () => {
       setLoading(false);
@@ -101,19 +124,41 @@ export const useSignUp = () => {
           description: 'Your account has been created and you are now logged in',
         });
         
-        // Redirect to dashboard
+        // Use Next.js router for navigation instead of page refresh
         router.push('/dashboard');
         
         // Invalidate all queries to refresh with authenticated state
         queryClient.invalidateQueries();
+      } else {
+        // Handle case where response doesn't have expected data
+        toast.error('Registration failed', {
+          description: 'Invalid response from server',
+        });
       }
     },
     onError: (error: any) => {
       console.error('Sign up error:', error);
+      
+      // Extract error message from different possible error structures
+      let errorMessage = 'Please check your information and try again';
+      
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.response?.status === 400) {
+        errorMessage = 'Invalid registration data provided';
+      } else if (error?.response?.status === 409) {
+        errorMessage = 'User already exists with this email';
+      } else if (error?.response?.status === 500) {
+        errorMessage = 'Server error. Please try again later';
+      }
+      
       toast.error('Registration failed', {
-        description: error?.message || 'Please check your information and try again',
+        description: errorMessage,
       });
-      setLoading(false);
     },
     onSettled: () => {
       setLoading(false);
@@ -145,7 +190,7 @@ export const useSignOut = () => {
       // Clear all cached data
       queryClient.clear();
       
-      // Redirect to sign in
+      // Use Next.js router for navigation instead of page refresh
       router.push('/auth/signin');
     },
     onError: (error: any) => {
@@ -157,6 +202,7 @@ export const useSignOut = () => {
         description: error?.message || 'You have been logged out locally',
       });
       
+      // Use Next.js router for navigation instead of page refresh
       router.push('/auth/signin');
     },
   });

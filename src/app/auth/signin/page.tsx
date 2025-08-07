@@ -40,14 +40,15 @@ export default function SignInPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     
     if (!validateForm()) return;
 
     try {
       await signInMutation.mutateAsync({ email, password, role: "USER" });
     } catch (error) {
-      console.error('Sign in error:', error);
-      // Handle API errors here if needed
+      console.error('Sign in error in component:', error);
+      // The error is already handled by the mutation's onError callback
     }
   };
 
@@ -57,13 +58,24 @@ export default function SignInPage() {
         {/* Mobile Layout */}
         <div className="lg:hidden min-h-screen flex flex-col">
           {/* Mobile Header */}
-          <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-purple-900 p-3 sm:p-4 text-center flex-shrink-0">
-            <h1 className="text-lg sm:text-xl font-bold text-white mb-1">
-              Scrap Collection
-            </h1>
-            <p className="text-xs text-white opacity-90">
-              Service System
-            </p>
+          <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-purple-900 p-3 sm:p-4 text-center flex-shrink-0 relative overflow-hidden">
+            {/* Mobile decorative elements */}
+            <div className="absolute top-2 left-2 w-16 h-4 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full opacity-60"></div>
+            <div className="absolute top-4 right-3 w-12 h-3 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full opacity-60"></div>
+            <div className="absolute left-3 bottom-4 w-14 h-3 bg-gradient-to-r from-orange-300 to-yellow-400 rounded-full opacity-60"></div>
+            <div className="absolute right-2 bottom-2 w-18 h-4 bg-gradient-to-r from-pink-300 to-orange-400 rounded-full opacity-60"></div>
+            
+            <div className="relative z-10">
+              <h1 className="text-lg sm:text-xl font-bold text-white mb-1">
+                Scrap Collection
+              </h1>
+              <p className="text-xs text-white opacity-90">
+                Service System
+              </p>
+              <p className="text-xs text-white opacity-75 mt-2">
+                Welcome Back
+              </p>
+            </div>
           </div>
 
           {/* Mobile Form */}

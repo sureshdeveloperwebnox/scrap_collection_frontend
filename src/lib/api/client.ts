@@ -26,11 +26,14 @@ export const getAuthenticatedClient = (token: string) => {
     (error) => {
       // Handle common errors
       if (error.response?.status === 401) {
-        // Unauthorized - redirect to login or refresh token
+        // Unauthorized - clear auth storage but don't redirect here
+        // Let the component handle the redirect
         if (typeof window !== 'undefined') {
-          // Clear auth storage
-          localStorage.removeItem('auth-storage');
-          window.location.href = '/auth/signin';
+          try {
+            localStorage.removeItem('auth-storage');
+          } catch (error) {
+            console.error('Error clearing auth storage:', error);
+          }
         }
       }
       
@@ -82,12 +85,11 @@ apiClient.interceptors.response.use(
   (error) => {
     // Handle common errors
     if (error.response?.status === 401) {
-      // Unauthorized - redirect to login or refresh token
+      // Unauthorized - clear auth storage but don't redirect here
+      // Let the component handle the redirect
       if (typeof window !== 'undefined') {
         try {
-          // Clear auth storage
           localStorage.removeItem('auth-storage');
-          window.location.href = '/auth/signin';
         } catch (error) {
           console.error('Error clearing auth storage:', error);
         }
