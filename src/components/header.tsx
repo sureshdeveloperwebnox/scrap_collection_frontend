@@ -20,7 +20,7 @@ export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) 
   };
   
   return (
-    <header className="bg-gradient-to-r from-[#a280ed] to-[#a280ed] shadow-md rounded-b-2xl h-16 flex items-center justify-between px-3 sm:px-4 lg:px-6 mx-2 sm:mx-4 lg:mx-6 mt-2 sm:mt-4">
+    <header className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-md rounded-b-2xl h-16 flex items-center justify-between px-3 sm:px-4 lg:px-6 mx-2 sm:mx-4 lg:mx-6 mt-2 sm:mt-4">
       <div className="flex flex-1 items-center min-w-0">
         {/* Burger Menu Button - Mobile and Desktop */}
         <button
@@ -51,7 +51,7 @@ export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) 
           </div>
         </button>
         
-        <h1 className="text-base sm:text-lg lg:text-xl font-semibold text-[#1F1F1F] truncate">
+        <h1 className="text-base sm:text-lg lg:text-xl font-semibold text-white truncate">
           Scrap Collection Admin
         </h1>
       </div>

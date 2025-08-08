@@ -102,36 +102,40 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white via-purple-50/30 to-indigo-50/30 border-0 shadow-2xl">
         <DialogHeader>
-          <DialogTitle>{lead ? 'Edit Lead' : 'Add New Lead'}</DialogTitle>
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            {lead ? 'Edit Lead' : 'Add New Lead'}
+          </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name" className="text-sm font-semibold text-gray-700">Name</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 required
                 disabled={isLoading}
+                className="border-gray-200 focus:border-purple-300 focus:ring-purple-200 transition-all duration-200"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">Phone</Label>
               <Input
                 id="phone"
                 value={formData.contact}
                 onChange={(e) => handleInputChange('contact', e.target.value)}
                 required
                 disabled={isLoading}
+                className="border-gray-200 focus:border-purple-300 focus:ring-purple-200 transition-all duration-200"
               />
             </div>
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Email</Label>
             <Input
               id="email"
               type="email"
@@ -139,18 +143,19 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
               onChange={(e) => handleInputChange('email', e.target.value)}
               required
               disabled={isLoading}
+              className="border-gray-200 focus:border-purple-300 focus:ring-purple-200 transition-all duration-200"
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="vehicleType">Vehicle Type</Label>
+              <Label htmlFor="vehicleType" className="text-sm font-semibold text-gray-700">Vehicle Type</Label>
               <Select 
                 value={formData.vehicleTypeId?.toString()} 
                 onValueChange={(value) => handleInputChange('vehicleTypeId', parseInt(value))}
                 disabled={isLoading}
               >
-                <SelectTrigger>
+                <SelectTrigger className="border-gray-200 focus:border-purple-300 focus:ring-purple-200 transition-all duration-200">
                   <SelectValue placeholder="Select vehicle type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -164,13 +169,13 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="scrapCategory">Scrap Category</Label>
+              <Label htmlFor="scrapCategory" className="text-sm font-semibold text-gray-700">Scrap Category</Label>
               <Select 
                 value={formData.scrapCategory as string}
                 onValueChange={(value) => handleInputChange('scrapCategory', value as ScrapCategory)}
                 disabled={isLoading}
               >
-                <SelectTrigger>
+                <SelectTrigger className="border-gray-200 focus:border-purple-300 focus:ring-purple-200 transition-all duration-200">
                   <SelectValue placeholder="Select scrap category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -183,24 +188,25 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
+            <Label htmlFor="location" className="text-sm font-semibold text-gray-700">Location</Label>
             <Input
               id="location"
               value={formData.location}
               onChange={(e) => handleInputChange('location', e.target.value)}
               required
               disabled={isLoading}
+              className="border-gray-200 focus:border-purple-300 focus:ring-purple-200 transition-all duration-200"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
+            <Label htmlFor="status" className="text-sm font-semibold text-gray-700">Status</Label>
             <Select 
               value={formData.status} 
               onValueChange={(value) => handleInputChange('status', value as LeadStatus)}
               disabled={isLoading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="border-gray-200 focus:border-purple-300 focus:ring-purple-200 transition-all duration-200">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
@@ -213,22 +219,24 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
             </Select>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="pt-6 border-t border-gray-100">
             <Button 
               type="button" 
               variant="outline" 
               onClick={onClose}
               disabled={isLoading}
+              className="border-gray-200 hover:bg-gray-50 transition-all duration-200"
             >
               Cancel
             </Button>
             <Button 
               type="submit"
               disabled={isLoading}
+              className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 font-semibold"
             >
               {isLoading ? (
                 <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  <div className="mr-2 h-4 w-4 bg-white animate-spin rounded-full border-2 border-current border-t-transparent" />
                   {lead ? 'Updating...' : 'Creating...'}
                 </>
               ) : (

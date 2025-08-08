@@ -59,7 +59,7 @@ export function Sidebar({ isOpen = true, onToggle, onCollapse, isCollapsed = fal
       )}
       
       <div className={cn(
-        "fixed left-0 top-0 flex flex-col bg-gradient-to-b from-[#a280ed] to-[#a280ed] text-[#1F1F1F] transition-all duration-300 ease-in-out shadow-md rounded-r-2xl",
+        "fixed left-0 top-0 flex flex-col bg-gradient-to-b from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-[#1F1F1F] transition-all duration-300 ease-in-out shadow-md rounded-r-2xl",
         // Base styles
         "z-50 h-screen",
         // Mobile responsive width
@@ -80,7 +80,7 @@ export function Sidebar({ isOpen = true, onToggle, onCollapse, isCollapsed = fal
               <Image src="/images/logo/logo.png" alt="Logo" width={50} height={50} />
             </div>
             <span className={cn(
-              "text-xl font-bold whitespace-nowrap transition-opacity duration-200 text-[#1F1F1F]",
+              "text-xl font-bold whitespace-nowrap transition-opacity duration-200 text-white",
               isCollapsed ? "lg:hidden" : "block"
             )}>
               AussieScrapX 
@@ -114,8 +114,8 @@ export function Sidebar({ isOpen = true, onToggle, onCollapse, isCollapsed = fal
                   className={cn(
                     'flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-300 group relative hover:scale-105',
                     isActive
-                      ? 'bg-white/30 text-[#1F1F1F] shadow-md backdrop-blur-sm'
-                      : 'text-[#1F1F1F] hover:bg-white/20 hover:shadow-md'
+                      ? 'bg-white/30 text-white shadow-md backdrop-blur-sm'
+                      : 'text-white hover:bg-white/20 hover:shadow-md'
                   )}
                   title={isCollapsed ? item.name : undefined}
                 >
@@ -157,8 +157,8 @@ export function Sidebar({ isOpen = true, onToggle, onCollapse, isCollapsed = fal
               "transition-opacity duration-200",
               isCollapsed ? "lg:hidden" : "block"
             )}>
-              <p className="text-sm font-medium text-[#1F1F1F]">Admin User</p>
-              <p className="text-xs text-[#1F1F1F]/70">admin@scrap.com</p>
+              <p className="text-sm font-medium text-white">Admin User</p>
+              <p className="text-xs text-white/70">admin@scrap.com</p>
             </div>
           </div>
         </div>
