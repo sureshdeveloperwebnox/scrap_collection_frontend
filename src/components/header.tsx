@@ -29,24 +29,18 @@ export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) 
           title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
         >
           {/* Animated burger menu icon */}
-          <div className="flex flex-col justify-center items-center w-4 h-4 sm:w-5 sm:h-5">
+          <div className="flex flex-col justify-center items-center w-4 h-2 sm:w-5 sm:h-5">
             {/* Top line */}
             <span 
-              className={`block w-4 sm:w-5 h-0.5 bg-[#1F1F1F] transform transition-all duration-300 ease-in-out ${
-                isSidebarOpen ? 'rotate-45 translate-y-1.5' : 'translate-y-0'
-              }`}
+              className="block w-4 sm:w-5 h-0.5 bg-white mt-1"
             />
             {/* Middle line */}
             <span 
-              className={`block w-4 sm:w-5 h-0.5 bg-[#1F1F1F] transform transition-all duration-300 ease-in-out mt-1 ${
-                isSidebarOpen ? 'opacity-0' : 'opacity-100'
-              }`}
+              className="block w-4 sm:w-5 h-0.5 bg-white mt-1"
             />
             {/* Bottom line */}
             <span 
-              className={`block w-4 sm:w-5 h-0.5 bg-[#1F1F1F] transform transition-all duration-300 ease-in-out mt-1 ${
-                isSidebarOpen ? '-rotate-45 -translate-y-1.5' : 'translate-y-0'
-              }`}
+              className="block w-4 sm:w-5 h-0.5 bg-white mt-1"
             />
           </div>
         </button>
