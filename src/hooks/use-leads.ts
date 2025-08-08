@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { leadsApi } from '@/lib/api';
 import { queryKeys } from '@/lib/query-client';
 import { Lead } from '@/types';
+import { useAuthStore } from '@/lib/store/auth-store';
 
 // Get all leads with optional filters
 export const useLeads = (params?: {
@@ -10,10 +11,13 @@ export const useLeads = (params?: {
   search?: string;
   status?: string;
   vehicleType?: string;
-}) => {
+  }) => {
+  const { user } = useAuthStore();
+  const organizationId = user?.organizationId;
+
   return useQuery({
-    queryKey: queryKeys.leads.list(params),
-    queryFn: () => leadsApi.getLeads(params),
+    queryKey: queryKeys.leads.list({ ...params, organizationId }),
+    queryFn: () => leadsApi.getLeads({ ...params, organizationId }),
     placeholderData: (previousData) => previousData, // Keep previous data while fetching new data
   });
 };
@@ -30,10 +34,12 @@ export const useLead = (id: string) => {
 // Create lead mutation
 export const useCreateLead = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const organizationId = user?.organizationId;
 
   return useMutation({
     mutationFn: (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>) => 
-      leadsApi.createLead(leadData),
+      leadsApi.createLead({ ...leadData, organizationId }),
     onSuccess: (newLead) => {
       // Invalidate and refetch leads list
       queryClient.invalidateQueries({ queryKey: queryKeys.leads.lists() });

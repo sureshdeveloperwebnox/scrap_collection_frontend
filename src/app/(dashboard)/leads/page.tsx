@@ -7,87 +7,86 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { LeadForm } from '@/components/lead-form';
 import { Lead } from '@/types';
-import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Loader2 } from 'lucide-react';
+import { useLeads, useDeleteLead } from '@/hooks/use-leads';
+import { toast } from 'sonner';
 
-const mockLeads: Lead[] = [
-  {
-    id: '1',
-    name: 'John Smith',
-    phone: '+61 400 123 456',
-    email: 'john@example.com',
-    vehicleType: 'car',
-    scrapType: 'junk',
-    address: '123 Main St, Sydney, NSW',
-    status: 'new',
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-15'),
-  },
-  {
-    id: '2',
-    name: 'Sarah Johnson',
-    phone: '+61 400 789 123',
-    email: 'sarah@example.com',
-    vehicleType: 'truck',
-    scrapType: 'accident-damaged',
-    address: '456 Oak Ave, Melbourne, VIC',
-    status: 'contacted',
-    createdAt: new Date('2024-01-14'),
-    updatedAt: new Date('2024-01-14'),
-  },
-  {
-    id: '3',
-    name: 'Mike Wilson',
-    phone: '+61 400 456 789',
-    email: 'mike@example.com',
-    vehicleType: 'bike',
-    scrapType: 'fully-scrap',
-    address: '789 Pine Rd, Brisbane, QLD',
-    status: 'qualified',
-    createdAt: new Date('2024-01-13'),
-    updatedAt: new Date('2024-01-13'),
-  },
-];
+// API response type
+interface ApiLead {
+  id: number;
+  organizationId: number;
+  name: string;
+  contact: string;
+  email: string;
+  location: string;
+  vehicleTypeId: number;
+  scrapCategory: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  vehicleType: {
+    id: number;
+    name: string;
+    description: string;
+  };
+  organization: {
+    name: string;
+  };
+}
+
+interface ApiResponse {
+  version: string;
+  validationErrors: any[];
+  code: number;
+  status: string;
+  message: string;
+  data: {
+    leads: ApiLead[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  };
+}
 
 export default function LeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>(mockLeads);
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | undefined>();
 
-  const filteredLeads = leads.filter(lead =>
-    lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.phone.includes(searchTerm) ||
-    lead.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // API hooks
+  const { data: leadsData, isLoading, error } = useLeads({
+    search: searchTerm || undefined,
+    limit: 100, // Adjust based on your needs
+  });
 
-  const handleCreateLead = (leadData: Partial<Lead>) => {
-    const newLead: Lead = {
-      ...leadData as Lead,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    setLeads([...leads, newLead]);
-  };
+  const deleteLeadMutation = useDeleteLead();
 
-  const handleUpdateLead = (leadData: Partial<Lead>) => {
-    setLeads(leads.map(lead => 
-      lead.id === editingLead?.id 
-        ? { ...lead, ...leadData, updatedAt: new Date() }
-        : lead
-    ));
-    setEditingLead(undefined);
-  };
+  // Handle the actual API response structure
+  const apiResponse = leadsData as unknown as ApiResponse;
+  console.log('====================================');
+  console.log("leadsData", leadsData);
+  console.log('====================================');
+  const leads = apiResponse?.data?.leads || [];
+  const totalLeads = apiResponse?.data?.pagination?.total || 0;
 
-  const handleDeleteLead = (id: string) => {
+  const handleDeleteLead = async (id: string) => {
     if (confirm('Are you sure you want to delete this lead?')) {
-      setLeads(leads.filter(lead => lead.id !== id));
+      try {
+        await deleteLeadMutation.mutateAsync(id);
+        toast.success('Lead deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting lead:', error);
+        toast.error('Failed to delete lead');
+      }
     }
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'new': return 'bg-gray-100 text-gray-800';
+    switch (status.toLowerCase()) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'contacted': return 'bg-blue-100 text-blue-800';
       case 'qualified': return 'bg-green-100 text-green-800';
       case 'converted': return 'bg-purple-100 text-purple-800';
@@ -96,10 +95,26 @@ export default function LeadsPage() {
     }
   };
 
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-red-600">Error loading leads</h2>
+          <p className="text-gray-600 mt-2">Please try again later.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Lead Management</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Lead Management</h1>
+          <p className="text-gray-600 mt-1">
+            {isLoading ? 'Loading...' : `${totalLeads} total leads`}
+          </p>
+        </div>
         <Button onClick={() => setIsFormOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Lead
@@ -123,61 +138,100 @@ export default function LeadsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Vehicle Type</TableHead>
-                <TableHead>Scrap Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredLeads.map((lead) => (
-                <TableRow key={lead.id}>
-                  <TableCell className="font-medium">{lead.name}</TableCell>
-                  <TableCell>
-                    <div>
-                      <div>{lead.phone}</div>
-                      <div className="text-sm text-gray-500">{lead.email}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="capitalize">{lead.vehicleType}</TableCell>
-                  <TableCell className="capitalize">{lead.scrapType.replace('-', ' ')}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 text-xs rounded-full capitalize ${getStatusColor(lead.status)}`}>
-                      {lead.status}
-                    </span>
-                  </TableCell>
-                  <TableCell>{lead.createdAt.toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setEditingLead(lead);
-                          setIsFormOpen(true);
-                        }}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteLead(lead.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              <span className="ml-2 text-gray-600">Loading leads...</span>
+            </div>
+          ) : leads?.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-600">No leads found.</p>
+              {searchTerm && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Try adjusting your search terms.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table className="min-w-[720px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Vehicle Type</TableHead>
+                    <TableHead>Scrap Category</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {leads.map((lead) => (
+                    <TableRow key={lead.id}>
+                      <TableCell className="font-medium">{lead.name}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div>{lead.contact}</div>
+                          <div className="text-sm text-gray-500">{lead.email}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="capitalize">{lead.vehicleType?.name || 'N/A'}</TableCell>
+                      <TableCell className="capitalize">{String(lead.scrapCategory || '').replace(/_/g, ' ')}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 text-xs rounded-full capitalize ${getStatusColor(lead.status)}`}>
+                          {lead.status.toLowerCase()}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(lead.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              // Convert API lead to our Lead type for editing
+                              const convertedLead: Lead = {
+                                id: lead.id.toString(),
+                                organizationId: lead.organizationId,
+                                name: lead.name,
+                                contact: lead.contact,
+                                email: lead.email,
+                                vehicleTypeId: lead.vehicleTypeId,
+                                scrapCategory: lead.scrapCategory,
+                                address: lead.location,
+                                status: lead.status.toLowerCase() as any,
+                                createdAt: new Date(lead.createdAt),
+                                updatedAt: new Date(lead.updatedAt),
+                              } as unknown as Lead;
+                              setEditingLead(convertedLead);
+                              setIsFormOpen(true);
+                            }}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteLead(lead.id.toString())}
+                            disabled={deleteLeadMutation.isPending}
+                          >
+                            {deleteLeadMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -188,7 +242,6 @@ export default function LeadsPage() {
           setIsFormOpen(false);
           setEditingLead(undefined);
         }}
-        onSubmit={editingLead ? handleUpdateLead : handleCreateLead}
       />
     </div>
   );

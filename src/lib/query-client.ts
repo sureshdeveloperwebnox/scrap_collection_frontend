@@ -111,4 +111,15 @@ export const queryKeys = {
     byCustomer: (customerId: string) => [...queryKeys.payments.all, 'by-customer', customerId] as const,
     byOrder: (orderId: string) => [...queryKeys.payments.all, 'by-order', orderId] as const,
   },
+
+  // Vehicle Types
+  vehicleTypes: {
+    all: ['vehicle-types'] as const,
+    lists: () => [...queryKeys.vehicleTypes.all, 'list'] as const,
+    list: (filters?: Record<string, any>) => [...queryKeys.vehicleTypes.lists(), filters] as const,
+    details: () => [...queryKeys.vehicleTypes.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.vehicleTypes.details(), id] as const,
+    stats: () => [...queryKeys.vehicleTypes.all, 'stats'] as const,
+    active: () => [...queryKeys.vehicleTypes.all, 'active'] as const,
+  },
 } as const;

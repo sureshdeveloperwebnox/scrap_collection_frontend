@@ -9,6 +9,7 @@ export const leadsApi = {
     search?: string;
     status?: string;
     vehicleType?: string;
+    organizationId?: number;
   }): Promise<{ data: Lead[], total: number, page: number, limit: number }> => {
     const response = await apiClient.get('/leads', { params });
     return response.data;

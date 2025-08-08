@@ -1,14 +1,16 @@
 export interface Lead {
   id: string;
   name: string;
-  phone: string;
+  contact: string;
   email: string;
-  vehicleType: VehicleType;
-  scrapType: ScrapType;
-  address: string;
+  vehicleTypeId: number;
+  ScrapCategory: ScrapCategory;
+  scrapCategory: ScrapCategory;
+  location: string;
   status: LeadStatus;
   createdAt: Date;
   updatedAt: Date;
+  organizationId?: number;
 }
 
 export interface Order {
@@ -18,8 +20,8 @@ export interface Order {
   collectorId?: string;
   scrapYardId: string;
   vehicleType: VehicleType;
-  scrapType: ScrapType;
-  pickupAddress: string;
+  scrapCategory: ScrapCategory;
+  location: string;
   status: OrderStatus;
   scheduledDate?: Date;
   completedDate?: Date;
@@ -79,15 +81,15 @@ export interface Payment {
   updatedAt: Date;
 }
 
-export type VehicleType = 'car' | 'bike' | 'truck' | 'boat';
-export type ScrapType = 'junk' | 'accident-damaged' | 'fully-scrap';
-export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'converted' | 'rejected';
-export type OrderStatus = 'pending' | 'assigned' | 'in-progress' | 'completed' | 'cancelled';
-export type EmployeeRole = 'admin' | 'staff' | 'collector' | 'manager';
-export type EmployeeStatus = 'active' | 'inactive' | 'blocked';
-export type ScrapYardStatus = 'active' | 'inactive' | 'maintenance';
-export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
-export type PaymentMethod = 'cash' | 'card' | 'bank-transfer' | 'wallet';
+export type VehicleType = 'CAR' | 'BIKE' | 'TRUCK' | 'BOAT';
+export type ScrapCategory = 'JUNK' | 'ACCIDENT_DAMAGED' | 'FULLY_SCRAP';
+export type LeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'CONVERTED' | 'REJECTED';
+export type OrderStatus = 'PENDING' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type EmployeeRole = 'ADMIN' | 'STAFF' | 'COLLECTOR' | 'MANAGER';
+export type EmployeeStatus = 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
+export type ScrapYardStatus = 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE';
+export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+export type PaymentMethod = 'CASH' | 'CARD' | 'BANK_TRANSFER' | 'WALLET';
 
 export interface DashboardStats {
   totalLeads: number;
