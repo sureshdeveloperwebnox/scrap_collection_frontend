@@ -93,6 +93,9 @@ export function Sidebar({ isOpen = true, onToggle, onCollapse, isCollapsed = fal
     // Animate menu items on mount with stagger effect
     const menuItems = sidebarRef.current.querySelectorAll('.menu-item');
     
+    // Reset any existing animations
+    gsap.set(menuItems, { clearProps: "all" });
+    
     gsap.fromTo(menuItems, 
       { 
         opacity: 0, 
@@ -107,19 +110,20 @@ export function Sidebar({ isOpen = true, onToggle, onCollapse, isCollapsed = fal
         rotationY: 0,
         duration: 0.8,
         stagger: 0.08,
-        ease: "power3.out"
+        ease: "power3.out",
+        delay: 0.1 // Small delay to ensure DOM is ready
       }
     );
 
-    // Enhanced hover animations with GSAP
+    // Enhanced hover animations with GSAP - Works on both mobile and desktop
     menuItems.forEach((item) => {
       const icon = item.querySelector('.menu-icon');
       const text = item.querySelector('.menu-text');
       const itemElement = item as HTMLElement;
       
       if (icon && text) {
-        // Mouse enter animations
-        item.addEventListener('mouseenter', () => {
+        // Touch and mouse events for better mobile support
+        const handleEnter = () => {
           gsap.to(icon, {
             scale: 1.3,
             rotation: 360,
@@ -138,10 +142,9 @@ export function Sidebar({ isOpen = true, onToggle, onCollapse, isCollapsed = fal
             duration: 0.3,
             ease: "power2.out"
           });
-        });
+        };
 
-        // Mouse leave animations
-        item.addEventListener('mouseleave', () => {
+        const handleLeave = () => {
           gsap.to(icon, {
             scale: 1,
             rotation: 0,
@@ -160,10 +163,16 @@ export function Sidebar({ isOpen = true, onToggle, onCollapse, isCollapsed = fal
             duration: 0.3,
             ease: "power2.out"
           });
-        });
+        };
+
+        // Add both mouse and touch events for better mobile support
+        item.addEventListener('mouseenter', handleEnter);
+        item.addEventListener('mouseleave', handleLeave);
+        item.addEventListener('touchstart', handleEnter);
+        item.addEventListener('touchend', handleLeave);
 
         // Click animation for active items
-        item.addEventListener('click', () => {
+        const handleClick = () => {
           if (item.classList.contains('active')) {
             createShiningEffect(itemElement);
             
@@ -175,22 +184,42 @@ export function Sidebar({ isOpen = true, onToggle, onCollapse, isCollapsed = fal
               ease: "power2.inOut"
             });
           }
-        });
+        };
+
+        item.addEventListener('click', handleClick);
+        item.addEventListener('touchend', handleClick);
+
+        // Store event handlers for cleanup using data attributes
+        item.setAttribute('data-gsap-enter', 'true');
+        item.setAttribute('data-gsap-leave', 'true');
+        item.setAttribute('data-gsap-click', 'true');
       }
     });
 
     return () => {
-      // Cleanup animations
+      // Cleanup animations and event listeners
       gsap.killTweensOf(menuItems);
+      
+      menuItems.forEach((item) => {
+        // Remove all event listeners by cloning the element
+        const newItem = item.cloneNode(true);
+        if (item.parentNode) {
+          item.parentNode.replaceChild(newItem, item);
+        }
+      });
     };
   }, [isOpen, createShiningEffect]);
 
-  // Auto-shining effect for active items
+  // Auto-shining effect for active items - Enhanced for mobile
   useEffect(() => {
     const activeMenuItem = sidebarRef.current?.querySelector('.menu-item.active') as HTMLElement;
     if (activeMenuItem && activeItem !== pathname) {
       setActiveItem(pathname);
-      createShiningEffect(activeMenuItem);
+      
+      // Delay the shining effect slightly for mobile
+      setTimeout(() => {
+        createShiningEffect(activeMenuItem);
+      }, 100);
     }
   }, [pathname, createShiningEffect, activeItem]);
 
