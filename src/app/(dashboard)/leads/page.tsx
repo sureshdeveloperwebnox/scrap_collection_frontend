@@ -137,8 +137,8 @@ export default function LeadsPage() {
 
   // Handle the actual API response structure
   const apiResponse = leadsData as unknown as ApiResponse;
-  const leads = apiResponse?.data?.leads || [];
-  const totalLeads = apiResponse?.data?.pagination?.total || 0;
+  const leads = useMemo(() => apiResponse?.data?.leads || [], [apiResponse]);
+  const totalLeads = useMemo(() => apiResponse?.data?.pagination?.total || 0, [apiResponse]);
 
   const countsByStatus = useMemo(() => {
     const counts: Record<string, number> = { New: 0, Contacted: 0, Qualified: 0, Converted: 0, Rejected: 0 };
@@ -170,6 +170,12 @@ export default function LeadsPage() {
 
     return arr;
   }, [leads, searchTerm, activeTab, scrapFilter, sortKey, sortDir]);
+
+  const scrapOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const l of leads) if (l.scrapCategory) set.add(String(l.scrapCategory).toUpperCase());
+    return Array.from(set);
+  }, [leads]);
 
   const handleDeleteLead = async (id: string) => {
     if (confirm('Delete this lead?')) {
@@ -210,12 +216,6 @@ export default function LeadsPage() {
       </div>
     );
   }
-
-  const scrapOptions = useMemo(() => {
-    const set = new Set<string>();
-    for (const l of leads) if (l.scrapCategory) set.add(String(l.scrapCategory).toUpperCase());
-    return Array.from(set);
-  }, [leads]);
 
   return (
     <div className="p-6 space-y-6">

@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
 import {
   LayoutDashboard,
   Users,
@@ -20,17 +19,34 @@ import {
   X,
   ChevronLeft
 } from 'lucide-react';
+import Image from 'next/image';
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Leads', href: '/leads', icon: Users },
-  { name: 'Orders', href: '/orders', icon: ShoppingCart },
-  { name: 'Employees', href: '/employees', icon: UserCheck },
-  { name: 'Collectors', href: '/collectors', icon: Truck },
-  { name: 'Scrap Yards', href: '/scrap-yards', icon: Building2 },
-  { name: 'Payments', href: '/payments', icon: CreditCard },
-  { name: 'Reports', href: '/reports', icon: BarChart3 },
-  { name: 'Settings', href: '/settings', icon: Settings },
+// Navigation structure organized into sections like BERRY design
+const navigationSections = [
+  {
+    title: 'Main',
+    items: [
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'Leads', href: '/leads', icon: Users },
+      { name: 'Orders', href: '/orders', icon: ShoppingCart },
+      { name: 'Employees', href: '/employees', icon: UserCheck },
+    ]
+  },
+  {
+    title: 'Management',
+    items: [
+      { name: 'Collectors', href: '/collectors', icon: Truck },
+      { name: 'Scrap Yards', href: '/scrap-yards', icon: Building2 },
+      { name: 'Payments', href: '/payments', icon: CreditCard },
+      { name: 'Reports', href: '/reports', icon: BarChart3 },
+    ]
+  },
+  {
+    title: 'System',
+    items: [
+      { name: 'Settings', href: '/settings', icon: Settings },
+    ]
+  }
 ];
 
 interface SidebarProps {
@@ -43,7 +59,6 @@ interface SidebarProps {
 export function Sidebar({ isOpen = true, onToggle, onCollapse, isCollapsed = false }: SidebarProps) {
   const pathname = usePathname();
 
-  // Remove internal collapse functionality since header controls everything
   useEffect(() => {
     onCollapse?.(isCollapsed);
   }, [isCollapsed, onCollapse]);
@@ -59,142 +74,131 @@ export function Sidebar({ isOpen = true, onToggle, onCollapse, isCollapsed = fal
       )}
       
       <div className={cn(
-        "fixed left-0 top-0 flex flex-col bg-gradient-to-b from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-[#1F1F1F] transition-all duration-300 ease-in-out shadow-md rounded-r-2xl",
-        // Base styles
+        "fixed left-0 top-0 flex flex-col bg-white text-gray-800 transition-all duration-300 ease-in-out shadow-lg border-r border-gray-200",
         "z-50 h-screen",
-        // Mobile responsive width
-        "w-64", // Default width for mobile
-        // Desktop responsive width
+        "w-64",
         isCollapsed ? "lg:w-16" : "lg:w-64",
-        // Mobile slide in/out
         isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
-        {/* Header */}
-        <div className="flex flex-shrink-0 justify-between items-center px-4 h-16 border-b border-white/20">
+        {/* Header with BERRY Logo */}
+        <div className="flex flex-shrink-0 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 justify-between items-center px-4 h-16 border-b border-gray-200 bg-white">
           <div className={cn(
             "flex items-center transition-all duration-200",
-            isCollapsed ? "lg:justify-center lg:w-full" : "space-x-2"
+            isCollapsed ? "lg:justify-center lg:w-full" : "space-x-3"
           )}>
-            {/* Logo - Always visible, centered when collapsed */}
-            <div className="flex flex-shrink-0 justify-center items-center w-10 h-8">
-              <Image src="/images/logo/logo.png" alt="Logo" width={50} height={50} />
+            {/* Logo */}
+            <div className="flex flex-shrink-0 justify-center items-center w-10 h-10  rounded-lg">
+              <Image src="/images/logo/logo.png" alt="Logo" width={40} height={40} />
             </div>
-            <span className={cn(
-              "text-xl font-bold whitespace-nowrap transition-opacity duration-200 text-white",
+            
+            {/* Brand Text */}
+            <div className={cn(
+              "flex flex-col transition-opacity duration-200",
               isCollapsed ? "lg:hidden" : "block"
             )}>
-              AussieScrapX 
-            </span>
+              <span className="text-lg font-bold text-white">
+                AussieScrapX
+              </span>
+           
+            </div>
           </div>
           
           {/* Close button for mobile */}
           <button
             onClick={onToggle}
-            className="lg:hidden flex items-center justify-center w-8 h-8 bg-white/20 text-[#1F1F1F] rounded-lg hover:bg-white/30 transition-all duration-300"
+            className="lg:hidden flex items-center justify-center w-8 h-8 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-all duration-300"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
         
-        {/* Navigation - Scrollable with hidden scrollbar */}
-        <div className="overflow-y-auto overflow-x-hidden flex-1 scrollbar-hide">
-          <nav className="px-2 py-6 space-y-1">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => {
-                    // Close mobile sidebar on navigation
-                    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-                      onToggle?.();
-                    }
-                  }}
-                  className={cn(
-                    'flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-300 group relative hover:scale-105',
-                    isActive
-                      ? 'bg-white/30 text-white shadow-md backdrop-blur-sm'
-                      : 'text-white hover:bg-white/20 hover:shadow-md'
-                  )}
-                  title={isCollapsed ? item.name : undefined}
-                >
-                  <div className={cn(
-                    "flex flex-shrink-0 justify-center items-center w-5 h-5",
-                    isCollapsed ? "lg:mx-auto" : ""
-                  )}>
-                    <item.icon className="w-5 h-5" />
-                  </div>
-                  <span className={cn(
-                    "ml-3 transition-all duration-200",
-                    isCollapsed ? "lg:opacity-0 lg:w-0 lg:ml-0" : "opacity-100"
-                  )}>
-                    {item.name}
-                  </span>
-                  
-                  {/* Tooltip for collapsed state - Desktop only */}
-                  {isCollapsed && (
-                    <div className="absolute left-full ml-2 px-2 py-1 bg-[#1F1F1F] text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50 hidden lg:block shadow-md">
-                      {item.name}
-                    </div>
-                  )}
-                </Link>
-              );
-            })}
+        {/* Navigation Sections */}
+        <div className="overflow-y-auto overflow-x-hidden flex-1 scrollbar-hide bg-white">
+          <nav className="px-4 py-6 space-y-8">
+            {navigationSections.map((section) => (
+              <div key={section.title} className="space-y-3">
+                {/* Section Title */}
+                <h3 className={cn(
+                  "font-bold text-gray-800 text-sm uppercase tracking-wide",
+                  isCollapsed ? "lg:hidden" : "block"
+                )}>
+                  {section.title}
+                </h3>
+                
+                {/* Section Items */}
+                <div className="space-y-1">
+                  {section.items.map((item) => {
+                    const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={() => {
+                          if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                            onToggle?.();
+                          }
+                        }}
+                        className={cn(
+                          'flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group relative',
+                          isActive
+                            ? 'bg-purple-100 text-purple-700'
+                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                        )}
+                        title={isCollapsed ? item.name : undefined}
+                      >
+                        <div className={cn(
+                          "flex flex-shrink-0 justify-center items-center w-5 h-5",
+                          isCollapsed ? "lg:mx-auto" : ""
+                        )}>
+                          <item.icon className={cn(
+                            "w-5 h-5",
+                            isActive ? "text-purple-700" : "text-gray-600 group-hover:text-gray-900"
+                          )} />
+                        </div>
+                        <span className={cn(
+                          "ml-3 transition-all duration-200",
+                          isCollapsed ? "lg:opacity-0 lg:w-0 lg:ml-0" : "opacity-100"
+                        )}>
+                          {item.name}
+                        </span>
+                        
+                        {/* Tooltip for collapsed state - Desktop only */}
+                        {isCollapsed && (
+                          <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50 hidden lg:block shadow-md">
+                            {item.name}
+                          </div>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </nav>
-        </div>
-        
-        {/* User Profile */}
-        <div className="flex-shrink-0 p-4 border-t border-white/20">
-          <div className={cn(
-            "flex items-center transition-all duration-200",
-            isCollapsed ? "lg:justify-center lg:w-full" : "space-x-3"
-          )}>
-            <div className="w-8 h-8 bg-gradient-to-r from-[#1F1F1F] to-[#2d2d2d] rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
-              <span className="text-sm font-medium text-white">A</span>
-            </div>
-            <div className={cn(
-              "transition-opacity duration-200",
-              isCollapsed ? "lg:hidden" : "block"
-            )}>
-              <p className="text-sm font-medium text-white">Admin User</p>
-              <p className="text-xs text-white/70">admin@scrap.com</p>
-            </div>
-          </div>
         </div>
       </div>
     </>
   );
 }
 
-// Mobile Menu Button Component - Authentic animated burger menu
+// Mobile Menu Button Component - Updated to match the design
 export function MobileMenuButton({ onToggle, isOpen }: { onToggle: () => void; isOpen: boolean }) {
   return (
     <button
       onClick={onToggle}
-      className="lg:hidden flex items-center justify-center w-10 h-10 bg-gradient-to-r from-[#a280ed] to-[#8b6fd8] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 border border-white/20 relative"
+      className="lg:hidden flex items-center justify-center w-10 h-10 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 transition-all duration-200"
       title={isOpen ? "Close menu" : "Open menu"}
     >
-      {/* Authentic hamburger menu with 3 lines that animate to X */}
-      <div className="flex flex-col justify-center items-center w-5 h-5">
-        {/* Top line */}
-        <span 
-          className={`block w-5 h-0.5 bg-white transform transition-all duration-300 ease-in-out ${
-            isOpen ? 'rotate-45 translate-y-1.5' : 'translate-y-0'
-          }`}
-        />
-        {/* Middle line */}
-        <span 
-          className={`block w-5 h-0.5 bg-white transform transition-all duration-300 ease-in-out mt-1 ${
-            isOpen ? 'opacity-0' : 'opacity-100'
-          }`}
-        />
-        {/* Bottom line */}
-        <span 
-          className={`block w-5 h-0.5 bg-white transform transition-all duration-300 ease-in-out mt-1 ${
-            isOpen ? '-rotate-45 -translate-y-1.5' : 'translate-y-0'
-          }`}
-        />
+      <div className="flex flex-col justify-center items-center w-5 h-4 space-y-0.5">
+        <span className={`block w-5 h-0.5 bg-purple-600 rounded-full transform transition-all duration-200 ${
+          isOpen ? 'rotate-45 translate-y-1.5' : 'translate-y-0'
+        }`} />
+        <span className={`block w-5 h-0.5 bg-purple-600 rounded-full transition-all duration-200 ${
+          isOpen ? 'opacity-0' : 'opacity-100'
+        }`} />
+        <span className={`block w-5 h-0.5 bg-purple-600 rounded-full transform transition-all duration-200 ${
+          isOpen ? '-rotate-45 -translate-y-1.5' : 'translate-y-0'
+        }`} />
       </div>
     </button>
   );
