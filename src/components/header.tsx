@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Bell, Grid3X3, Maximize, LogOut, User } from 'lucide-react';
+import { Search, Bell, Grid3X3, Maximize, LogOut, User, Menu } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { useSignOut } from '@/hooks/use-auth';
@@ -22,25 +22,31 @@ export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) 
   return (
     <header className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-md rounded-b-2xl h-16 flex items-center justify-between px-3 sm:px-4 lg:px-6 mx-2 sm:mx-4 lg:mx-6 mt-2 sm:mt-4">
       <div className="flex flex-1 items-center min-w-0">
-        {/* Burger Menu Button - Mobile and Desktop */}
+        {/* Burger Menu Button - Always visible */}
         <button
           onClick={onToggleSidebar}
-          className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-white/30 text-[#1F1F1F] rounded-lg hover:bg-white/50 transition-all duration-300 hover:scale-105 mr-2 sm:mr-3 lg:mr-4 border border-white/20 flex-shrink-0"
+          className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-white/30 text-white rounded-lg hover:bg-white/50 transition-all duration-300 hover:scale-105 mr-2 sm:mr-3 lg:mr-4 border border-white/20 flex-shrink-0"
           title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
         >
           {/* Animated burger menu icon */}
-          <div className="flex flex-col justify-center items-center w-4 h-2 sm:w-5 sm:h-5">
+          <div className="flex flex-col justify-center items-center w-5 h-5 space-y-1">
             {/* Top line */}
             <span 
-              className="block w-4 sm:w-5 h-0.5 bg-white mt-1"
+              className={`block w-5 h-0.5 bg-white transform transition-all duration-300 rounded-full ${
+                isSidebarOpen ? 'rotate-45 translate-y-1.5' : 'translate-y-0'
+              }`}
             />
             {/* Middle line */}
             <span 
-              className="block w-4 sm:w-5 h-0.5 bg-white mt-1"
+              className={`block w-5 h-0.5 bg-white transform transition-all duration-300 rounded-full ${
+                isSidebarOpen ? 'opacity-0' : 'opacity-100'
+              }`}
             />
             {/* Bottom line */}
             <span 
-              className="block w-4 sm:w-5 h-0.5 bg-white mt-1"
+              className={`block w-5 h-0.5 bg-white transform transition-all duration-300 rounded-full ${
+                isSidebarOpen ? '-rotate-45 -translate-y-1.5' : 'translate-y-0'
+              }`}
             />
           </div>
         </button>
@@ -62,20 +68,20 @@ export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) 
         </div>
         
         {/* Search icon for mobile */}
-        <button className="sm:hidden p-2 text-[#1F1F1F] hover:text-[#1F1F1F]/80 rounded-lg hover:bg-white/20 transition-all duration-300 hover:scale-105">
+        <button className="sm:hidden p-2 text-white hover:text-white/80 rounded-lg hover:bg-white/20 transition-all duration-300 hover:scale-105">
           <Search className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
         
         {/* Action buttons - Responsive visibility */}
-        <button className="hidden md:flex p-2 text-[#1F1F1F] hover:text-[#1F1F1F]/80 rounded-lg hover:bg-white/20 transition-all duration-300 hover:scale-105">
+        <button className="hidden md:flex p-2 text-white hover:text-white/80 rounded-lg hover:bg-white/20 transition-all duration-300 hover:scale-105">
           <Grid3X3 className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
         
-        <button className="hidden lg:flex p-2 text-[#1F1F1F] hover:text-[#1F1F1F]/80 rounded-lg hover:bg-white/20 transition-all duration-300 hover:scale-105">
+        <button className="hidden lg:flex p-2 text-white hover:text-white/80 rounded-lg hover:bg-white/20 transition-all duration-300 hover:scale-105">
           <Maximize className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
         
-        <button className="p-2 text-[#1F1F1F] hover:text-[#1F1F1F]/80 rounded-lg hover:bg-white/20 transition-all duration-300 hover:scale-105 relative">
+        <button className="p-2 text-white hover:text-white/80 rounded-lg hover:bg-white/20 transition-all duration-300 hover:scale-105 relative">
           <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
         
@@ -85,17 +91,17 @@ export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) 
             <User className="w-4 h-4 text-white" />
           </div>
           <div className="hidden sm:flex flex-col">
-            <span className="text-xs font-medium text-[#1F1F1F]">
+            <span className="text-xs font-medium text-white">
               {user?.name || 'User'}
             </span>
-            <span className="text-xs text-[#1F1F1F]/70">
+            <span className="text-xs text-white/70">
               {user?.role || 'Admin'}
             </span>
           </div>
           <button 
             onClick={handleSignOut}
             disabled={signOutMutation.isPending}
-            className="hidden sm:flex items-center space-x-1 text-xs sm:text-sm text-[#1F1F1F] hover:text-[#1F1F1F]/80 transition-all duration-300 hover:scale-105 whitespace-nowrap disabled:opacity-50"
+            className="hidden sm:flex items-center space-x-1 text-xs sm:text-sm text-white hover:text-white/80 transition-all duration-300 hover:scale-105 whitespace-nowrap disabled:opacity-50"
           >
             <LogOut className="w-3 h-3" />
             <span>{signOutMutation.isPending ? 'Signing out...' : 'Sign Out'}</span>
