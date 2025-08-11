@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { gsap } from 'gsap';
+
+
 import {
   LayoutDashboard,
   Users,
@@ -18,7 +20,8 @@ import {
   ClipboardList,
   Menu,
   X,
-  ChevronLeft
+  ChevronLeft,
+  CircleUserRound
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -29,6 +32,7 @@ const navigationSections = [
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       { name: 'Leads', href: '/leads', icon: Users },
+      { name: 'Customers', href: '/customers', icon: CircleUserRound },
       { name: 'Orders', href: '/orders', icon: ShoppingCart },
       { name: 'Employees', href: '/employees', icon: UserCheck },
     ]

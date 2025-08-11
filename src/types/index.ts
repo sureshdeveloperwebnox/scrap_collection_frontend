@@ -81,6 +81,23 @@ export interface Payment {
   updatedAt: Date;
 }
 
+export interface Customer {
+  id: string;
+  organizationId: number;
+  name: string;
+  contact: string;
+  email: string;
+  address: string;
+  vehicleTypeId: number;
+  scrapCategory: ScrapCategory;
+  status: CustomerStatus;
+  totalOrders: number;
+  totalSpent: number;
+  lastOrderDate?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export type VehicleType = 'CAR' | 'BIKE' | 'TRUCK' | 'BOAT';
 export type ScrapCategory = 'JUNK' | 'ACCIDENT_DAMAGED' | 'FULLY_SCRAP';
 export type LeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'CONVERTED' | 'REJECTED';
@@ -90,6 +107,7 @@ export type EmployeeStatus = 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
 export type ScrapYardStatus = 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE';
 export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
 export type PaymentMethod = 'CASH' | 'CARD' | 'BANK_TRANSFER' | 'WALLET';
+export type CustomerStatus = 'ACTIVE' | 'INACTIVE' | 'VIP' | 'BLOCKED';
 
 export interface DashboardStats {
   totalLeads: number;

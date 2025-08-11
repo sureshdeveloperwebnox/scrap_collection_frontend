@@ -1,5 +1,6 @@
 // Export all API modules for easy importing
 export { leadsApi } from './leads';
+export { customersApi } from './customers';
 export { ordersApi } from './orders';
 export { employeesApi } from './employees';
 export { collectorsApi } from './collectors';
