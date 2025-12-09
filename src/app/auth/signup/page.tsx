@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useSignUp } from '@/hooks/use-auth';
+import { useSignUp, useGoogleSignIn } from '@/hooks/use-auth';
+import { GoogleLogin } from '@react-oauth/google';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +20,7 @@ export default function SignUpPage() {
 
   const signUpMutation = useSignUp();
   const { isLoading } = useAuthStore();
+  const { handleGoogleSuccess } = useGoogleSignIn();
 
   const validateForm = () => {
     const newErrors: { name?: string; email?: string; password?: string; confirmPassword?: string } = {};
@@ -163,6 +165,30 @@ export default function SignUpPage() {
                   {signUpMutation.isPending || isLoading ? 'Creating account...' : 'SIGN UP'}
                 </button>
                 
+                <div className="relative my-3">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="px-2 bg-white text-gray-500">OR</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-center">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => {
+                      console.error('Google Login failed');
+                    }}
+                    useOneTap={false}
+                    theme="outline"
+                    size="large"
+                    text="signup_with"
+                    shape="rectangular"
+                    width="100%"
+                  />
+                </div>
+                
                 {signUpMutation.isError && (
                   <p className="text-xs text-red-500 text-center">
                     {signUpMutation.error?.message || 'An error occurred during sign up'}
@@ -279,6 +305,30 @@ export default function SignUpPage() {
                 >
                   {signUpMutation.isPending || isLoading ? 'Creating account...' : 'SIGN UP'}
                 </button>
+                
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-500">OR</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-center">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => {
+                      console.error('Google Login failed');
+                    }}
+                    useOneTap={false}
+                    theme="outline"
+                    size="large"
+                    text="signup_with"
+                    shape="rectangular"
+                    width="100%"
+                  />
+                </div>
                 
                 {signUpMutation.isError && (
                   <p className="text-sm text-red-500 text-center">

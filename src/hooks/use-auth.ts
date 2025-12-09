@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { authApi, SignInRequest, SignUpRequest } from '@/lib/api/auth';
+import { CredentialResponse } from '@react-oauth/google';
+import { authApi, SignInRequest, SignUpRequest, GoogleSignInRequest } from '@/lib/api/auth';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { getAuthenticatedClient } from '@/lib/api/client';
@@ -217,4 +218,83 @@ export const useAuthenticatedClient = () => {
   }
   
   return getAuthenticatedClient(token);
+};
+
+export const useGoogleSignIn = () => {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { login, setLoading } = useAuthStore();
+
+  const googleSignInMutation = useMutation({
+    mutationFn: (data: GoogleSignInRequest) => authApi.signInWithGoogle(data),
+    onMutate: () => {
+      setLoading(true);
+    },
+    onSuccess: (response) => {
+      console.log("Google sign in response:", response);
+      
+      if (response?.data?.user && response?.data?.token) {
+        // Store in Zustand store
+        login(response.data.user, response.data.token);
+
+        toast.success('Google sign-in successful!', {
+          description: 'You are now logged in',
+        });
+        
+        // Use Next.js router for navigation instead of page refresh
+        router.push('/dashboard');
+        
+        // Invalidate all queries to refresh with authenticated state
+        queryClient.invalidateQueries();
+      } else {
+        // Handle case where response doesn't have expected data
+        toast.error('Google sign-in failed', {
+          description: 'Invalid response from server',
+        });
+      }
+    },
+    onError: (error: any) => {
+      console.error('Google sign in error:', error);
+      
+      // Extract error message from different possible error structures
+      let errorMessage = 'Google sign-in failed. Please try again';
+      
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.response?.status === 401) {
+        errorMessage = 'Google authentication failed';
+      } else if (error?.response?.status === 500) {
+        errorMessage = 'Server error. Please try again later';
+      }
+      
+      toast.error('Google sign-in failed', {
+        description: errorMessage,
+      });
+    },
+    onSettled: () => {
+      setLoading(false);
+    },
+  });
+
+  // Handle Google credential response (from GoogleLogin component)
+  const handleGoogleSuccess = (credentialResponse: CredentialResponse) => {
+    if (credentialResponse?.credential) {
+      googleSignInMutation.mutate({ idToken: credentialResponse.credential });
+    } else {
+      toast.error('Google sign-in failed', {
+        description: 'No credential received from Google',
+      });
+    }
+  };
+
+  return {
+    handleGoogleSuccess,
+    isLoading: googleSignInMutation.isPending,
+    isError: googleSignInMutation.isError,
+    error: googleSignInMutation.error,
+  };
 }; 

@@ -25,6 +25,10 @@ export interface AuthResponse {
   }
 }
 
+export interface GoogleSignInRequest {
+  idToken: string;
+}
+
 export const authApi = {
   signIn: async (data: SignInRequest): Promise<AuthResponse> => {
     const response = await apiClient.post('/auth/signIn', data);
@@ -42,6 +46,11 @@ export const authApi = {
 
   refreshToken: async (): Promise<AuthResponse> => {
     const response = await apiClient.post('/auth/refresh');
+    return response.data;
+  },
+
+  signInWithGoogle: async (data: GoogleSignInRequest): Promise<AuthResponse> => {
+    const response = await apiClient.post('/auth/google', data);
     return response.data;
   },
 }; 
