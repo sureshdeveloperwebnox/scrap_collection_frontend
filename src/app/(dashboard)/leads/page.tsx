@@ -542,30 +542,30 @@ export default function LeadsPage() {
                         variant="ghost" 
                         size="sm" 
                         onClick={() => {
-                          const convertedLead: Lead = {
-                            id: lead.id,
-                            organizationId: lead.organizationId,
-                            fullName: lead.fullName || '',
-                            phone: lead.phone || '',
-                            email: lead.email,
-                            vehicleType: lead.vehicleType as any,
-                            vehicleMake: lead.vehicleMake,
-                            vehicleModel: lead.vehicleModel,
-                            vehicleYear: lead.vehicleYear,
-                            vehicleCondition: lead.vehicleCondition as any,
-                            locationAddress: lead.locationAddress,
-                            latitude: lead.latitude,
-                            longitude: lead.longitude,
-                            leadSource: lead.leadSource as any,
-                            photos: lead.photos,
-                            notes: lead.notes,
-                            status: lead.status as any,
-                            customerId: lead.customerId,
-                            createdAt: new Date(lead.createdAt),
-                            updatedAt: new Date(lead.updatedAt),
-                          };
-                          setEditingLead(convertedLead);
-                          setIsFormOpen(true);
+                        const convertedLead: Lead = {
+                          id: lead.id,
+                          organizationId: lead.organizationId,
+                          fullName: lead.fullName || '',
+                          phone: lead.phone || '',
+                          email: lead.email,
+                          vehicleType: lead.vehicleType as any,
+                          vehicleMake: lead.vehicleMake,
+                          vehicleModel: lead.vehicleModel,
+                          vehicleYear: lead.vehicleYear,
+                          vehicleCondition: lead.vehicleCondition as any,
+                          locationAddress: lead.locationAddress,
+                          latitude: lead.latitude,
+                          longitude: lead.longitude,
+                          leadSource: lead.leadSource as any,
+                          photos: lead.photos,
+                          notes: lead.notes,
+                          status: lead.status as any,
+                          customerId: lead.customerId,
+                          createdAt: new Date(lead.createdAt),
+                          updatedAt: new Date(lead.updatedAt),
+                        };
+                        setEditingLead(convertedLead);
+                        setIsFormOpen(true);
                         }} 
                         className="bg-violet-50/50 hover:bg-violet-100 text-violet-600 hover:text-violet-700 transition-all duration-200 border border-violet-200/50 hover:border-violet-300 shadow-sm hover:shadow-md z-10 relative"
                         title="Edit Lead"
@@ -747,17 +747,17 @@ export default function LeadsPage() {
               <div className="flex items-center gap-2 pt-4 border-t">
                 <Button 
                   onClick={() => {
-                    const convertedLead: Lead = {
-                      id: detailsLead.id,
-                      organizationId: detailsLead.organizationId,
-                      fullName: detailsLead.fullName || '',
-                      phone: detailsLead.phone || '',
-                      email: detailsLead.email,
-                      vehicleType: detailsLead.vehicleType as any,
-                      vehicleMake: detailsLead.vehicleMake,
-                      vehicleModel: detailsLead.vehicleModel,
-                      vehicleYear: detailsLead.vehicleYear,
-                      vehicleCondition: detailsLead.vehicleCondition as any,
+                  const convertedLead: Lead = {
+                    id: detailsLead.id,
+                    organizationId: detailsLead.organizationId,
+                    fullName: detailsLead.fullName || '',
+                    phone: detailsLead.phone || '',
+                    email: detailsLead.email,
+                    vehicleType: detailsLead.vehicleType as any,
+                    vehicleMake: detailsLead.vehicleMake,
+                    vehicleModel: detailsLead.vehicleModel,
+                    vehicleYear: detailsLead.vehicleYear,
+                    vehicleCondition: detailsLead.vehicleCondition as any,
                     locationAddress: detailsLead.locationAddress,
                     latitude: detailsLead.latitude,
                     longitude: detailsLead.longitude,
