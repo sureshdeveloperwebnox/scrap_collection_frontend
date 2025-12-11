@@ -580,50 +580,125 @@ export default function LeadsPage() {
 
       {/* Quick View Dialog */}
       <Dialog open={!!detailsLead} onOpenChange={(open) => !open && setDetailsLead(null)}>
-        <DialogContent className="sm:max-w-[520px]">
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Lead Details</DialogTitle>
           </DialogHeader>
           {detailsLead && (
-            <div className="space-y-3">
-              <div className="text-lg font-semibold">{detailsLead.fullName || 'N/A'}</div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="text-muted-foreground">Phone</div>
-                <div>{detailsLead.phone || 'N/A'}</div>
-                {detailsLead.email && (
-                  <>
-                    <div className="text-muted-foreground">Email</div>
-                    <div>{detailsLead.email}</div>
-                  </>
-                )}
-                <div className="text-muted-foreground">Vehicle Type</div>
-                <div className="capitalize">{detailsLead.vehicleType || 'N/A'}</div>
-                <div className="text-muted-foreground">Condition</div>
-                <div className="capitalize">{String(detailsLead.vehicleCondition || '').replace(/_/g, ' ')}</div>
-                {detailsLead.vehicleMake && (
-                  <>
-                    <div className="text-muted-foreground">Make</div>
-                    <div>{detailsLead.vehicleMake}</div>
-                  </>
-                )}
-                {detailsLead.vehicleModel && (
-                  <>
-                    <div className="text-muted-foreground">Model</div>
-                    <div>{detailsLead.vehicleModel}</div>
-                  </>
-                )}
-                {detailsLead.locationAddress && (
-                  <>
-                    <div className="text-muted-foreground">Address</div>
-                    <div>{detailsLead.locationAddress}</div>
-                  </>
-                )}
-                <div className="text-muted-foreground">Status</div>
-                <div><StatusBadge status={detailsLead.status} /></div>
-                <div className="text-muted-foreground">Created</div>
-                <div>{formatDateHuman(detailsLead.createdAt)}</div>
+            <div className="space-y-4">
+              {/* Lead Name */}
+              <div className="text-xl font-bold text-gray-900">{detailsLead.fullName || 'N/A'}</div>
+              
+              {/* Basic Information */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Contact Information</h3>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="text-muted-foreground">Phone</div>
+                  <div className="font-medium">{detailsLead.phone || 'N/A'}</div>
+                  {detailsLead.email && (
+                    <>
+                      <div className="text-muted-foreground">Email</div>
+                      <div className="font-medium">{detailsLead.email}</div>
+                    </>
+                  )}
+                  {detailsLead.locationAddress && (
+                    <>
+                      <div className="text-muted-foreground">Address</div>
+                      <div className="font-medium">{detailsLead.locationAddress}</div>
+                    </>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2 pt-2">
+
+              {/* Vehicle Information */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Vehicle Information</h3>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="text-muted-foreground">Vehicle Type</div>
+                  <div className="font-medium capitalize">{detailsLead.vehicleType || 'N/A'}</div>
+                  <div className="text-muted-foreground">Condition</div>
+                  <div className="font-medium capitalize">{String(detailsLead.vehicleCondition || '').replace(/_/g, ' ')}</div>
+                  {detailsLead.vehicleMake && (
+                    <>
+                      <div className="text-muted-foreground">Make</div>
+                      <div className="font-medium">{detailsLead.vehicleMake}</div>
+                    </>
+                  )}
+                  {detailsLead.vehicleModel && (
+                    <>
+                      <div className="text-muted-foreground">Model</div>
+                      <div className="font-medium">{detailsLead.vehicleModel}</div>
+                    </>
+                  )}
+                  {detailsLead.vehicleYear && (
+                    <>
+                      <div className="text-muted-foreground">Year</div>
+                      <div className="font-medium">{detailsLead.vehicleYear}</div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Vehicle Images */}
+              {detailsLead.photos && detailsLead.photos.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Vehicle Images</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {detailsLead.photos.map((photo, index) => {
+                      const imageUrl = getImageUrl(photo);
+                      return (
+                        <div key={index} className="relative group">
+                          <div className="aspect-square rounded-lg border overflow-hidden bg-muted">
+                            <img
+                              src={imageUrl}
+                              alt={`Vehicle image ${index + 1}`}
+                              className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
+                              onClick={() => window.open(imageUrl, '_blank')}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect width="100" height="100" fill="%23ddd"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999"%3EImage%3C/text%3E%3C/svg%3E';
+                              }}
+                            />
+                          </div>
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <span className="text-white text-xs font-medium bg-black/50 px-2 py-1 rounded">Click to view</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Click on any image to view in full size</p>
+                </div>
+              )}
+
+              {/* Internal Notes */}
+              {detailsLead.notes && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Internal Notes</h3>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{detailsLead.notes}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Status and Metadata */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Status & Metadata</h3>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="text-muted-foreground">Status</div>
+                  <div><StatusBadge status={detailsLead.status} /></div>
+                  <div className="text-muted-foreground">Created</div>
+                  <div className="font-medium">{formatDateHuman(detailsLead.createdAt)}</div>
+                  {detailsLead.leadSource && (
+                    <>
+                      <div className="text-muted-foreground">Source</div>
+                      <div className="font-medium capitalize">{String(detailsLead.leadSource).replace(/_/g, ' ')}</div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 pt-4 border-t">
                 <Button onClick={() => {
                   const convertedLead: Lead = {
                     id: detailsLead.id,
