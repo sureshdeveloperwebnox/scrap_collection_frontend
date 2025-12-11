@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,31 +9,41 @@ import { LeadForm } from '@/components/lead-form';
 import { Lead } from '@/types';
 import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal } from 'lucide-react';
 import { useLeads, useDeleteLead, useUpdateLead } from '@/hooks/use-leads';
+import { useLeadStats } from '@/hooks/use-lead-stats';
+import { useLeadStatsStore } from '@/lib/store/lead-stats-store';
+import { getImageUrl, getImageUrls } from '@/utils/image-utils';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Pagination } from '@/components/ui/pagination';
+import { RowsPerPage } from '@/components/ui/rows-per-page';
 
-// API response type
+// API response type - matches backend Lead model
 interface ApiLead {
-  id: number;
+  id: string;
   organizationId: number;
-  name: string;
-  contact: string;
-  email: string;
-  location: string;
-  vehicleTypeId: number;
-  scrapCategory: string;
+  fullName: string;
+  phone: string;
+  email?: string;
+  vehicleType: string;
+  vehicleMake?: string;
+  vehicleModel?: string;
+  vehicleYear?: number;
+  vehicleCondition: string;
+  locationAddress?: string;
+  latitude?: number;
+  longitude?: number;
+  leadSource: string;
+  photos?: string[];
+  notes?: string;
   status: string;
+  customerId?: string;
   createdAt: string;
   updatedAt: string;
-  vehicleType: {
-    id: number;
-    name: string;
-    description: string;
-  };
-  organization: {
+  organization?: {
     name: string;
   };
+  customer?: any;
 }
 
 interface ApiResponse {
@@ -53,7 +63,7 @@ interface ApiResponse {
   };
 }
 
-type SortKey = 'name' | 'createdAt' | 'status';
+type SortKey = 'fullName' | 'createdAt' | 'status';
 
 function formatDateHuman(dateStr: string): string {
   const date = new Date(dateStr);
@@ -118,64 +128,115 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function LeadsPage() {
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  
+  // Filter and search state
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | undefined>();
   const [activeTab, setActiveTab] = useState<'All' | 'New' | 'Contacted' | 'Qualified' | 'Converted' | 'Rejected'>('All');
   const [scrapFilter, setScrapFilter] = useState<string>('ALL');
+  
+  // Sorting state
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [detailsLead, setDetailsLead] = useState<ApiLead | null>(null);
 
-  // API hooks
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1); // Reset to first page on search
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Map tab to status for API
+  const getStatusFromTab = (tab: string): string | undefined => {
+    const statusMap: Record<string, string> = {
+      'New': 'NEW',
+      'Contacted': 'CONTACTED',
+      'Qualified': 'QUOTED',
+      'Converted': 'CONVERTED',
+      'Rejected': 'REJECTED'
+    };
+    return tab === 'All' ? undefined : statusMap[tab];
+  };
+
+  // Map sort key to API sortBy
+  const getApiSortBy = (key: SortKey): 'fullName' | 'phone' | 'email' | 'status' | 'createdAt' | 'updatedAt' => {
+    const sortMap: Record<SortKey, 'fullName' | 'phone' | 'email' | 'status' | 'createdAt' | 'updatedAt'> = {
+      'fullName': 'fullName',
+      'createdAt': 'createdAt',
+      'status': 'status'
+    };
+    return sortMap[key] || 'createdAt';
+  };
+
+  // API hooks with server-side pagination, filtering, and sorting
   const { data: leadsData, isLoading, error } = useLeads({
-    search: searchTerm || undefined,
-    limit: 100,
+    page: currentPage,
+    limit: rowsPerPage,
+    search: debouncedSearchTerm || undefined,
+    status: getStatusFromTab(activeTab) as any,
+    vehicleCondition: scrapFilter !== 'ALL' ? scrapFilter : undefined,
+    sortBy: getApiSortBy(sortKey),
+    sortOrder: sortDir,
   });
   const deleteLeadMutation = useDeleteLead();
   const updateLeadMutation = useUpdateLead();
 
+  // Fetch and sync lead stats to Zustand store
+  useLeadStats();
+  
+  // Get stats from Zustand store
+  const stats = useLeadStatsStore((state) => state.stats);
+
   // Handle the actual API response structure
   const apiResponse = leadsData as unknown as ApiResponse;
   const leads = useMemo(() => apiResponse?.data?.leads || [], [apiResponse]);
-  const totalLeads = useMemo(() => apiResponse?.data?.pagination?.total || 0, [apiResponse]);
+  const pagination = useMemo(() => apiResponse?.data?.pagination || {
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: false
+  }, [apiResponse]);
+  
+  const totalLeads = pagination.total;
 
-  const countsByStatus = useMemo(() => {
-    const counts: Record<string, number> = { New: 0, Contacted: 0, Qualified: 0, Converted: 0, Rejected: 0 };
-    for (const l of leads) {
-      const d = toDisplayStatus(l.status);
-      if (d in counts) counts[d] += 1;
+  // Map stats to tab counts
+  const getTabCount = (tab: string): number => {
+    if (!stats) return 0;
+    switch (tab) {
+      case 'All':
+        return stats.total;
+      case 'New':
+        return stats.new;
+      case 'Contacted':
+        return stats.contacted;
+      case 'Qualified':
+        return stats.quoted; // Backend uses 'quoted', frontend uses 'Qualified'
+      case 'Converted':
+        return stats.converted;
+      case 'Rejected':
+        return stats.rejected;
+      default:
+        return 0;
     }
-    return counts;
-  }, [leads]);
+  };
 
-  const filteredSortedLeads = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    let arr = leads.filter((l) => {
-      const matchesSearch = !term || [l.name, l.contact, l.email, l.vehicleType?.name]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(term));
-      const matchesStatus = activeTab === 'All' ? true : toDisplayStatus(l.status) === activeTab;
-      const matchesScrap = scrapFilter === 'ALL' ? true : (l.scrapCategory || '').toUpperCase() === scrapFilter;
-      return matchesSearch && matchesStatus && matchesScrap;
-    });
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, scrapFilter, rowsPerPage]);
 
-    arr.sort((a, b) => {
-      let cmp = 0;
-      if (sortKey === 'name') cmp = a.name.localeCompare(b.name);
-      else if (sortKey === 'status') cmp = toDisplayStatus(a.status).localeCompare(toDisplayStatus(b.status));
-      else cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      return sortDir === 'asc' ? cmp : -cmp;
-    });
-
-    return arr;
-  }, [leads, searchTerm, activeTab, scrapFilter, sortKey, sortDir]);
-
-  const scrapOptions = useMemo(() => {
-    const set = new Set<string>();
-    for (const l of leads) if (l.scrapCategory) set.add(String(l.scrapCategory).toUpperCase());
-    return Array.from(set);
-  }, [leads]);
+  // Get available vehicle conditions (this could be from a separate API call)
+  const scrapOptions = ['ALL', 'JUNK', 'DAMAGED', 'WRECKED', 'ACCIDENTAL', 'FULLY_SCRAP'];
 
   const handleDeleteLead = async (id: string) => {
     if (confirm('Delete this lead?')) {
@@ -199,8 +260,11 @@ export default function LeadsPage() {
 
   const onInlineStatusChange = async (lead: ApiLead, value: string) => {
     try {
+      const oldStatus = lead.status;
       await updateLeadMutation.mutateAsync({ id: String(lead.id), data: { status: value } as any });
       toast.success('Status updated');
+      
+      // Zustand store will be updated automatically by the mutation hook
     } catch (e) {
       toast.error('Failed to update status');
     }
@@ -222,7 +286,9 @@ export default function LeadsPage() {
       <div className="flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur z-10 py-2">
         <div>
           <h1 className="text-3xl font-bold">Leads</h1>
-          <p className="text-gray-600 mt-1">{isLoading ? 'Loading...' : `${totalLeads} Total Leads`}</p>
+          <p className="text-gray-600 mt-1">
+            {isLoading ? 'Loading...' : `${stats?.total ?? totalLeads} Total Leads`}
+          </p>
         </div>
         <Button onClick={() => setIsFormOpen(true)} className="hidden sm:inline-flex bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
           <Plus className="mr-2 h-4 w-4" />
@@ -245,7 +311,9 @@ export default function LeadsPage() {
                 <span className="inline-flex items-center gap-2">
                   {tab}
                   {tab !== 'All' && (
-                    <span className={`text-xs rounded-full px-2 py-0.5 ${style.count}`}>{countsByStatus[tab] || 0}</span>
+                    <span className={`text-xs rounded-full px-2 py-0.5 ${style.count}`}>
+                      {getTabCount(tab)}
+                    </span>
                   )}
                 </span>
                 {isActive && <span className={`absolute left-0 right-0 -bottom-px h-0.5 ${style.underline} rounded`} />}
@@ -289,7 +357,7 @@ export default function LeadsPage() {
               <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
               <span className="ml-2 text-gray-600">Loading leads...</span>
             </div>
-          ) : filteredSortedLeads.length === 0 ? (
+          ) : leads.length === 0 ? (
             <div className="text-center py-8 text-gray-600">No leads found.</div>
           ) : (
             <>
@@ -299,13 +367,13 @@ export default function LeadsPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>
-                        <button className="inline-flex items-center gap-1" onClick={() => toggleSort('name')}>
+                        <button className="inline-flex items-center gap-1" onClick={() => toggleSort('fullName')}>
                           Name <ArrowUpDown className="h-3.5 w-3.5" />
                         </button>
                       </TableHead>
-                      <TableHead>Contact</TableHead>
+                      <TableHead>Phone</TableHead>
                       <TableHead>Vehicle Type</TableHead>
-                      <TableHead>Scrap Category</TableHead>
+                      <TableHead>Condition</TableHead>
                       <TableHead>
                         <button className="inline-flex items-center gap-1" onClick={() => toggleSort('status')}>
                           Status <ArrowUpDown className="h-3.5 w-3.5" />
@@ -320,17 +388,17 @@ export default function LeadsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredSortedLeads.map((lead) => (
+                    {leads.map((lead) => (
                       <TableRow key={lead.id} className="even:bg-muted/50 border-b hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md" onClick={() => setDetailsLead(lead)}>
-                        <TableCell className="font-medium">{lead.name}</TableCell>
+                        <TableCell className="font-medium">{lead.fullName || 'N/A'}</TableCell>
                         <TableCell>
                           <div>
-                            <div>{lead.contact}</div>
-                            <div className="text-sm text-gray-500">{lead.email}</div>
+                            <div>{lead.phone || 'N/A'}</div>
+                            {lead.email && <div className="text-sm text-gray-500">{lead.email}</div>}
                           </div>
                         </TableCell>
-                        <TableCell className="capitalize">{lead.vehicleType?.name || 'N/A'}</TableCell>
-                        <TableCell className="capitalize">{String(lead.scrapCategory || '').replace(/_/g, ' ')}</TableCell>
+                        <TableCell className="capitalize">{lead.vehicleType || 'N/A'}</TableCell>
+                        <TableCell className="capitalize">{String(lead.vehicleCondition || '').replace(/_/g, ' ')}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                             <StatusBadge status={lead.status} />
@@ -366,18 +434,27 @@ export default function LeadsPage() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const convertedLead: Lead = {
-                                  id: lead.id.toString(),
+                                  id: lead.id,
                                   organizationId: lead.organizationId,
-                                  name: lead.name,
-                                  contact: lead.contact,
+                                  fullName: lead.fullName || '',
+                                  phone: lead.phone || '',
                                   email: lead.email,
-                                  vehicleTypeId: lead.vehicleTypeId,
-                                  scrapCategory: lead.scrapCategory as any,
-                                  address: lead.location,
+                                  vehicleType: lead.vehicleType as any,
+                                  vehicleMake: lead.vehicleMake,
+                                  vehicleModel: lead.vehicleModel,
+                                  vehicleYear: lead.vehicleYear,
+                                  vehicleCondition: lead.vehicleCondition as any,
+                                  locationAddress: lead.locationAddress,
+                                  latitude: lead.latitude,
+                                  longitude: lead.longitude,
+                                  leadSource: lead.leadSource as any,
+                                  photos: lead.photos,
+                                  notes: lead.notes,
                                   status: lead.status as any,
+                                  customerId: lead.customerId,
                                   createdAt: new Date(lead.createdAt),
                                   updatedAt: new Date(lead.updatedAt),
-                                } as unknown as Lead;
+                                };
                                 setEditingLead(convertedLead);
                                 setIsFormOpen(true);
                               }}
@@ -390,7 +467,7 @@ export default function LeadsPage() {
                               size="sm" 
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDeleteLead(lead.id.toString());
+                                handleDeleteLead(lead.id);
                               }}
                               className="h-8 w-8 p-0 hover:bg-rose-50 text-rose-600 transition-all duration-200"
                             >
@@ -410,22 +487,22 @@ export default function LeadsPage() {
 
               {/* Mobile cards */}
               <div className="sm:hidden space-y-3">
-                {filteredSortedLeads.map((lead) => (
+                {leads.map((lead) => (
                   <div key={lead.id} className="rounded-lg border bg-card p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:bg-gradient-to-br hover:from-blue-50 hover:to-indigo-50 cursor-pointer" onClick={() => setDetailsLead(lead)}>
                     <div className="flex items-start justify-between">
                       <div>
-                        <div className="font-semibold">{lead.name}</div>
-                        <div className="text-sm text-muted-foreground">{lead.email}</div>
+                        <div className="font-semibold">{lead.fullName || 'N/A'}</div>
+                        {lead.email && <div className="text-sm text-muted-foreground">{lead.email}</div>}
                       </div>
                       <StatusBadge status={lead.status} />
                     </div>
                     <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                      <div className="text-muted-foreground">Contact</div>
-                      <div>{lead.contact}</div>
+                      <div className="text-muted-foreground">Phone</div>
+                      <div>{lead.phone || 'N/A'}</div>
                       <div className="text-muted-foreground">Vehicle</div>
-                      <div className="capitalize">{lead.vehicleType?.name || 'N/A'}</div>
-                      <div className="text-muted-foreground">Category</div>
-                      <div className="capitalize">{String(lead.scrapCategory || '').replace(/_/g, ' ')}</div>
+                      <div className="capitalize">{lead.vehicleType || 'N/A'}</div>
+                      <div className="text-muted-foreground">Condition</div>
+                      <div className="capitalize">{String(lead.vehicleCondition || '').replace(/_/g, ' ')}</div>
                       <div className="text-muted-foreground">Created</div>
                       <div>{formatDateHuman(lead.createdAt)}</div>
                     </div>
@@ -435,24 +512,33 @@ export default function LeadsPage() {
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => {
                         const convertedLead: Lead = {
-                          id: lead.id.toString(),
+                          id: lead.id,
                           organizationId: lead.organizationId,
-                          name: lead.name,
-                          contact: lead.contact,
+                          fullName: lead.fullName || '',
+                          phone: lead.phone || '',
                           email: lead.email,
-                          vehicleTypeId: lead.vehicleTypeId,
-                          scrapCategory: lead.scrapCategory as any,
-                          address: lead.location,
+                          vehicleType: lead.vehicleType as any,
+                          vehicleMake: lead.vehicleMake,
+                          vehicleModel: lead.vehicleModel,
+                          vehicleYear: lead.vehicleYear,
+                          vehicleCondition: lead.vehicleCondition as any,
+                          locationAddress: lead.locationAddress,
+                          latitude: lead.latitude,
+                          longitude: lead.longitude,
+                          leadSource: lead.leadSource as any,
+                          photos: lead.photos,
+                          notes: lead.notes,
                           status: lead.status as any,
+                          customerId: lead.customerId,
                           createdAt: new Date(lead.createdAt),
                           updatedAt: new Date(lead.updatedAt),
-                        } as unknown as Lead;
+                        };
                         setEditingLead(convertedLead);
                         setIsFormOpen(true);
                       }} className="hover:bg-violet-50 text-violet-600 transition-all duration-200">
                         <Edit2 className="h-4 w-4 mr-1" /> Edit
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteLead(lead.id.toString())} className="hover:bg-rose-50 text-rose-600 transition-all duration-200">
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteLead(lead.id)} className="hover:bg-rose-50 text-rose-600 transition-all duration-200">
                         <Trash2 className="h-4 w-4 mr-1" /> Delete
                       </Button>
                     </div>
@@ -462,6 +548,29 @@ export default function LeadsPage() {
             </>
           )}
         </CardContent>
+        
+        {/* Pagination Controls */}
+        {!isLoading && pagination.totalPages > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t bg-gray-50/50">
+            <div className="flex items-center gap-4">
+              <RowsPerPage
+                value={rowsPerPage}
+                onChange={(value) => {
+                  setRowsPerPage(value);
+                  setCurrentPage(1);
+                }}
+              />
+              <div className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalLeads)} of {totalLeads} leads
+              </div>
+            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={pagination.totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </Card>
 
       {/* Sticky Add button for mobile */}
@@ -477,16 +586,38 @@ export default function LeadsPage() {
           </DialogHeader>
           {detailsLead && (
             <div className="space-y-3">
-              <div className="text-lg font-semibold">{detailsLead.name}</div>
+              <div className="text-lg font-semibold">{detailsLead.fullName || 'N/A'}</div>
               <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="text-muted-foreground">Contact</div>
-                <div>{detailsLead.contact}</div>
-                <div className="text-muted-foreground">Email</div>
-                <div>{detailsLead.email}</div>
-                <div className="text-muted-foreground">Vehicle</div>
-                <div className="capitalize">{detailsLead.vehicleType?.name || 'N/A'}</div>
-                <div className="text-muted-foreground">Category</div>
-                <div className="capitalize">{String(detailsLead.scrapCategory || '').replace(/_/g, ' ')}</div>
+                <div className="text-muted-foreground">Phone</div>
+                <div>{detailsLead.phone || 'N/A'}</div>
+                {detailsLead.email && (
+                  <>
+                    <div className="text-muted-foreground">Email</div>
+                    <div>{detailsLead.email}</div>
+                  </>
+                )}
+                <div className="text-muted-foreground">Vehicle Type</div>
+                <div className="capitalize">{detailsLead.vehicleType || 'N/A'}</div>
+                <div className="text-muted-foreground">Condition</div>
+                <div className="capitalize">{String(detailsLead.vehicleCondition || '').replace(/_/g, ' ')}</div>
+                {detailsLead.vehicleMake && (
+                  <>
+                    <div className="text-muted-foreground">Make</div>
+                    <div>{detailsLead.vehicleMake}</div>
+                  </>
+                )}
+                {detailsLead.vehicleModel && (
+                  <>
+                    <div className="text-muted-foreground">Model</div>
+                    <div>{detailsLead.vehicleModel}</div>
+                  </>
+                )}
+                {detailsLead.locationAddress && (
+                  <>
+                    <div className="text-muted-foreground">Address</div>
+                    <div>{detailsLead.locationAddress}</div>
+                  </>
+                )}
                 <div className="text-muted-foreground">Status</div>
                 <div><StatusBadge status={detailsLead.status} /></div>
                 <div className="text-muted-foreground">Created</div>
@@ -495,18 +626,27 @@ export default function LeadsPage() {
               <div className="flex items-center gap-2 pt-2">
                 <Button onClick={() => {
                   const convertedLead: Lead = {
-                    id: detailsLead.id.toString(),
+                    id: detailsLead.id,
                     organizationId: detailsLead.organizationId,
-                    name: detailsLead.name,
-                    contact: detailsLead.contact,
+                    fullName: detailsLead.fullName || '',
+                    phone: detailsLead.phone || '',
                     email: detailsLead.email,
-                    vehicleTypeId: detailsLead.vehicleTypeId,
-                    scrapCategory: detailsLead.scrapCategory as any,
-                    address: detailsLead.location,
+                    vehicleType: detailsLead.vehicleType as any,
+                    vehicleMake: detailsLead.vehicleMake,
+                    vehicleModel: detailsLead.vehicleModel,
+                    vehicleYear: detailsLead.vehicleYear,
+                    vehicleCondition: detailsLead.vehicleCondition as any,
+                    locationAddress: detailsLead.locationAddress,
+                    latitude: detailsLead.latitude,
+                    longitude: detailsLead.longitude,
+                    leadSource: detailsLead.leadSource as any,
+                    photos: detailsLead.photos,
+                    notes: detailsLead.notes,
                     status: detailsLead.status as any,
+                    customerId: detailsLead.customerId,
                     createdAt: new Date(detailsLead.createdAt),
                     updatedAt: new Date(detailsLead.updatedAt),
-                  } as unknown as Lead;
+                  };
                   setEditingLead(convertedLead);
                   setIsFormOpen(true);
                 }}>

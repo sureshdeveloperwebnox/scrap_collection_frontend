@@ -1,23 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useVehicleTypes, useDeleteVehicleType, useUpdateVehicleType, useVehicleTypeStats } from '@/hooks/use-vehicle-types';
+import { useVehicleTypeStore } from '@/lib/store/vehicle-type-store';
+import { VehicleType } from '@/lib/api/vehicleTypes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { VehicleTypeForm } from '@/components/vehicle-type-form';
-import { VehicleType } from '@/lib/api/vehicleTypes';
-import { Plus, Search, Edit2, Trash2, Loader2, Power, PowerOff } from 'lucide-react';
-import { useVehicleTypes, useDeleteVehicleType, useToggleVehicleTypeStatus } from '@/hooks/use-vehicle-types';
+import { Pagination } from '@/components/ui/pagination';
+import { RowsPerPage } from '@/components/ui/rows-per-page';
 import { toast } from 'sonner';
+import { Plus, Search, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown, MoreVertical } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Switch } from '@/components/ui/switch';
 
-// API response type
+type SortKey = 'name' | 'isActive' | 'createdAt' | 'updatedAt';
+
 interface ApiResponse {
-  version: string;
-  validationErrors: any[];
-  code: number;
-  status: string;
-  message: string;
   data: {
     vehicleTypes: VehicleType[];
     pagination: {
@@ -25,53 +33,116 @@ interface ApiResponse {
       limit: number;
       total: number;
       totalPages: number;
+      hasNextPage: boolean;
+      hasPreviousPage: boolean;
     };
   };
 }
 
 export default function VehicleTypesPage() {
-  const [searchTerm, setSearchTerm] = useState('');
+  // Zustand store
+  const filters = useVehicleTypeStore((state) => state.filters);
+  const setSearch = useVehicleTypeStore((state) => state.setSearch);
+  const setIsActiveFilter = useVehicleTypeStore((state) => state.setIsActiveFilter);
+  const setPage = useVehicleTypeStore((state) => state.setPage);
+  const setLimit = useVehicleTypeStore((state) => state.setLimit);
+  const setSortBy = useVehicleTypeStore((state) => state.setSortBy);
+  const setSortOrder = useVehicleTypeStore((state) => state.setSortOrder);
+
+  // Local state
+  const [searchTerm, setSearchTerm] = useState(filters.search);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(filters.search);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingVehicleType, setEditingVehicleType] = useState<VehicleType | undefined>();
+  const [detailsVehicleType, setDetailsVehicleType] = useState<VehicleType | null>(null);
 
-  // API hooks
-  const { data: vehicleTypesData, isLoading, error } = useVehicleTypes({
-    search: searchTerm || undefined,
-    limit: 100,
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setSearch(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm, setSearch]);
+
+  // Fetch vehicle types
+  const { data: vehicleTypesData, isLoading, error, refetch } = useVehicleTypes({
+    page: filters.page,
+    limit: filters.limit,
+    search: debouncedSearchTerm || undefined,
+    status: filters.isActive,
+    sortBy: filters.sortBy,
+    sortOrder: filters.sortOrder,
   });
 
+  // Fetch stats
+  const { data: stats } = useVehicleTypeStats();
+
+  // Mutations
   const deleteVehicleTypeMutation = useDeleteVehicleType();
-  const toggleStatusMutation = useToggleVehicleTypeStatus();
+  const updateVehicleTypeMutation = useUpdateVehicleType();
 
-  // Handle the actual API response structure
+  // Handle API response structure
   const apiResponse = vehicleTypesData as unknown as ApiResponse;
-  const vehicleTypes = apiResponse?.data?.vehicleTypes || [];
-  const totalVehicleTypes = apiResponse?.data?.pagination?.total || 0;
+  const vehicleTypes = useMemo(() => apiResponse?.data?.vehicleTypes || [], [apiResponse]);
+  const pagination = useMemo(() => apiResponse?.data?.pagination || {
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: false
+  }, [apiResponse]);
 
-  const handleDeleteVehicleType = async (id: string) => {
+  const handleCreate = () => {
+    setEditingVehicleType(undefined);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (vehicleType: VehicleType) => {
+    setEditingVehicleType(vehicleType);
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this vehicle type?')) {
       try {
         await deleteVehicleTypeMutation.mutateAsync(id);
-        toast.success('Vehicle type deleted successfully!');
+        toast.success('Vehicle type deleted successfully');
       } catch (error) {
-        console.error('Error deleting vehicle type:', error);
         toast.error('Failed to delete vehicle type');
       }
     }
   };
 
-  const handleToggleStatus = async (id: string) => {
+  const handleToggleStatus = async (vehicleType: VehicleType) => {
     try {
-      await toggleStatusMutation.mutateAsync(id);
-      toast.success('Vehicle type status updated successfully!');
+      await updateVehicleTypeMutation.mutateAsync({
+        id: vehicleType.id.toString(),
+        data: { isActive: !vehicleType.isActive }
+      });
+      toast.success(`Vehicle type ${vehicleType.isActive ? 'deactivated' : 'activated'} successfully`);
     } catch (error) {
-      console.error('Error toggling vehicle type status:', error);
       toast.error('Failed to update vehicle type status');
     }
   };
 
-  const getStatusColor = (isActive: boolean) => {
-    return isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+  const handleSort = (key: SortKey) => {
+    if (filters.sortBy === key) {
+      setSortOrder(filters.sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(key);
+      setSortOrder('asc');
+    }
+  };
+
+  const getSortIcon = (key: SortKey) => {
+    if (filters.sortBy !== key) {
+      return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    }
+    return filters.sortOrder === 'asc' 
+      ? <ArrowUp className="ml-2 h-4 w-4" />
+      : <ArrowDown className="ml-2 h-4 w-4" />;
   };
 
   if (error) {
@@ -80,6 +151,7 @@ export default function VehicleTypesPage() {
         <div className="text-center">
           <h2 className="text-xl font-semibold text-red-600">Error loading vehicle types</h2>
           <p className="text-gray-600 mt-2">Please try again later.</p>
+          <Button onClick={() => refetch()} className="mt-4">Retry</Button>
         </div>
       </div>
     );
@@ -87,123 +159,183 @@ export default function VehicleTypesPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur z-10 py-2">
         <div>
-          <h1 className="text-3xl font-bold">Vehicle Types Management</h1>
+          <h1 className="text-3xl font-bold">Vehicle Types</h1>
           <p className="text-gray-600 mt-1">
-            {isLoading ? 'Loading...' : `${totalVehicleTypes} total vehicle types`}
+            {isLoading ? 'Loading...' : `${stats?.total ?? pagination.total} Total Vehicle Types`}
+            {stats && (
+              <span className="ml-4 text-sm">
+                ({stats.active} Active, {stats.inactive} Inactive)
+              </span>
+            )}
           </p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
+        <Button onClick={handleCreate} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
           Add Vehicle Type
         </Button>
       </div>
 
+      {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>All Vehicle Types</CardTitle>
-          <div className="flex items-center space-x-2">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                type="text"
-                placeholder="Search vehicle types..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+          <CardTitle>Filters</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search by name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
+            <Select
+              value={filters.isActive === null ? 'all' : filters.isActive ? 'active' : 'inactive'}
+              onValueChange={(value) => {
+                setIsActiveFilter(value === 'all' ? null : value === 'active');
+              }}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Vehicle Types</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-              <span className="ml-2 text-gray-600">Loading vehicle types...</span>
-            </div>
-          ) : vehicleTypes?.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-600">No vehicle types found.</p>
-              {searchTerm && (
-                <p className="text-sm text-gray-500 mt-1">
-                  Try adjusting your search terms.
-                </p>
-              )}
-            </div>
+            <div className="text-center py-8">Loading...</div>
+          ) : vehicleTypes.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">No vehicle types found</div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {vehicleTypes.map((vehicleType) => (
-                  <TableRow key={vehicleType.id}>
-                    <TableCell className="font-medium">{vehicleType.name}</TableCell>
-                    <TableCell className="text-gray-600">{vehicleType.description || 'No description'}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 text-xs rounded-full capitalize ${getStatusColor(vehicleType.isActive)}`}>
-                        {vehicleType.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(vehicleType.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleToggleStatus(vehicleType.id.toString())}
-                          disabled={toggleStatusMutation.isPending}
-                          title={vehicleType.isActive ? 'Deactivate' : 'Activate'}
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-4">
+                        <button
+                          onClick={() => handleSort('name')}
+                          className="flex items-center hover:text-primary"
                         >
-                          {toggleStatusMutation.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : vehicleType.isActive ? (
-                            <PowerOff className="h-4 w-4" />
+                          Name {getSortIcon('name')}
+                        </button>
+                      </th>
+                      <th className="text-left p-4">Icon</th>
+                      <th className="text-left p-4">
+                        <button
+                          onClick={() => handleSort('isActive')}
+                          className="flex items-center hover:text-primary"
+                        >
+                          Status {getSortIcon('isActive')}
+                        </button>
+                      </th>
+                      <th className="text-left p-4">
+                        <button
+                          onClick={() => handleSort('createdAt')}
+                          className="flex items-center hover:text-primary"
+                        >
+                          Created {getSortIcon('createdAt')}
+                        </button>
+                      </th>
+                      <th className="text-right p-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vehicleTypes.map((vehicleType) => (
+                      <tr key={vehicleType.id} className="border-b hover:bg-muted/50">
+                        <td className="p-4 font-medium">{vehicleType.name}</td>
+                        <td className="p-4">
+                          {vehicleType.icon ? (
+                            <span className="text-sm text-gray-500">{vehicleType.icon}</span>
                           ) : (
-                            <Power className="h-4 w-4" />
+                            <span className="text-sm text-gray-400">—</span>
                           )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setEditingVehicleType(vehicleType);
-                            setIsFormOpen(true);
-                          }}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteVehicleType(vehicleType.id.toString())}
-                          disabled={deleteVehicleTypeMutation.isPending}
-                        >
-                          {deleteVehicleTypeMutation.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                        </td>
+                        <td className="p-4">
+                          <Badge variant={vehicleType.isActive ? 'default' : 'secondary'}>
+                            {vehicleType.isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </td>
+                        <td className="p-4 text-sm text-gray-600">
+                          {new Date(vehicleType.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <Switch
+                              checked={vehicleType.isActive}
+                              onCheckedChange={() => handleToggleStatus(vehicleType)}
+                              disabled={updateVehicleTypeMutation.isPending}
+                            />
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEdit(vehicleType)}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleDelete(vehicleType.id.toString())}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <RowsPerPage
+                  value={filters.limit}
+                  onChange={(value) => setLimit(value)}
+                  options={[5, 10, 20, 50]}
+                />
+                <div className="text-sm text-gray-600">
+                  Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
+                  {pagination.total} vehicle types
+                </div>
+                <Pagination
+                  currentPage={pagination.page}
+                  totalPages={pagination.totalPages}
+                  onPageChange={(page) => setPage(page)}
+                />
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
 
+      {/* Form Dialog */}
       <VehicleTypeForm
         vehicleType={editingVehicleType}
         isOpen={isFormOpen}
@@ -214,4 +346,4 @@ export default function VehicleTypesPage() {
       />
     </div>
   );
-} 
+}

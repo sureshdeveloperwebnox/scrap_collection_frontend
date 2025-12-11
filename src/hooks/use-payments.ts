@@ -126,7 +126,11 @@ export const useProcessRefund = () => {
       paymentId: string; 
       amount?: number; 
       reason?: string 
-    }) => paymentsApi.processRefund(paymentId, amount, reason),
+    }) => paymentsApi.createRefund(paymentId, {
+      amount: amount || 0,
+      reason,
+      processedByAdmin: 'system' // In real app, get from auth context
+    }),
     onSuccess: (refundedPayment) => {
       // Update payment in cache
       queryClient.setQueryData(queryKeys.payments.detail(refundedPayment.id), refundedPayment);

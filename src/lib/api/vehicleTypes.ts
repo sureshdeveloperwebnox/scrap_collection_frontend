@@ -2,12 +2,15 @@ import { apiClient } from './client';
 
 export interface VehicleType {
   id: number;
-  organizationId: number;
+  organizationId?: number;
   name: string;
-  description: string;
+  icon?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  organization?: {
+    name: string;
+  };
 }
 
 export interface ApiResponse<T> {
@@ -26,6 +29,9 @@ export const vehicleTypesApi = {
     limit?: number;
     search?: string;
     isActive?: boolean;
+    organizationId?: number;
+    sortBy?: 'name' | 'isActive' | 'createdAt' | 'updatedAt';
+    sortOrder?: 'asc' | 'desc';
   }): Promise<ApiResponse<{
     vehicleTypes: VehicleType[];
     pagination: {
@@ -33,6 +39,8 @@ export const vehicleTypesApi = {
       limit: number;
       total: number;
       totalPages: number;
+      hasNextPage: boolean;
+      hasPreviousPage: boolean;
     };
   }>> => {
     const response = await apiClient.get('/vehicle-types', { params });
@@ -46,13 +54,22 @@ export const vehicleTypesApi = {
   },
 
   // Create new vehicle type
-  createVehicleType: async (vehicleTypeData: Omit<VehicleType, 'id' | 'organizationId' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<VehicleType>> => {
+  createVehicleType: async (vehicleTypeData: {
+    organizationId: number;
+    name: string;
+    icon?: string;
+    isActive?: boolean;
+  }): Promise<ApiResponse<VehicleType>> => {
     const response = await apiClient.post('/vehicle-types', vehicleTypeData);
     return response.data;
   },
 
   // Update existing vehicle type
-  updateVehicleType: async (id: string, vehicleTypeData: Partial<VehicleType>): Promise<ApiResponse<VehicleType>> => {
+  updateVehicleType: async (id: string, vehicleTypeData: {
+    name?: string;
+    icon?: string;
+    isActive?: boolean;
+  }): Promise<ApiResponse<VehicleType>> => {
     const response = await apiClient.put(`/vehicle-types/${id}`, vehicleTypeData);
     return response.data;
   },
@@ -63,15 +80,13 @@ export const vehicleTypesApi = {
     return response.data;
   },
 
-  // Bulk operations
-  bulkUpdateVehicleTypes: async (ids: string[], updates: Partial<VehicleType>): Promise<ApiResponse<VehicleType[]>> => {
-    const response = await apiClient.patch('/vehicle-types/bulk', { ids, updates });
-    return response.data;
-  },
-
-  // Toggle vehicle type status
-  toggleVehicleTypeStatus: async (id: string): Promise<ApiResponse<VehicleType>> => {
-    const response = await apiClient.patch(`/vehicle-types/${id}/toggle-status`);
+  // Get vehicle type stats
+  getVehicleTypeStats: async (organizationId: number): Promise<ApiResponse<{
+    total: number;
+    active: number;
+    inactive: number;
+  }>> => {
+    const response = await apiClient.get(`/vehicle-types/stats/${organizationId}`);
     return response.data;
   },
 };

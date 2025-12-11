@@ -1,18 +1,28 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { vehicleTypesApi, VehicleType } from '@/lib/api/vehicleTypes';
 import { queryKeys } from '@/lib/query-client';
+import { useAuthStore } from '@/lib/store/auth-store';
+import { useVehicleTypeStore } from '@/lib/store/vehicle-type-store';
 
-// Get all vehicle types with optional filters
+// Get all vehicle types with optional filters and pagination
 export const useVehicleTypes = (params?: {
   page?: number;
   limit?: number;
   search?: string;
-  isActive?: boolean;
+  status?: boolean | null;
+  sortBy?: 'name' | 'isActive' | 'createdAt' | 'updatedAt';
+  sortOrder?: 'asc' | 'desc';
 }) => {
+  const { user } = useAuthStore();
+  const organizationId = user?.organizationId;
+
   return useQuery({
-    queryKey: queryKeys.vehicleTypes.list(params),
-    queryFn: () => vehicleTypesApi.getVehicleTypes(params),
-    placeholderData: (previousData) => previousData,
+    queryKey: queryKeys.vehicleTypes.list({ ...params, organizationId }),
+    queryFn: () => vehicleTypesApi.getVehicleTypes({ ...params, organizationId }),
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching new data
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!organizationId,
   });
 };
 
@@ -28,16 +38,22 @@ export const useVehicleType = (id: string) => {
 // Create vehicle type mutation
 export const useCreateVehicleType = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const organizationId = user?.organizationId;
+  const { resetFilters } = useVehicleTypeStore();
 
   return useMutation({
-    mutationFn: (vehicleTypeData: Omit<VehicleType, 'id' | 'organizationId' | 'createdAt' | 'updatedAt'>) => 
-      vehicleTypesApi.createVehicleType(vehicleTypeData),
-    onSuccess: (newVehicleType) => {
-      // Invalidate and refetch vehicle types list
+    mutationFn: (vehicleTypeData: { name: string; icon?: string; isActive?: boolean }) => 
+      vehicleTypesApi.createVehicleType({ ...vehicleTypeData, organizationId: organizationId! }),
+    onSuccess: () => {
+      // Invalidate all vehicle types list queries
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.lists() });
       
-      // Optionally add the new vehicle type to the cache
-      queryClient.setQueryData(queryKeys.vehicleTypes.detail(newVehicleType.data.id.toString()), newVehicleType);
+      // Invalidate stats query
+      queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.stats(organizationId) });
+      
+      // Reset filters to show the new item
+      resetFilters();
     },
   });
 };
@@ -45,16 +61,21 @@ export const useCreateVehicleType = () => {
 // Update vehicle type mutation
 export const useUpdateVehicleType = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const organizationId = user?.organizationId;
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<VehicleType> }) => 
+    mutationFn: ({ id, data }: { id: string; data: { name?: string; icon?: string; isActive?: boolean } }) => 
       vehicleTypesApi.updateVehicleType(id, data),
-    onSuccess: (updatedVehicleType) => {
+    onSuccess: (updatedVehicleType, variables) => {
       // Update the vehicle type in cache
-      queryClient.setQueryData(queryKeys.vehicleTypes.detail(updatedVehicleType.data.id.toString()), updatedVehicleType);
+      queryClient.setQueryData(queryKeys.vehicleTypes.detail(variables.id), updatedVehicleType);
       
-      // Invalidate vehicle types list to ensure consistency
+      // Invalidate all vehicle types list queries to ensure consistency
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.lists() });
+      
+      // Invalidate stats query
+      queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.stats(organizationId) });
     },
   });
 };
@@ -62,6 +83,8 @@ export const useUpdateVehicleType = () => {
 // Delete vehicle type mutation
 export const useDeleteVehicleType = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const organizationId = user?.organizationId;
 
   return useMutation({
     mutationFn: (id: string) => vehicleTypesApi.deleteVehicleType(id),
@@ -71,36 +94,30 @@ export const useDeleteVehicleType = () => {
       
       // Invalidate vehicle types list
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.lists() });
-    },
-  });
-};
-
-// Bulk update vehicle types mutation
-export const useBulkUpdateVehicleTypes = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ ids, updates }: { ids: string[]; updates: Partial<VehicleType> }) => 
-      vehicleTypesApi.bulkUpdateVehicleTypes(ids, updates),
-    onSuccess: () => {
-      // Invalidate all vehicle types queries to ensure consistency
-      queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.all });
-    },
-  });
-};
-
-// Toggle vehicle type status mutation
-export const useToggleVehicleTypeStatus = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => vehicleTypesApi.toggleVehicleTypeStatus(id),
-    onSuccess: (updatedVehicleType) => {
-      // Update the vehicle type in cache
-      queryClient.setQueryData(queryKeys.vehicleTypes.detail(updatedVehicleType.data.id.toString()), updatedVehicleType);
       
-      // Invalidate vehicle types list
-      queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.lists() });
+      // Invalidate stats query
+      queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.stats(organizationId) });
     },
   });
-}; 
+};
+
+// Get vehicle type stats
+export const useVehicleTypeStats = () => {
+  const { user } = useAuthStore();
+  const organizationId = user?.organizationId;
+
+  return useQuery({
+    queryKey: queryKeys.vehicleTypes.stats(organizationId),
+    queryFn: async () => {
+      if (!organizationId) {
+        throw new Error('Organization ID is required');
+      }
+      const response = await vehicleTypesApi.getVehicleTypeStats(organizationId);
+      return response.data;
+    },
+    enabled: !!organizationId,
+    staleTime: 1 * 60 * 1000, // 1 minute
+    gcTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: true,
+  });
+};

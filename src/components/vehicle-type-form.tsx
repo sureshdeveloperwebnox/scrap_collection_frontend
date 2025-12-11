@@ -18,9 +18,9 @@ interface VehicleTypeFormProps {
 }
 
 export function VehicleTypeForm({ vehicleType, isOpen, onClose, onSubmit }: VehicleTypeFormProps) {
-  const [formData, setFormData] = useState<Partial<VehicleType>>({
+  const [formData, setFormData] = useState<{ name: string; icon?: string; isActive: boolean }>({
     name: '',
-    description: '',
+    icon: '',
     isActive: true,
   });
 
@@ -29,14 +29,14 @@ export function VehicleTypeForm({ vehicleType, isOpen, onClose, onSubmit }: Vehi
     if (vehicleType) {
       setFormData({
         name: vehicleType.name || '',
-        description: vehicleType.description || '',
+        icon: vehicleType.icon || '',
         isActive: vehicleType.isActive ?? true,
       });
     } else {
       // Reset form for new vehicle type
       setFormData({
         name: '',
-        description: '',
+        icon: '',
         isActive: true,
       });
     }
@@ -54,12 +54,20 @@ export function VehicleTypeForm({ vehicleType, isOpen, onClose, onSubmit }: Vehi
         // Update existing vehicle type
         await updateVehicleTypeMutation.mutateAsync({
           id: vehicleType.id.toString(),
-          data: formData
+          data: {
+            name: formData.name,
+            icon: formData.icon || undefined,
+            isActive: formData.isActive,
+          }
         });
         toast.success('Vehicle type updated successfully!');
       } else {
         // Create new vehicle type
-        await createVehicleTypeMutation.mutateAsync(formData as Omit<VehicleType, 'id' | 'organizationId' | 'createdAt' | 'updatedAt'>);
+        await createVehicleTypeMutation.mutateAsync({
+          name: formData.name,
+          icon: formData.icon || undefined,
+          isActive: formData.isActive,
+        });
         toast.success('Vehicle type created successfully!');
       }
       
@@ -75,7 +83,7 @@ export function VehicleTypeForm({ vehicleType, isOpen, onClose, onSubmit }: Vehi
     }
   };
 
-  const handleInputChange = (field: keyof VehicleType, value: string | boolean) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -101,13 +109,13 @@ export function VehicleTypeForm({ vehicleType, isOpen, onClose, onSubmit }: Vehi
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="icon">Icon URL (Optional)</Label>
             <Input
-              id="description"
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
+              id="icon"
+              value={formData.icon || ''}
+              onChange={(e) => handleInputChange('icon', e.target.value)}
               disabled={isLoading}
-              placeholder="Brief description of the vehicle type"
+              placeholder="Icon URL or identifier"
             />
           </div>
 

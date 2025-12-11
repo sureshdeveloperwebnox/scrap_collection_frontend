@@ -6,6 +6,8 @@ export { employeesApi } from './employees';
 export { collectorsApi } from './collectors';
 export { scrapYardsApi } from './scrap-yards';
 export { paymentsApi } from './payments';
+export { pickupRequestsApi } from './pickup-requests';
+export { reviewsApi } from './reviews';
 export { dashboardApi } from './dashboard';
 export { vehicleTypesApi } from './vehicleTypes';
 export { apiClient } from './client';

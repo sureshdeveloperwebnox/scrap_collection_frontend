@@ -5,120 +5,90 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Payment } from '@/types';
-import { Search, CreditCard, DollarSign, AlertCircle, CheckCircle, Clock, RefreshCw } from 'lucide-react';
-
-const mockPayments: Payment[] = [
-  {
-    id: 'pay-1',
-    orderId: 'order-1',
-    customerId: 'customer-1',
-    amount: 650,
-    status: 'completed',
-    method: 'card',
-    transactionId: 'txn_1234567890',
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-15'),
-  },
-  {
-    id: 'pay-2',
-    orderId: 'order-2',
-    customerId: 'customer-2',
-    amount: 1200,
-    status: 'pending',
-    method: 'bank-transfer',
-    transactionId: 'txn_2345678901',
-    createdAt: new Date('2024-01-14'),
-    updatedAt: new Date('2024-01-14'),
-  },
-  {
-    id: 'pay-3',
-    orderId: 'order-3',
-    customerId: 'customer-3',
-    amount: 200,
-    status: 'completed',
-    method: 'cash',
-    transactionId: 'txn_3456789012',
-    createdAt: new Date('2024-01-13'),
-    updatedAt: new Date('2024-01-13'),
-  },
-  {
-    id: 'pay-4',
-    orderId: 'order-4',
-    customerId: 'customer-4',
-    amount: 500,
-    status: 'failed',
-    method: 'card',
-    transactionId: 'txn_4567890123',
-    createdAt: new Date('2024-01-12'),
-    updatedAt: new Date('2024-01-12'),
-  },
-  {
-    id: 'pay-5',
-    orderId: 'order-5',
-    customerId: 'customer-5',
-    amount: 300,
-    status: 'refunded',
-    method: 'wallet',
-    transactionId: 'txn_5678901234',
-    refundId: 'ref_1234567890',
-    createdAt: new Date('2024-01-11'),
-    updatedAt: new Date('2024-01-12'),
-  },
-];
+import { Payment, PaymentStatusEnum, PaymentTypeEnum } from '@/types';
+import { Search, CreditCard, DollarSign, AlertCircle, CheckCircle, Clock, RefreshCw, Loader2 } from 'lucide-react';
+import { usePayments, useProcessRefund } from '@/hooks/use-payments';
+import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 export default function PaymentsPage() {
-  const [payments, setPayments] = useState<Payment[]>(mockPayments);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [refundDialog, setRefundDialog] = useState<{ open: boolean; payment: Payment | null }>({ open: false, payment: null });
+  const [refundAmount, setRefundAmount] = useState('');
+  const [refundReason, setRefundReason] = useState('');
+
+  const { data: paymentsData, isLoading } = usePayments({
+    search: searchTerm || undefined,
+    status: statusFilter !== 'ALL' ? statusFilter as PaymentStatusEnum : undefined,
+  });
+  const refundMutation = useProcessRefund();
+
+  const payments = paymentsData?.data?.payments || [];
 
   const filteredPayments = payments.filter(payment =>
     payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     payment.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    payment.customerId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    payment.transactionId?.toLowerCase().includes(searchTerm.toLowerCase())
+    payment.customerId.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getStatusColor = (status: string) => {
+  const handleRefund = async () => {
+    if (!refundDialog.payment) return;
+    
+    try {
+      await refundMutation.mutateAsync({
+        paymentId: refundDialog.payment.id,
+        amount: refundAmount ? parseFloat(refundAmount) : undefined,
+        reason: refundReason || undefined,
+      });
+      toast.success('Refund processed successfully');
+      setRefundDialog({ open: false, payment: null });
+      setRefundAmount('');
+      setRefundReason('');
+    } catch (error) {
+      toast.error('Failed to process refund');
+    }
+  };
+
+  const getStatusColor = (status: PaymentStatusEnum) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'failed': return 'bg-red-100 text-red-800';
-      case 'refunded': return 'bg-blue-100 text-blue-800';
+      case 'PAID': return 'bg-green-100 text-green-800';
+      case 'UNPAID': return 'bg-yellow-100 text-yellow-800';
+      case 'REFUNDED': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: PaymentStatusEnum) => {
     switch (status) {
-      case 'completed': return CheckCircle;
-      case 'pending': return Clock;
-      case 'failed': return AlertCircle;
-      case 'refunded': return RefreshCw;
+      case 'PAID': return CheckCircle;
+      case 'UNPAID': return Clock;
+      case 'REFUNDED': return RefreshCw;
       default: return Clock;
     }
   };
 
-  const getMethodIcon = (method: string) => {
+  const getMethodIcon = (method: PaymentTypeEnum) => {
     switch (method) {
-      case 'card': return CreditCard;
-      case 'cash': return DollarSign;
-      case 'bank-transfer': return CreditCard;
-      case 'wallet': return DollarSign;
+      case 'CARD': return CreditCard;
+      case 'CASH': return DollarSign;
+      case 'BANK_TRANSFER': return CreditCard;
+      case 'ONLINE': return CreditCard;
       default: return CreditCard;
     }
   };
 
   const totalRevenue = payments
-    .filter(p => p.status === 'completed')
+    .filter(p => p.status === 'PAID')
     .reduce((sum, p) => sum + p.amount, 0);
   
-  const pendingAmount = payments
-    .filter(p => p.status === 'pending')
+  const unpaidAmount = payments
+    .filter(p => p.status === 'UNPAID')
     .reduce((sum, p) => sum + p.amount, 0);
   
-  const failedCount = payments.filter(p => p.status === 'failed').length;
   const refundedAmount = payments
-    .filter(p => p.status === 'refunded')
+    .filter(p => p.status === 'REFUNDED')
     .reduce((sum, p) => sum + p.amount, 0);
 
   return (
@@ -130,7 +100,7 @@ export default function PaymentsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -143,20 +113,12 @@ export default function PaymentsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Pending Amount</CardTitle>
+            <CardTitle className="text-sm font-medium">Unpaid Amount</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              ${pendingAmount.toLocaleString()}
+              ${unpaidAmount.toLocaleString()}
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Failed Payments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{failedCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -173,10 +135,9 @@ export default function PaymentsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Payments</CardTitle>
-          <div className="flex items-center space-x-2">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 type="text"
                 placeholder="Search payments..."
@@ -185,87 +146,154 @@ export default function PaymentsPage() {
                 className="pl-10"
               />
             </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Status</SelectItem>
+                <SelectItem value="PAID">Paid</SelectItem>
+                <SelectItem value="UNPAID">Unpaid</SelectItem>
+                <SelectItem value="REFUNDED">Refunded</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Payment ID</TableHead>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Transaction ID</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPayments.map((payment) => {
-                const StatusIcon = getStatusIcon(payment.status);
-                const MethodIcon = getMethodIcon(payment.method);
-                
-                return (
-                  <TableRow key={payment.id}>
-                    <TableCell className="font-medium">#{payment.id}</TableCell>
-                    <TableCell>#{payment.orderId}</TableCell>
-                    <TableCell>{payment.customerId}</TableCell>
-                    <TableCell>
-                      <div className="font-medium">
-                        ${payment.amount.toLocaleString()}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <MethodIcon className="h-4 w-4 text-gray-500" />
-                        <span className="capitalize">
-                          {payment.method.replace('-', ' ')}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <StatusIcon className="h-4 w-4" />
-                        <span className={`px-2 py-1 text-xs rounded-full capitalize ${getStatusColor(payment.status)}`}>
-                          {payment.status}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {payment.transactionId}
-                      {payment.refundId && (
-                        <div className="text-xs text-blue-600">
-                          Refund: {payment.refundId}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            </div>
+          ) : filteredPayments.length === 0 ? (
+            <div className="text-center py-8 text-gray-600">No payments found.</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Payment ID</TableHead>
+                  <TableHead>Order ID</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Collector</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPayments.map((payment) => {
+                  const StatusIcon = getStatusIcon(payment.status);
+                  const MethodIcon = getMethodIcon(payment.paymentType);
+                  
+                  return (
+                    <TableRow key={payment.id}>
+                      <TableCell className="font-medium">#{payment.id.slice(0, 8)}</TableCell>
+                      <TableCell>#{payment.orderId.slice(0, 8)}</TableCell>
+                      <TableCell>{payment.customerId.slice(0, 8)}</TableCell>
+                      <TableCell>{payment.collectorId ? payment.collectorId.slice(0, 8) : 'N/A'}</TableCell>
+                      <TableCell>
+                        <div className="font-medium">
+                          ${payment.amount.toLocaleString()}
                         </div>
-                      )}
-                    </TableCell>
-                    <TableCell>{payment.createdAt.toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
-                        {payment.status === 'completed' && (
-                          <Button variant="outline" size="sm">
-                            Refund
-                          </Button>
-                        )}
-                        {payment.status === 'failed' && (
-                          <Button variant="outline" size="sm">
-                            Retry
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <MethodIcon className="h-4 w-4 text-gray-500" />
+                          <span className="capitalize">
+                            {payment.paymentType.replace('_', ' ')}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <StatusIcon className="h-4 w-4" />
+                          <span className={`px-2 py-1 text-xs rounded-full capitalize ${getStatusColor(payment.status)}`}>
+                            {payment.status}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{new Date(payment.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          {payment.status === 'PAID' && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setRefundDialog({ open: true, payment })}
+                            >
+                              Refund
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
+
+      {/* Refund Dialog */}
+      <Dialog open={refundDialog.open} onOpenChange={(open) => !open && setRefundDialog({ open: false, payment: null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Process Refund</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {refundDialog.payment && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold">Payment Amount</label>
+                  <div className="text-lg font-bold">${refundDialog.payment.amount.toLocaleString()}</div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold">Refund Amount *</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max={refundDialog.payment.amount}
+                    value={refundAmount}
+                    onChange={(e) => setRefundAmount(e.target.value)}
+                    placeholder={`Max: $${refundDialog.payment.amount}`}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold">Reason</label>
+                  <textarea
+                    value={refundReason}
+                    onChange={(e) => setRefundReason(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border rounded-md resize-none"
+                    placeholder="Enter refund reason..."
+                  />
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRefundDialog({ open: false, payment: null })}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleRefund}
+              disabled={refundMutation.isPending || !refundAmount}
+            >
+              {refundMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                'Process Refund'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

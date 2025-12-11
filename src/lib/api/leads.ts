@@ -1,34 +1,58 @@
 import { apiClient } from './client';
-import { Lead } from '@/types';
+import { Lead, LeadStatus } from '@/types';
 
 export const leadsApi = {
-  // Get all leads with optional filters
+  // Get all leads with optional filters and pagination
   getLeads: async (params?: {
     page?: number;
     limit?: number;
     search?: string;
-    status?: string;
+    status?: LeadStatus;
     vehicleType?: string;
+    vehicleCondition?: string;
+    leadSource?: string;
     organizationId?: number;
-  }): Promise<{ data: Lead[], total: number, page: number, limit: number }> => {
+    dateFrom?: string;
+    dateTo?: string;
+    sortBy?: 'fullName' | 'phone' | 'email' | 'status' | 'createdAt' | 'updatedAt';
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ data: { leads: Lead[], pagination: any } }> => {
     const response = await apiClient.get('/leads', { params });
     return response.data;
   },
 
   // Get single lead by ID
-  getLead: async (id: string): Promise<Lead> => {
+  getLead: async (id: string): Promise<{ data: Lead }> => {
     const response = await apiClient.get(`/leads/${id}`);
     return response.data;
   },
 
   // Create new lead
-  createLead: async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>): Promise<Lead> => {
+  createLead: async (leadData: {
+    organizationId: number;
+    fullName: string;
+    phone: string;
+    countryCode?: string;
+    email?: string;
+    vehicleType: string;
+    vehicleMake?: string;
+    vehicleModel?: string;
+    vehicleYear?: number;
+    vehicleCondition: string;
+    locationAddress?: string;
+    latitude?: number;
+    longitude?: number;
+    leadSource: string;
+    photos?: string[];
+    notes?: string;
+    customerId?: string;
+  }): Promise<{ data: Lead }> => {
     const response = await apiClient.post('/leads', leadData);
     return response.data;
   },
 
   // Update existing lead
-  updateLead: async (id: string, leadData: Partial<Lead>): Promise<Lead> => {
+  updateLead: async (id: string, leadData: Partial<Lead>): Promise<{ data: Lead }> => {
     const response = await apiClient.put(`/leads/${id}`, leadData);
     return response.data;
   },
@@ -38,15 +62,28 @@ export const leadsApi = {
     await apiClient.delete(`/leads/${id}`);
   },
 
-  // Bulk operations
-  bulkUpdateLeads: async (ids: string[], updates: Partial<Lead>): Promise<Lead[]> => {
-    const response = await apiClient.patch('/leads/bulk', { ids, updates });
+  // Convert lead to order
+  convertToOrder: async (leadId: string, data: {
+    quotedPrice?: number;
+    pickupTime?: Date;
+    assignedCollectorId?: string;
+    yardId?: string;
+    customerNotes?: string;
+    adminNotes?: string;
+  }): Promise<{ data: any }> => {
+    const response = await apiClient.put(`/leads/${leadId}/convert`, data);
     return response.data;
   },
 
-  // Convert lead to order
-  convertToOrder: async (leadId: string): Promise<{ leadId: string, orderId: string }> => {
-    const response = await apiClient.post(`/leads/${leadId}/convert`);
+  // Get lead timeline
+  getLeadTimeline: async (leadId: string): Promise<{ data: any[] }> => {
+    const response = await apiClient.get(`/leads/${leadId}/timeline`);
+    return response.data;
+  },
+
+  // Get lead stats
+  getLeadStats: async (organizationId: number): Promise<{ data: any }> => {
+    const response = await apiClient.get(`/leads/stats/${organizationId}`);
     return response.data;
   },
 };

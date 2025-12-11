@@ -21,7 +21,8 @@ import {
   Menu,
   X,
   ChevronLeft,
-  CircleUserRound
+  CircleUserRound,
+  Car
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -40,7 +41,9 @@ const navigationSections = [
   {
     title: 'Management',
     items: [
+      { name: 'Vehicle Types', href: '/vehicle-types', icon: Car },
       { name: 'Collectors', href: '/collectors', icon: Truck },
+      { name: 'Pickup Requests', href: '/pickup-requests', icon: ClipboardList },
       { name: 'Scrap Yards', href: '/scrap-yards', icon: Building2 },
       { name: 'Payments', href: '/payments', icon: CreditCard },
       { name: 'Reports', href: '/reports', icon: BarChart3 },

@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { Employee } from '@/types';
+import { Employee, EmployeeRole } from '@/types';
 
 export const employeesApi = {
   // Get all employees with optional filters
@@ -7,28 +7,39 @@ export const employeesApi = {
     page?: number;
     limit?: number;
     search?: string;
-    role?: string;
-    status?: string;
+    role?: EmployeeRole;
+    isActive?: boolean;
+    organizationId?: number;
     workZone?: string;
-  }): Promise<{ data: Employee[], total: number, page: number, limit: number }> => {
+  }): Promise<{ data: { employees: Employee[], pagination: any } }> => {
     const response = await apiClient.get('/employees', { params });
     return response.data;
   },
 
   // Get single employee by ID
-  getEmployee: async (id: string): Promise<Employee> => {
+  getEmployee: async (id: string): Promise<{ data: Employee }> => {
     const response = await apiClient.get(`/employees/${id}`);
     return response.data;
   },
 
   // Create new employee
-  createEmployee: async (employeeData: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>): Promise<Employee> => {
+  createEmployee: async (employeeData: {
+    organizationId: number;
+    fullName: string;
+    email: string;
+    phone: string;
+    role: EmployeeRole;
+    workZone?: string;
+    password: string;
+    profilePhoto?: string;
+    scrapYardId?: string;
+  }): Promise<{ data: Employee }> => {
     const response = await apiClient.post('/employees', employeeData);
     return response.data;
   },
 
   // Update existing employee
-  updateEmployee: async (id: string, employeeData: Partial<Employee>): Promise<Employee> => {
+  updateEmployee: async (id: string, employeeData: Partial<Employee & { password?: string }>): Promise<{ data: Employee }> => {
     const response = await apiClient.put(`/employees/${id}`, employeeData);
     return response.data;
   },
@@ -38,27 +49,21 @@ export const employeesApi = {
     await apiClient.delete(`/employees/${id}`);
   },
 
-  // Toggle employee status
-  toggleEmployeeStatus: async (id: string): Promise<Employee> => {
-    const response = await apiClient.patch(`/employees/${id}/toggle-status`);
+  // Activate employee
+  activateEmployee: async (id: string): Promise<{ data: Employee }> => {
+    const response = await apiClient.put(`/employees/${id}/activate`);
     return response.data;
   },
 
-  // Get employees by role
-  getEmployeesByRole: async (role: string): Promise<Employee[]> => {
-    const response = await apiClient.get('/employees', { params: { role } });
-    return response.data.data;
+  // Deactivate employee
+  deactivateEmployee: async (id: string): Promise<{ data: Employee }> => {
+    const response = await apiClient.put(`/employees/${id}/deactivate`);
+    return response.data;
   },
 
-  // Get employee statistics
-  getEmployeeStats: async (): Promise<{
-    total: number;
-    active: number;
-    inactive: number;
-    byRole: Record<string, number>;
-    byWorkZone: Record<string, number>;
-  }> => {
-    const response = await apiClient.get('/employees/stats');
+  // Get employee performance
+  getEmployeePerformance: async (id: string): Promise<{ data: any }> => {
+    const response = await apiClient.get(`/employees/${id}/performance`);
     return response.data;
   },
 };

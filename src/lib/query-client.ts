@@ -48,6 +48,17 @@ export const queryKeys = {
     list: (filters?: Record<string, any>) => [...queryKeys.leads.lists(), filters] as const,
     details: () => [...queryKeys.leads.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.leads.details(), id] as const,
+    stats: (organizationId?: number) => [...queryKeys.leads.all, 'stats', organizationId] as const,
+  },
+
+  // Vehicle Types
+  vehicleTypes: {
+    all: ['vehicle-types'] as const,
+    lists: () => [...queryKeys.vehicleTypes.all, 'list'] as const,
+    list: (filters?: Record<string, any>) => [...queryKeys.vehicleTypes.lists(), filters] as const,
+    details: () => [...queryKeys.vehicleTypes.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.vehicleTypes.details(), id] as const,
+    stats: (organizationId?: number) => [...queryKeys.vehicleTypes.all, 'stats', organizationId] as const,
   },
 
   // Orders

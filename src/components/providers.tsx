@@ -11,9 +11,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+      <AuthProvider>
+        {children}
+      </AuthProvider>
       </GoogleOAuthProvider>
     </QueryClientProvider>
   );
