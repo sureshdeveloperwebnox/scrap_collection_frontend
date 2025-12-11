@@ -123,14 +123,21 @@ export const queryKeys = {
     byOrder: (orderId: string) => [...queryKeys.payments.all, 'by-order', orderId] as const,
   },
 
-  // Vehicle Types
-  vehicleTypes: {
-    all: ['vehicle-types'] as const,
-    lists: () => [...queryKeys.vehicleTypes.all, 'list'] as const,
-    list: (filters?: Record<string, any>) => [...queryKeys.vehicleTypes.lists(), filters] as const,
-    details: () => [...queryKeys.vehicleTypes.all, 'detail'] as const,
-    detail: (id: string) => [...queryKeys.vehicleTypes.details(), id] as const,
-    stats: () => [...queryKeys.vehicleTypes.all, 'stats'] as const,
-    active: () => [...queryKeys.vehicleTypes.all, 'active'] as const,
+  // Cities
+  cities: {
+    all: ['cities'] as const,
+    lists: () => [...queryKeys.cities.all, 'list'] as const,
+    list: (filters?: Record<string, any>) => [...queryKeys.cities.lists(), filters] as const,
+    details: () => [...queryKeys.cities.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.cities.details(), id] as const,
+  },
+
+  // Roles
+  roles: {
+    all: ['roles'] as const,
+    lists: () => [...queryKeys.roles.all, 'list'] as const,
+    list: (filters?: Record<string, any>) => [...queryKeys.roles.lists(), filters] as const,
+    details: () => [...queryKeys.roles.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.roles.details(), id] as const,
   },
 } as const;

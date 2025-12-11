@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Employee, EmployeeRole } from '@/types';
 import { useCreateEmployee, useUpdateEmployee } from '@/hooks/use-employees';
-import { useScrapYards } from '@/hooks/use-scrap-yards';
+import { useRoles } from '@/hooks/use-roles';
+import { useCities } from '@/hooks/use-cities';
 import { toast } from 'sonner';
 import { CountryCodeSelector } from './country-code-selector';
 import { combinePhoneNumber, validatePhoneNumber, validatePhoneNumberByCountry } from '@/utils/phone-validator';
@@ -31,15 +32,17 @@ export function EmployeeForm({ employee, isOpen, onClose, onSubmit }: EmployeeFo
     email: '',
     phone: '',
     countryCode: '+1',
-    role: 'COLLECTOR' as EmployeeRole,
-    workZone: '',
-    password: '',
-    profilePhoto: '',
-    scrapYardId: '',
+    roleId: '',
+    cityId: 'none',
+    password: '', // Only used for updates if needed
   });
 
-  const { data: scrapYardsData } = useScrapYards();
-  const scrapYards = scrapYardsData?.data?.scrapYards || [];
+  // Fetch roles and cities
+  const { data: rolesData } = useRoles({ limit: 100, status: true });
+  const { data: citiesData } = useCities({ limit: 100, status: true });
+  
+  const roles = rolesData?.data?.roles || [];
+  const cities = citiesData?.data?.cities || [];
 
   useEffect(() => {
     if (employee) {
@@ -70,11 +73,9 @@ export function EmployeeForm({ employee, isOpen, onClose, onSubmit }: EmployeeFo
         email: employee.email || '',
         phone: phoneNumber,
         countryCode: countryCode,
-        role: employee.role || 'COLLECTOR',
-        workZone: employee.workZone || '',
+        roleId: (employee as any).roleId?.toString() || (employee as any).role?.id?.toString() || '',
+        cityId: (employee as any).cityId?.toString() || (employee as any).city?.id?.toString() || 'none',
         password: '', // Don't populate password
-        profilePhoto: employee.profilePhoto || '',
-        scrapYardId: employee.scrapYardId || '',
       });
       setPhoneError(undefined);
       setPhoneTouched(false);
@@ -85,11 +86,9 @@ export function EmployeeForm({ employee, isOpen, onClose, onSubmit }: EmployeeFo
         email: '',
         phone: '',
         countryCode: '+1',
-        role: 'COLLECTOR',
-        workZone: '',
+        roleId: '',
+        cityId: 'none',
         password: '',
-        profilePhoto: '',
-        scrapYardId: '',
       });
       setPhoneError(undefined);
       setPhoneTouched(false);
@@ -114,27 +113,47 @@ export function EmployeeForm({ employee, isOpen, onClose, onSubmit }: EmployeeFo
       return;
     }
     
+    // Validate roleId
+    if (!formData.roleId) {
+      toast.error('Please select a role');
+      return;
+    }
+
     // Prepare data with combined phone number
-    const submitData = {
-      ...formData,
-      phone: phoneValidation.formatted || fullPhoneNumber
+    const submitData: any = {
+      organizationId: formData.organizationId,
+      fullName: formData.fullName,
+      email: formData.email,
+      phone: phoneValidation.formatted || fullPhoneNumber,
+      roleId: parseInt(formData.roleId),
     };
     
-    // Remove countryCode from submit data as it's not in the schema
-    delete (submitData as any).countryCode;
+    // Add optional fields
+    if (formData.cityId && formData.cityId !== 'none') {
+      submitData.cityId = parseInt(formData.cityId);
+    } else {
+      submitData.cityId = null;
+    }
     
     try {
       if (employee) {
+        // For update, don't include password if not provided
+        const updateData: any = { ...submitData };
+        if (formData.password) {
+          updateData.password = formData.password;
+        }
         await updateEmployeeMutation.mutateAsync({
           id: employee.id,
-          data: submitData
+          data: updateData
         });
         toast.success('Employee updated successfully!');
       } else {
-        if (!submitData.password) {
+        // Password is required for new employees
+        if (!formData.password) {
           toast.error('Password is required for new employees');
           return;
         }
+        submitData.password = formData.password;
         await createEmployeeMutation.mutateAsync(submitData);
         toast.success('Employee created successfully!');
       }
@@ -265,63 +284,44 @@ export function EmployeeForm({ employee, isOpen, onClose, onSubmit }: EmployeeFo
             <h3 className="text-lg font-semibold border-b pb-2">Role & Assignment</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="role">Role *</Label>
+                <Label htmlFor="roleId">Role *</Label>
                 <Select 
-                  value={formData.role} 
-                  onValueChange={(value) => handleInputChange('role', value as EmployeeRole)}
+                  value={formData.roleId} 
+                  onValueChange={(value) => handleInputChange('roleId', value)}
                   disabled={isLoading}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="COLLECTOR">Collector</SelectItem>
-                    <SelectItem value="ADMIN">Admin</SelectItem>
-                    <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
-                    <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="scrapYardId">Scrap Yard</Label>
-                <Select 
-                  value={formData.scrapYardId} 
-                  onValueChange={(value) => handleInputChange('scrapYardId', value)}
-                  disabled={isLoading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select scrap yard" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">None</SelectItem>
-                    {scrapYards.map((yard) => (
-                      <SelectItem key={yard.id} value={yard.id}>
-                        {yard.yardName}
+                    {roles.map((role) => (
+                      <SelectItem key={role.id} value={role.id.toString()}>
+                        {role.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="workZone">Work Zone</Label>
-              <Input
-                id="workZone"
-                value={formData.workZone}
-                onChange={(e) => handleInputChange('workZone', e.target.value)}
-                placeholder="e.g., Sydney Metro, Melbourne North"
-                disabled={isLoading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="profilePhoto">Profile Photo URL</Label>
-              <Input
-                id="profilePhoto"
-                value={formData.profilePhoto}
-                onChange={(e) => handleInputChange('profilePhoto', e.target.value)}
-                placeholder="https://..."
-                disabled={isLoading}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="cityId">Work Zone (City)</Label>
+                <Select 
+                  value={formData.cityId || 'none'} 
+                  onValueChange={(value) => handleInputChange('cityId', value)}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select work zone (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {cities.map((city) => (
+                      <SelectItem key={city.id} value={city.id.toString()}>
+                        {city.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 

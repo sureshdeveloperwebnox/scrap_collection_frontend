@@ -7,10 +7,10 @@ export const employeesApi = {
     page?: number;
     limit?: number;
     search?: string;
-    role?: EmployeeRole;
+    roleId?: number;
+    cityId?: number;
     isActive?: boolean;
     organizationId?: number;
-    workZone?: string;
   }): Promise<{ data: { employees: Employee[], pagination: any } }> => {
     const response = await apiClient.get('/employees', { params });
     return response.data;
@@ -28,8 +28,8 @@ export const employeesApi = {
     fullName: string;
     email: string;
     phone: string;
-    role: EmployeeRole;
-    workZone?: string;
+    roleId: number;
+    cityId?: number;
     password: string;
     profilePhoto?: string;
     scrapYardId?: string;
@@ -39,7 +39,7 @@ export const employeesApi = {
   },
 
   // Update existing employee
-  updateEmployee: async (id: string, employeeData: Partial<Employee & { password?: string }>): Promise<{ data: Employee }> => {
+  updateEmployee: async (id: string, employeeData: Partial<Employee & { password?: string; roleId?: number; cityId?: number | null }>): Promise<{ data: Employee }> => {
     const response = await apiClient.put(`/employees/${id}`, employeeData);
     return response.data;
   },
