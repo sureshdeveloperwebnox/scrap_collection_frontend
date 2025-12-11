@@ -131,4 +131,13 @@ export const queryKeys = {
     details: () => [...queryKeys.cities.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.cities.details(), id] as const,
   },
+
+  // Roles
+  roles: {
+    all: ['roles'] as const,
+    lists: () => [...queryKeys.roles.all, 'list'] as const,
+    list: (filters?: Record<string, any>) => [...queryKeys.roles.lists(), filters] as const,
+    details: () => [...queryKeys.roles.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.roles.details(), id] as const,
+  },
 } as const;
