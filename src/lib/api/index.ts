@@ -10,5 +10,6 @@ export { pickupRequestsApi } from './pickup-requests';
 export { reviewsApi } from './reviews';
 export { dashboardApi } from './dashboard';
 export { vehicleTypesApi } from './vehicleTypes';
+export { citiesApi } from './cities';
 export { apiClient } from './client';
 export * from './auth';

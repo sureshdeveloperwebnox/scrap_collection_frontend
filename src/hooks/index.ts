@@ -8,4 +8,5 @@ export * from './use-collectors';
 export * from './use-scrap-yards';
 export * from './use-payments';
 export * from './use-vehicle-types';
+export * from './use-cities';
 export * from './use-auth';
