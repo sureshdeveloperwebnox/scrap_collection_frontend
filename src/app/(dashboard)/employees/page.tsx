@@ -146,7 +146,7 @@ export default function EmployeesPage() {
             <CardTitle className="text-sm font-medium">Admins</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{roleStats.admin}</div>
+            <div className="text-2xl font-bold text-violet-600">{roleStats.admin}</div>
           </CardContent>
         </Card>
         <Card>
@@ -154,7 +154,7 @@ export default function EmployeesPage() {
             <CardTitle className="text-sm font-medium">Managers</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{roleStats.manager}</div>
+            <div className="text-2xl font-bold text-violet-600">{roleStats.manager}</div>
           </CardContent>
         </Card>
         <Card>

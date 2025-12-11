@@ -92,7 +92,7 @@ type TabKey = 'All' | 'New' | 'Contacted' | 'Qualified' | 'Converted' | 'Rejecte
 function getTabStyle(tab: TabKey) {
   switch (tab) {
     case 'New':
-      return { activeText: 'text-blue-700', activeBg: 'bg-blue-50', underline: 'bg-blue-600', count: 'bg-blue-100 text-blue-700' };
+      return { activeText: 'text-violet-700', activeBg: 'bg-violet-50', underline: 'bg-violet-600', count: 'bg-violet-100 text-violet-700' };
     case 'Contacted':
       return { activeText: 'text-indigo-700', activeBg: 'bg-indigo-50', underline: 'bg-indigo-600', count: 'bg-indigo-100 text-indigo-700' };
     case 'Qualified':
@@ -290,7 +290,7 @@ export default function LeadsPage() {
             {isLoading ? 'Loading...' : `${stats?.total ?? totalLeads} Total Leads`}
           </p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)} className="hidden sm:inline-flex bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+        <Button onClick={() => setIsFormOpen(true)} className="hidden sm:inline-flex bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
           <Plus className="mr-2 h-4 w-4" />
           Add Lead
         </Button>
@@ -389,7 +389,7 @@ export default function LeadsPage() {
                   </TableHeader>
                   <TableBody>
                     {leads.map((lead) => (
-                      <TableRow key={lead.id} className="even:bg-muted/50 border-b hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md" onClick={() => setDetailsLead(lead)}>
+                      <TableRow key={lead.id} className="even:bg-muted/50 border-b hover:bg-gradient-to-r hover:from-violet-50 hover:to-purple-50 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md" onClick={() => setDetailsLead(lead)}>
                         <TableCell className="font-medium">{lead.fullName || 'N/A'}</TableCell>
                         <TableCell>
                           <div>
@@ -488,7 +488,7 @@ export default function LeadsPage() {
               {/* Mobile cards */}
               <div className="sm:hidden space-y-3">
                 {leads.map((lead) => (
-                  <div key={lead.id} className="rounded-lg border bg-card p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:bg-gradient-to-br hover:from-blue-50 hover:to-indigo-50 cursor-pointer" onClick={() => setDetailsLead(lead)}>
+                  <div key={lead.id} className="rounded-lg border bg-card p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:bg-gradient-to-br hover:from-violet-50 hover:to-purple-50 cursor-pointer" onClick={() => setDetailsLead(lead)}>
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="font-semibold">{lead.fullName || 'N/A'}</div>
@@ -574,7 +574,7 @@ export default function LeadsPage() {
       </Card>
 
       {/* Sticky Add button for mobile */}
-      <Button onClick={() => setIsFormOpen(true)} className="sm:hidden fixed bottom-6 right-6 rounded-full shadow-xl bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white transform hover:scale-110 transition-all duration-200 hover:shadow-2xl">
+      <Button onClick={() => setIsFormOpen(true)} className="sm:hidden fixed bottom-6 right-6 rounded-full shadow-xl bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white transform hover:scale-110 transition-all duration-200 hover:shadow-2xl">
         <Plus className="mr-2 h-4 w-4" /> Add Lead
       </Button>
 

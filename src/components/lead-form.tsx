@@ -365,9 +365,9 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white via-purple-50/30 to-indigo-50/30 border-0 shadow-2xl">
+      <DialogContent className="w-[95vw] sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white via-violet-50/30 to-purple-50/30 border-0 shadow-2xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
             {lead ? 'Edit Lead' : 'Add New Lead'}
           </DialogTitle>
         </DialogHeader>
@@ -737,7 +737,7 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
             <Button 
               type="submit"
               disabled={isLoading}
-              className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl"
+              className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white shadow-lg hover:shadow-xl"
             >
               {isLoading ? (
                 <>

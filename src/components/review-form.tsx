@@ -149,7 +149,7 @@ export function ReviewForm({
             <Button 
               type="submit"
               disabled={isLoading}
-              className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+              className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary"
             >
               {isLoading ? (
                 <>

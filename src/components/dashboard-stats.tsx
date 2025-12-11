@@ -41,8 +41,8 @@ export const DashboardStats = () => {
       title: 'Active Collectors',
       value: stats.activeCollectors.toString(),
       icon: Truck,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
+      color: 'text-violet-600',
+      bgColor: 'bg-violet-100',
     },
     {
       title: 'Today Revenue',

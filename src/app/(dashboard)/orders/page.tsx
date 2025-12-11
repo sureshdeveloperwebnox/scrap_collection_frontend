@@ -161,7 +161,7 @@ export default function OrdersPage() {
             <CardTitle className="text-sm font-medium">Assigned Orders</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-violet-600">
               {orders.filter(o => o.status === 'assigned').length}
             </div>
           </CardContent>
