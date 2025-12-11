@@ -78,12 +78,12 @@ function formatDateHuman(dateStr: string): string {
 }
 
 function toDisplayStatus(status: string): 'New' | 'Contacted' | 'Qualified' | 'Converted' | 'Rejected' | string {
-  const s = status?.toLowerCase();
-  if (s === 'pending' || s === 'new') return 'New';
-  if (s === 'contacted') return 'Contacted';
-  if (s === 'qualified') return 'Qualified';
-  if (s === 'converted') return 'Converted';
-  if (s === 'rejected') return 'Rejected';
+  const s = status?.toUpperCase();
+  if (s === 'PENDING' || s === 'NEW') return 'New';
+  if (s === 'CONTACTED') return 'Contacted';
+  if (s === 'QUOTED' || s === 'QUALIFIED') return 'Qualified';
+  if (s === 'CONVERTED') return 'Converted';
+  if (s === 'REJECTED') return 'Rejected';
   return status;
 }
 
@@ -92,7 +92,7 @@ type TabKey = 'All' | 'New' | 'Contacted' | 'Qualified' | 'Converted' | 'Rejecte
 function getTabStyle(tab: TabKey) {
   switch (tab) {
     case 'New':
-      return { activeText: 'text-blue-700', activeBg: 'bg-blue-50', underline: 'bg-blue-600', count: 'bg-blue-100 text-blue-700' };
+      return { activeText: 'text-violet-700', activeBg: 'bg-violet-50', underline: 'bg-violet-600', count: 'bg-violet-100 text-violet-700' };
     case 'Contacted':
       return { activeText: 'text-indigo-700', activeBg: 'bg-indigo-50', underline: 'bg-indigo-600', count: 'bg-indigo-100 text-indigo-700' };
     case 'Qualified':
@@ -159,7 +159,7 @@ export default function LeadsPage() {
     const statusMap: Record<string, string> = {
       'New': 'NEW',
       'Contacted': 'CONTACTED',
-      'Qualified': 'QUOTED',
+      'Qualified': 'QUOTED', // Map 'Qualified' tab to 'QUOTED' status
       'Converted': 'CONVERTED',
       'Rejected': 'REJECTED'
     };
@@ -260,13 +260,31 @@ export default function LeadsPage() {
 
   const onInlineStatusChange = async (lead: ApiLead, value: string) => {
     try {
-      const oldStatus = lead.status;
-      await updateLeadMutation.mutateAsync({ id: String(lead.id), data: { status: value } as any });
-      toast.success('Status updated');
+      // Validate status value
+      const validStatuses = ['NEW', 'CONTACTED', 'QUOTED', 'CONVERTED', 'REJECTED'];
+      if (!validStatuses.includes(value.toUpperCase())) {
+        toast.error(`Invalid status: ${value}`);
+        return;
+      }
+
+      const normalizedStatus = value.toUpperCase() as 'NEW' | 'CONTACTED' | 'QUOTED' | 'CONVERTED' | 'REJECTED';
+      
+      // Don't update if status hasn't changed
+      if (lead.status.toUpperCase() === normalizedStatus) {
+        return;
+      }
+
+      await updateLeadMutation.mutateAsync({ 
+        id: String(lead.id), 
+        data: { status: normalizedStatus } 
+      });
+      toast.success('Status updated successfully');
       
       // Zustand store will be updated automatically by the mutation hook
-    } catch (e) {
-      toast.error('Failed to update status');
+    } catch (e: any) {
+      const errorMessage = e?.response?.data?.message || e?.message || 'Failed to update status';
+      toast.error(errorMessage);
+      console.error('Status update error:', e);
     }
   };
 
@@ -290,7 +308,7 @@ export default function LeadsPage() {
             {isLoading ? 'Loading...' : `${stats?.total ?? totalLeads} Total Leads`}
           </p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)} className="hidden sm:inline-flex bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+        <Button onClick={() => setIsFormOpen(true)} className="hidden sm:inline-flex bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
           <Plus className="mr-2 h-4 w-4" />
           Add Lead
         </Button>
@@ -389,7 +407,7 @@ export default function LeadsPage() {
                   </TableHeader>
                   <TableBody>
                     {leads.map((lead) => (
-                      <TableRow key={lead.id} className="even:bg-muted/50 border-b hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md" onClick={() => setDetailsLead(lead)}>
+                      <TableRow key={lead.id} className="even:bg-muted/50 border-b hover:bg-gradient-to-r hover:from-violet-50 hover:to-purple-50 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md" onClick={() => setDetailsLead(lead)}>
                         <TableCell className="font-medium">{lead.fullName || 'N/A'}</TableCell>
                         <TableCell>
                           <div>
@@ -407,7 +425,7 @@ export default function LeadsPage() {
                                 <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
                               </SelectTrigger>
                               <SelectContent>
-                                {['NEW','CONTACTED','QUALIFIED','CONVERTED','REJECTED','pending'].map((s) => (
+                                {['NEW','CONTACTED','QUOTED','CONVERTED','REJECTED'].map((s) => (
                                   <SelectItem key={s} value={s}>{toDisplayStatus(s)}</SelectItem>
                                 ))}
                               </SelectContent>
@@ -416,7 +434,7 @@ export default function LeadsPage() {
                         </TableCell>
                         <TableCell>{formatDateHuman(lead.createdAt)}</TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                             <Button 
                               variant="ghost" 
                               size="sm" 
@@ -424,7 +442,8 @@ export default function LeadsPage() {
                                 e.stopPropagation();
                                 setDetailsLead(lead);
                               }}
-                              className="h-8 w-8 p-0 hover:bg-indigo-50 text-indigo-600 transition-all duration-200"
+                              className="h-8 w-8 p-0 bg-violet-50/50 hover:bg-violet-100 text-violet-600 hover:text-violet-700 transition-all duration-200 border border-violet-200/50 hover:border-violet-300 shadow-sm hover:shadow-md z-10 relative"
+                              title="View Details"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -458,7 +477,8 @@ export default function LeadsPage() {
                                 setEditingLead(convertedLead);
                                 setIsFormOpen(true);
                               }}
-                              className="h-8 w-8 p-0 hover:bg-violet-50 text-violet-600 transition-all duration-200"
+                              className="h-8 w-8 p-0 bg-violet-50/50 hover:bg-violet-100 text-violet-600 hover:text-violet-700 transition-all duration-200 border border-violet-200/50 hover:border-violet-300 shadow-sm hover:shadow-md z-10 relative"
+                              title="Edit Lead"
                             >
                               <Edit2 className="h-4 w-4" />
                             </Button>
@@ -469,7 +489,9 @@ export default function LeadsPage() {
                                 e.stopPropagation();
                                 handleDeleteLead(lead.id);
                               }}
-                              className="h-8 w-8 p-0 hover:bg-rose-50 text-rose-600 transition-all duration-200"
+                              className="h-8 w-8 p-0 bg-red-50/50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all duration-200 border border-red-200/50 hover:border-red-300 shadow-sm hover:shadow-md z-10 relative"
+                              title="Delete Lead"
+                              disabled={deleteLeadMutation.isPending}
                             >
                               {deleteLeadMutation.isPending ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -488,7 +510,7 @@ export default function LeadsPage() {
               {/* Mobile cards */}
               <div className="sm:hidden space-y-3">
                 {leads.map((lead) => (
-                  <div key={lead.id} className="rounded-lg border bg-card p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:bg-gradient-to-br hover:from-blue-50 hover:to-indigo-50 cursor-pointer" onClick={() => setDetailsLead(lead)}>
+                  <div key={lead.id} className="rounded-lg border bg-card p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:bg-gradient-to-br hover:from-violet-50 hover:to-purple-50 cursor-pointer" onClick={() => setDetailsLead(lead)}>
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="font-semibold">{lead.fullName || 'N/A'}</div>
@@ -507,39 +529,63 @@ export default function LeadsPage() {
                       <div>{formatDateHuman(lead.createdAt)}</div>
                     </div>
                     <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="sm" onClick={() => setDetailsLead(lead)} className="hover:bg-indigo-50 text-indigo-600 transition-all duration-200">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setDetailsLead(lead)} 
+                        className="bg-violet-50/50 hover:bg-violet-100 text-violet-600 hover:text-violet-700 transition-all duration-200 border border-violet-200/50 hover:border-violet-300 shadow-sm hover:shadow-md z-10 relative"
+                        title="View Details"
+                      >
                         <Eye className="h-4 w-4 mr-1" /> View
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => {
-                        const convertedLead: Lead = {
-                          id: lead.id,
-                          organizationId: lead.organizationId,
-                          fullName: lead.fullName || '',
-                          phone: lead.phone || '',
-                          email: lead.email,
-                          vehicleType: lead.vehicleType as any,
-                          vehicleMake: lead.vehicleMake,
-                          vehicleModel: lead.vehicleModel,
-                          vehicleYear: lead.vehicleYear,
-                          vehicleCondition: lead.vehicleCondition as any,
-                          locationAddress: lead.locationAddress,
-                          latitude: lead.latitude,
-                          longitude: lead.longitude,
-                          leadSource: lead.leadSource as any,
-                          photos: lead.photos,
-                          notes: lead.notes,
-                          status: lead.status as any,
-                          customerId: lead.customerId,
-                          createdAt: new Date(lead.createdAt),
-                          updatedAt: new Date(lead.updatedAt),
-                        };
-                        setEditingLead(convertedLead);
-                        setIsFormOpen(true);
-                      }} className="hover:bg-violet-50 text-violet-600 transition-all duration-200">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => {
+                          const convertedLead: Lead = {
+                            id: lead.id,
+                            organizationId: lead.organizationId,
+                            fullName: lead.fullName || '',
+                            phone: lead.phone || '',
+                            email: lead.email,
+                            vehicleType: lead.vehicleType as any,
+                            vehicleMake: lead.vehicleMake,
+                            vehicleModel: lead.vehicleModel,
+                            vehicleYear: lead.vehicleYear,
+                            vehicleCondition: lead.vehicleCondition as any,
+                            locationAddress: lead.locationAddress,
+                            latitude: lead.latitude,
+                            longitude: lead.longitude,
+                            leadSource: lead.leadSource as any,
+                            photos: lead.photos,
+                            notes: lead.notes,
+                            status: lead.status as any,
+                            customerId: lead.customerId,
+                            createdAt: new Date(lead.createdAt),
+                            updatedAt: new Date(lead.updatedAt),
+                          };
+                          setEditingLead(convertedLead);
+                          setIsFormOpen(true);
+                        }} 
+                        className="bg-violet-50/50 hover:bg-violet-100 text-violet-600 hover:text-violet-700 transition-all duration-200 border border-violet-200/50 hover:border-violet-300 shadow-sm hover:shadow-md z-10 relative"
+                        title="Edit Lead"
+                      >
                         <Edit2 className="h-4 w-4 mr-1" /> Edit
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteLead(lead.id)} className="hover:bg-rose-50 text-rose-600 transition-all duration-200">
-                        <Trash2 className="h-4 w-4 mr-1" /> Delete
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleDeleteLead(lead.id)} 
+                        className="bg-red-50/50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all duration-200 border border-red-200/50 hover:border-red-300 shadow-sm hover:shadow-md z-10 relative"
+                        title="Delete Lead"
+                        disabled={deleteLeadMutation.isPending}
+                      >
+                        {deleteLeadMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 mr-1" />
+                        )}
+                        Delete
                       </Button>
                     </div>
                   </div>
@@ -574,7 +620,7 @@ export default function LeadsPage() {
       </Card>
 
       {/* Sticky Add button for mobile */}
-      <Button onClick={() => setIsFormOpen(true)} className="sm:hidden fixed bottom-6 right-6 rounded-full shadow-xl bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white transform hover:scale-110 transition-all duration-200 hover:shadow-2xl">
+      <Button onClick={() => setIsFormOpen(true)} className="sm:hidden fixed bottom-6 right-6 rounded-full shadow-xl bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white transform hover:scale-110 transition-all duration-200 hover:shadow-2xl">
         <Plus className="mr-2 h-4 w-4" /> Add Lead
       </Button>
 
@@ -699,18 +745,19 @@ export default function LeadsPage() {
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2 pt-4 border-t">
-                <Button onClick={() => {
-                  const convertedLead: Lead = {
-                    id: detailsLead.id,
-                    organizationId: detailsLead.organizationId,
-                    fullName: detailsLead.fullName || '',
-                    phone: detailsLead.phone || '',
-                    email: detailsLead.email,
-                    vehicleType: detailsLead.vehicleType as any,
-                    vehicleMake: detailsLead.vehicleMake,
-                    vehicleModel: detailsLead.vehicleModel,
-                    vehicleYear: detailsLead.vehicleYear,
-                    vehicleCondition: detailsLead.vehicleCondition as any,
+                <Button 
+                  onClick={() => {
+                    const convertedLead: Lead = {
+                      id: detailsLead.id,
+                      organizationId: detailsLead.organizationId,
+                      fullName: detailsLead.fullName || '',
+                      phone: detailsLead.phone || '',
+                      email: detailsLead.email,
+                      vehicleType: detailsLead.vehicleType as any,
+                      vehicleMake: detailsLead.vehicleMake,
+                      vehicleModel: detailsLead.vehicleModel,
+                      vehicleYear: detailsLead.vehicleYear,
+                      vehicleCondition: detailsLead.vehicleCondition as any,
                     locationAddress: detailsLead.locationAddress,
                     latitude: detailsLead.latitude,
                     longitude: detailsLead.longitude,
@@ -724,7 +771,9 @@ export default function LeadsPage() {
                   };
                   setEditingLead(convertedLead);
                   setIsFormOpen(true);
-                }}>
+                }}
+                  className="bg-violet-500 hover:bg-violet-600 text-white"
+                >
                   <Edit2 className="h-4 w-4 mr-2" /> Edit
                 </Button>
                 <Button variant="outline" onClick={() => setDetailsLead(null)}>Close</Button>

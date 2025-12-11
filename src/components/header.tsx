@@ -1,9 +1,11 @@
 'use client';
 
-import { Search, Bell, Grid3X3, Maximize, LogOut, User, Menu } from 'lucide-react';
+import { Search, Bell, MessageCircle, Moon, Menu, ChevronDown, Calendar, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { useSignOut } from '@/hooks/use-auth';
+import { useState, useEffect, useRef } from 'react';
+import { cn } from '@/lib/utils';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -12,100 +14,129 @@ interface HeaderProps {
 
 export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
-  const signOutMutation = useSignOut();
-  
-  const handleSignOut = () => {
-    signOutMutation.mutate();
-  };
+  const { user } = useAuthStore();
+  const [appsDropdownOpen, setAppsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setAppsDropdownOpen(false);
+      }
+    };
+
+    if (appsDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [appsDropdownOpen]);
   
   return (
-    <header className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-md rounded-b-2xl h-16 flex items-center justify-between px-3 sm:px-4 lg:px-6 mx-2 sm:mx-4 lg:mx-6 mt-2 sm:mt-4">
-      <div className="flex flex-1 items-center min-w-0">
-        {/* Burger Menu Button - Always visible */}
+    <header className="bg-gradient-to-r from-violet-50 to-white shadow-sm border border-violet-200 rounded-2xl h-16 flex items-center justify-between px-4 mx-4 mt-4">
+      <div className="flex flex-1 items-center min-w-0 space-x-4">
+        {/* Hamburger Menu Button */}
         <button
           onClick={onToggleSidebar}
-          className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-white/30 text-white rounded-lg hover:bg-white/50 transition-all duration-300 hover:scale-105 mr-2 sm:mr-3 lg:mr-4 border border-white/20 flex-shrink-0"
+          className="flex items-center justify-center w-9 h-9 text-gray-600 rounded-lg hover:bg-violet-50 hover:text-violet-600 transition-all duration-200 flex-shrink-0"
           title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
         >
-          {/* Animated burger menu icon */}
-          <div className="flex flex-col justify-center items-center w-5 h-5 space-y-1">
-            {/* Top line */}
-            <span 
-              className={`block w-5 h-0.5 bg-white transform transition-all duration-300 rounded-full ${
-                isSidebarOpen ? 'rotate-45 translate-y-1.5' : 'translate-y-0'
-              }`}
-            />
-            {/* Middle line */}
-            <span 
-              className={`block w-5 h-0.5 bg-white transform transition-all duration-300 rounded-full ${
-                isSidebarOpen ? 'opacity-0' : 'opacity-100'
-              }`}
-            />
-            {/* Bottom line */}
-            <span 
-              className={`block w-5 h-0.5 bg-white transform transition-all duration-300 rounded-full ${
-                isSidebarOpen ? '-rotate-45 -translate-y-1.5' : 'translate-y-0'
-              }`}
-            />
-          </div>
+          <Menu className="w-5 h-5" />
         </button>
         
-        <h1 className="text-base sm:text-lg lg:text-xl font-semibold text-white truncate">
-          Scrap Collection Admin
-        </h1>
+        {/* Navigation Links */}
+        <div className="hidden md:flex items-center space-x-1">
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setAppsDropdownOpen(!appsDropdownOpen)}
+              className="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all"
+            >
+              <span>Apps</span>
+              <ChevronDown className={cn(
+                "w-4 h-4 transition-transform",
+                appsDropdownOpen && "rotate-180"
+              )} />
+            </button>
+            
+            {/* Dropdown Menu */}
+            {appsDropdownOpen && (
+              <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-violet-100 py-1 z-50">
+                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600">
+                  All Apps
+                </button>
+                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600">
+                  Recent Apps
+                </button>
+              </div>
+            )}
+          </div>
+          
+          <button className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all">
+            <MessageCircle className="w-4 h-4 mr-1.5" />
+            <span>Chat</span>
+          </button>
+          
+          <button className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all">
+            <Calendar className="w-4 h-4 mr-1.5" />
+            <span>Calendar</span>
+          </button>
+          
+          <button className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all">
+            <Mail className="w-4 h-4 mr-1.5" />
+            <span>Email</span>
+          </button>
+        </div>
       </div>
       
-      <div className="flex flex-shrink-0 items-center space-x-1 sm:space-x-2 lg:space-x-4">
-        {/* Search - Responsive */}
-        <div className="hidden relative sm:block">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#1F1F1F]/60 h-4 w-4" />
+      {/* Center Search Bar */}
+      <div className="hidden lg:flex flex-1 max-w-md mx-8">
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <input
             type="text"
-            placeholder="Search..."
-            className="pl-10 pr-4 py-2 w-32 sm:w-40 lg:w-64 border border-white/30 rounded-xl focus:ring-2 focus:ring-white/50 focus:border-transparent text-sm bg-white/20 backdrop-blur-sm text-[#1F1F1F] placeholder-[#1F1F1F]/60"
+            placeholder="Try to searching..."
+            className="w-full pl-10 pr-4 py-2 text-sm border border-violet-200 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white"
           />
         </div>
-        
-        {/* Search icon for mobile */}
-        <button className="sm:hidden p-2 text-white hover:text-white/80 rounded-lg hover:bg-white/20 transition-all duration-300 hover:scale-105">
-          <Search className="w-4 h-4 sm:w-5 sm:h-5" />
+      </div>
+      
+      {/* Right Side Icons and User */}
+      <div className="flex flex-shrink-0 items-center space-x-3">
+        {/* Dark Mode Toggle */}
+        <button className="p-2 text-gray-600 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all">
+          <Moon className="w-5 h-5" />
         </button>
         
-        {/* Action buttons - Responsive visibility */}
-        <button className="hidden md:flex p-2 text-white hover:text-white/80 rounded-lg hover:bg-white/20 transition-all duration-300 hover:scale-105">
-          <Grid3X3 className="w-4 h-4 sm:w-5 sm:h-5" />
+        {/* Chat Icon */}
+        <button className="p-2 text-gray-600 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all relative">
+          <MessageCircle className="w-5 h-5" />
+          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
         
-        <button className="hidden lg:flex p-2 text-white hover:text-white/80 rounded-lg hover:bg-white/20 transition-all duration-300 hover:scale-105">
-          <Maximize className="w-4 h-4 sm:w-5 sm:h-5" />
+        {/* Notifications */}
+        <button className="p-2 text-gray-600 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all relative">
+          <Bell className="w-5 h-5" />
+          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
         
-        <button className="p-2 text-white hover:text-white/80 rounded-lg hover:bg-white/20 transition-all duration-300 hover:scale-105 relative">
-          <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
-        </button>
-        
-        {/* User Avatar - Responsive */}
-        <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3">
-          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-[#1F1F1F] to-[#2d2d2d] rounded-full flex items-center justify-center shadow-md flex-shrink-0">
-            <User className="w-4 h-4 text-white" />
-          </div>
-          <div className="hidden sm:flex flex-col">
-            <span className="text-xs font-medium text-white">
-              {user?.name || 'User'}
+        {/* User Profile */}
+        <div className="flex items-center space-x-2 pl-3 border-l border-violet-200">
+          <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-violet-600 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-white font-semibold text-xs">
+              {user?.name?.charAt(0).toUpperCase() || 'M'}
             </span>
-            <span className="text-xs text-white/70">
+          </div>
+          <div className="hidden xl:flex flex-col">
+            <span className="text-sm font-semibold text-gray-900">
+              {user?.name || 'Mike Nielsen'}
+            </span>
+            <span className="text-xs text-gray-600">
               {user?.role || 'Admin'}
             </span>
           </div>
-          <button 
-            onClick={handleSignOut}
-            disabled={signOutMutation.isPending}
-            className="hidden sm:flex items-center space-x-1 text-xs sm:text-sm text-white hover:text-white/80 transition-all duration-300 hover:scale-105 whitespace-nowrap disabled:opacity-50"
-          >
-            <LogOut className="w-3 h-3" />
-            <span>{signOutMutation.isPending ? 'Signing out...' : 'Sign Out'}</span>
-          </button>
         </div>
       </div>
     </header>

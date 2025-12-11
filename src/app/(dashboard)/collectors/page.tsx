@@ -125,7 +125,7 @@ export default function CollectorsPage() {
             <CardTitle className="text-sm font-medium">Total Pickups</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{totalPickups}</div>
+            <div className="text-2xl font-bold text-violet-600">{totalPickups}</div>
           </CardContent>
         </Card>
         <Card>

@@ -98,7 +98,7 @@ export default function ReportsPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center">
-              <Users className="mr-2 h-4 w-4 text-purple-500" />
+              <Users className="mr-2 h-4 w-4 text-violet-500" />
               Active Collectors
             </CardTitle>
           </CardHeader>
@@ -138,7 +138,7 @@ export default function ReportsPage() {
                 <div key={collector.name} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-blue-600">#{index + 1}</span>
+                      <span className="text-sm font-medium text-violet-600">#{index + 1}</span>
                     </div>
                     <div>
                       <div className="font-medium">{collector.name}</div>
@@ -172,7 +172,7 @@ export default function ReportsPage() {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
-                      className="bg-blue-600 h-2 rounded-full"
+                      className="bg-violet-600 h-2 rounded-full"
                       style={{ width: `${item.percentage}%` }}
                     />
                   </div>
@@ -195,7 +195,7 @@ export default function ReportsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{reportData.weekly.pickups}</div>
+              <div className="text-2xl font-bold text-violet-600">{reportData.weekly.pickups}</div>
               <div className="text-sm text-gray-600">Pickups This Week</div>
             </div>
             <div className="text-center">
@@ -203,7 +203,7 @@ export default function ReportsPage() {
               <div className="text-sm text-gray-600">Revenue This Week</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{reportData.weekly.leads}</div>
+              <div className="text-2xl font-bold text-violet-600">{reportData.weekly.leads}</div>
               <div className="text-sm text-gray-600">New Leads This Week</div>
             </div>
           </div>
