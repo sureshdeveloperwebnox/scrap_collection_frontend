@@ -61,7 +61,7 @@ const Pagination = React.forwardRef<HTMLDivElement, PaginationProps>(
           size="sm"
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className="h-9 w-9 p-0 rounded-md border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+          className="h-9 w-9 p-0 rounded-md border-gray-200 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-200"
         >
           <ChevronLeft className="h-4 w-4" />
           <span className="sr-only">Previous page</span>
@@ -86,10 +86,10 @@ const Pagination = React.forwardRef<HTMLDivElement, PaginationProps>(
               size="sm"
               onClick={() => onPageChange(pageNum)}
               className={cn(
-                "h-9 w-9 p-0 rounded-md",
+                "h-9 w-9 p-0 rounded-md font-medium transition-all",
                 isActive 
-                  ? "bg-cyan-500 text-white hover:bg-cyan-600" 
-                  : "border-gray-200 hover:bg-gray-50"
+                  ? "bg-cyan-500 text-white hover:bg-cyan-600 border-cyan-500" 
+                  : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900"
               )}
             >
               {pageNum}
@@ -102,7 +102,7 @@ const Pagination = React.forwardRef<HTMLDivElement, PaginationProps>(
           size="sm"
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
-          className="h-9 w-9 p-0 rounded-md border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+          className="h-9 w-9 p-0 rounded-md border-gray-200 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-200"
         >
           <ChevronRight className="h-4 w-4" />
           <span className="sr-only">Next page</span>

@@ -286,7 +286,7 @@ export default function LeadsPage() {
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   
   // Filter and search state
   const [searchTerm, setSearchTerm] = useState('');
@@ -996,6 +996,7 @@ export default function LeadsPage() {
                   setRowsPerPage(value);
                   setCurrentPage(1);
                 }}
+                options={[5, 10, 20, 50, 100]}
               />
               <div className="text-sm text-gray-600">
                 Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalLeads)} of {totalLeads} leads
