@@ -120,7 +120,6 @@ export interface ScrapYard {
   address: string;
   latitude?: number;
   longitude?: number;
-  capacity: number;
   assignedEmployeeIds?: string[];
   operatingHours?: {
     [key: string]: {
@@ -129,7 +128,19 @@ export interface ScrapYard {
       closed?: boolean;
     };
   };
+  isActive?: boolean;
   organizationId: number;
+  employees?: Array<{
+    id: string;
+    fullName: string;
+    email: string;
+    role?: {
+      id: number;
+      name: string;
+      description?: string;
+      isActive: boolean;
+    };
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -200,6 +211,20 @@ export interface VehicleType {
   name: string;
   icon?: string;
   organizationId?: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Vehicle Name
+export interface VehicleName {
+  id: string;
+  name: string;
+  vehicleTypeId: number;
+  vehicleType?: VehicleType;
+  scrapYardId: string;
+  scrapYard?: ScrapYard;
+  organizationId: number;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

@@ -37,15 +37,6 @@ export const useScrapYardStats = () => {
   });
 };
 
-// Get capacity status
-export const useCapacityStatus = () => {
-  return useQuery({
-    queryKey: queryKeys.scrapYards.capacityStatus(),
-    queryFn: () => scrapYardsApi.getCapacityStatus(),
-    staleTime: 2 * 60 * 1000, // 2 minutes for critical data
-  });
-};
-
 // Get scrap yards by region
 export const useScrapYardsByRegion = (region: string) => {
   return useQuery({
@@ -80,12 +71,6 @@ export const useCreateScrapYard = () => {
       
       // Update stats
       queryClient.invalidateQueries({ queryKey: queryKeys.scrapYards.stats() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.scrapYards.capacityStatus() });
-      
-      // Update region-specific data
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.scrapYards.byRegion(newYard.state) 
-      });
     },
   });
 };
@@ -104,59 +89,20 @@ export const useUpdateScrapYard = () => {
       // Invalidate lists
       queryClient.invalidateQueries({ queryKey: queryKeys.scrapYards.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.scrapYards.stats() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.scrapYards.capacityStatus() });
-      
-      // Update region-specific data
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.scrapYards.byRegion(updatedYard.state) 
-      });
     },
   });
 };
 
-// Update current load mutation with optimistic updates
-export const useUpdateCurrentLoad = () => {
+// Delete scrap yard mutation
+export const useDeleteScrapYard = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, currentLoad }: { id: string; currentLoad: number }) => 
-      scrapYardsApi.updateCurrentLoad(id, currentLoad),
-    onSuccess: (updatedYard) => {
-      // Update scrap yard in cache
-      queryClient.setQueryData(queryKeys.scrapYards.detail(updatedYard.id), updatedYard);
-      
-      // Invalidate capacity-related queries
+    mutationFn: (id: string) => scrapYardsApi.deleteScrapYard(id),
+    onSuccess: () => {
+      // Invalidate all scrap yard queries
       queryClient.invalidateQueries({ queryKey: queryKeys.scrapYards.lists() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.scrapYards.capacityStatus() });
       queryClient.invalidateQueries({ queryKey: queryKeys.scrapYards.stats() });
-    },
-    // Optimistic update for better UX
-    onMutate: async ({ id, currentLoad }) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: queryKeys.scrapYards.detail(id) });
-      
-      // Snapshot previous value
-      const previousYard = queryClient.getQueryData(queryKeys.scrapYards.detail(id));
-      
-      // Optimistically update
-      if (previousYard) {
-        queryClient.setQueryData(queryKeys.scrapYards.detail(id), {
-          ...previousYard,
-          currentLoad,
-          updatedAt: new Date(),
-        });
-      }
-      
-      return { previousYard };
-    },
-    onError: (err, variables, context) => {
-      // Rollback on error
-      if (context?.previousYard) {
-        queryClient.setQueryData(
-          queryKeys.scrapYards.detail(variables.id), 
-          context.previousYard
-        );
-      }
     },
   });
 };

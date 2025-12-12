@@ -46,17 +46,16 @@ const navigationSections: Array<{
   {
     title: 'APPS',
     items: [
-      { name: 'Leads', href: '/leads', icon: Users },
-      { name: 'Customers', href: '/customers', icon: CircleUserRound },
-      { name: 'Orders', href: '/orders', icon: ShoppingCart },
-      { name: 'Vehicle Types', href: '/vehicle-types', icon: Car },
-      { name: 'Collectors', href: '/collectors', icon: Truck },
-      { name: 'Pickup Requests', href: '/pickup-requests', icon: ClipboardList },
-      { name: 'Scrap Yards', href: '/scrap-yards', icon: Building2 },
-      { name: 'Payments', href: '/payments', icon: CreditCard },
-      { name: 'Employees', href: '/employees', icon: UserCheck },
-      { name: 'Reports', href: '/reports', icon: BarChart3 },
-      { name: 'Settings', href: '/settings', icon: Settings },
+      { name: 'Leads', href: '/leads', icon: Users, hasChevron: true },
+      { name: 'Customers', href: '/customers', icon: CircleUserRound, hasChevron: true },
+      { name: 'Orders', href: '/orders', icon: ShoppingCart, hasChevron: true },
+      { name: 'Vehicles', href: '/vehicles/types', icon: Car, hasChevron: true },
+      { name: 'Pickup Requests', href: '/pickup-requests', icon: ClipboardList, hasChevron: true },
+      { name: 'Scrap Yards', href: '/scrap-yards', icon: Building2, hasChevron: true },
+      { name: 'Payments', href: '/payments', icon: CreditCard, hasChevron: true },
+      { name: 'Employees', href: '/employees', icon: UserCheck, hasChevron: true },
+      { name: 'Reports', href: '/reports', icon: BarChart3, hasChevron: true },
+      { name: 'Settings', href: '/settings', icon: Settings, hasChevron: true },
     ]
   }
 ];

@@ -2,35 +2,40 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Settings } from 'lucide-react';
+import { Car, List, UserCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function SettingsLayout({
+export default function VehiclesLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
 
-  const settingsMenu = [
+  const vehiclesMenu = [
     {
-      name: 'Admin Settings',
-      href: '/settings/admin',
-      icon: Settings,
+      name: 'Vehicle Types',
+      href: '/vehicles/types',
+      icon: Car,
+    },
+    {
+      name: 'Vehicle Names',
+      href: '/vehicles/names',
+      icon: List,
+    },
+    {
+      name: 'Collector Assignment',
+      href: '/vehicles/collectors',
+      icon: UserCheck,
     },
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-gray-600 mt-1">Manage your application settings</p>
-      </div>
-
+    <div className="space-y-6">
       {/* Submenu */}
       <div className="border-b">
         <nav className="flex space-x-8">
-          {settingsMenu.map((item) => {
+          {vehiclesMenu.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             
@@ -60,4 +65,3 @@ export default function SettingsLayout({
     </div>
   );
 }
-
