@@ -8,7 +8,7 @@ import { MapPin, Search } from 'lucide-react';
 
 const mapContainerStyle = {
   width: '100%',
-  height: '400px',
+  height: '450px',
 };
 
 const defaultCenter = {
@@ -22,6 +22,7 @@ interface GoogleMapPickerProps {
   onLocationChange: (lat: number, lng: number) => void;
   address?: string;
   onAddressChange?: (address: string) => void;
+  showCoordinates?: boolean; // Option to show/hide latitude/longitude input fields
 }
 
 export function GoogleMapPicker({
@@ -30,12 +31,14 @@ export function GoogleMapPicker({
   onLocationChange,
   address,
   onAddressChange,
+  showCoordinates = true, // Default to showing coordinates
 }: GoogleMapPickerProps) {
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const addressInputRef = useRef<HTMLInputElement>(null);
   const geocodeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isReverseGeocodingRef = useRef(false); // Track if address change came from reverse geocoding
+  const isAutocompleteSelectionRef = useRef(false); // Track if address change came from autocomplete selection
 
   const center = useMemo(() => {
     if (latitude && longitude && latitude !== 0 && longitude !== 0) {
@@ -60,6 +63,11 @@ export function GoogleMapPicker({
       isReverseGeocodingRef.current = false;
       return;
     }
+    // Skip if this address change came from autocomplete selection
+    if (isAutocompleteSelectionRef.current) {
+      isAutocompleteSelectionRef.current = false;
+      return;
+    }
 
     // Clear previous timeout
     if (geocodeTimeoutRef.current) {
@@ -70,7 +78,7 @@ export function GoogleMapPicker({
     geocodeTimeoutRef.current = setTimeout(() => {
       const geocoder = new window.google.maps.Geocoder();
       setIsGeocoding(true);
-      geocoder.geocode({ address }, (results, status) => {
+      geocoder.geocode({ address: address.trim() }, (results, status) => {
         setIsGeocoding(false);
         if (status === 'OK' && results && results[0]) {
           const location = results[0].geometry.location;
@@ -82,6 +90,8 @@ export function GoogleMapPicker({
               Math.abs(lng - longitude) > 0.001) {
             onLocationChange(lat, lng);
           }
+        } else if (status !== 'OK') {
+          console.warn('Geocoding failed:', status, 'for address:', address);
         }
       });
     }, 1500); // Wait 1.5 seconds after user stops typing
@@ -107,7 +117,12 @@ export function GoogleMapPicker({
         geocoder.geocode({ location: { lat, lng } }, (results, status) => {
           setIsGeocoding(false);
           if (status === 'OK' && results && results[0]) {
-            onAddressChange(results[0].formatted_address);
+            const address = results[0].formatted_address || '';
+            if (address.trim()) {
+              onAddressChange(address.trim());
+            }
+          } else if (status !== 'OK') {
+            console.warn('Reverse geocoding failed:', status);
           }
         });
       }
@@ -120,11 +135,83 @@ export function GoogleMapPicker({
       if (place.geometry && place.geometry.location) {
         const lat = place.geometry.location.lat();
         const lng = place.geometry.location.lng();
-        const address = place.formatted_address || '';
         
+        // Get the complete address - prefer formatted_address, fallback to constructing from components
+        let fullAddress = place.formatted_address || '';
+        
+        // If formatted_address is not available, construct from address components
+        if (!fullAddress && place.address_components) {
+          const addressParts: string[] = [];
+          
+          // Extract address components
+          const streetNumber = place.address_components.find(
+            (component: any) => component.types.includes('street_number')
+          )?.long_name;
+          
+          const route = place.address_components.find(
+            (component: any) => component.types.includes('route')
+          )?.long_name;
+          
+          const locality = place.address_components.find(
+            (component: any) => component.types.includes('locality')
+          )?.long_name;
+          
+          const administrativeAreaLevel1 = place.address_components.find(
+            (component: any) => component.types.includes('administrative_area_level_1')
+          )?.long_name;
+          
+          const country = place.address_components.find(
+            (component: any) => component.types.includes('country')
+          )?.long_name;
+          
+          const postalCode = place.address_components.find(
+            (component: any) => component.types.includes('postal_code')
+          )?.long_name;
+          
+          // Build address string
+          if (streetNumber || route) {
+            addressParts.push([streetNumber, route].filter(Boolean).join(' '));
+          }
+          if (locality) {
+            addressParts.push(locality);
+          }
+          if (administrativeAreaLevel1) {
+            addressParts.push(administrativeAreaLevel1);
+          }
+          if (postalCode) {
+            addressParts.push(postalCode);
+          }
+          if (country) {
+            addressParts.push(country);
+          }
+          
+          fullAddress = addressParts.join(', ');
+        }
+        
+        // Fallback to place name if still no address
+        if (!fullAddress && place.name) {
+          fullAddress = place.name;
+        }
+        
+        // Mark that this is from autocomplete selection to prevent geocoding effect
+        isAutocompleteSelectionRef.current = true;
+        
+        console.log('Place selected from autocomplete:', {
+          lat,
+          lng,
+          address: fullAddress,
+          placeName: place.name,
+          formattedAddress: place.formatted_address
+        });
+        
+        // Update coordinates first
         onLocationChange(lat, lng);
-        if (address) {
-          onAddressChange(address);
+        
+        // Then update address if we have one
+        if (fullAddress && fullAddress.trim()) {
+          onAddressChange(fullAddress.trim());
+        } else {
+          console.warn('No address found for selected place');
         }
       }
     }
@@ -189,7 +276,7 @@ export function GoogleMapPicker({
                   onLoad={onLoad}
                   onPlaceChanged={onPlaceChanged}
                   options={{
-                    fields: ['formatted_address', 'geometry', 'name', 'place_id'],
+                    fields: ['formatted_address', 'geometry', 'name', 'place_id', 'address_components'],
                     types: ['geocode', 'establishment'],
                   }}
                 >
@@ -229,6 +316,7 @@ export function GoogleMapPicker({
           </p>
         </div>
 
+        {showCoordinates && (
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="latitude">Latitude</Label>
@@ -265,6 +353,7 @@ export function GoogleMapPicker({
             </div>
           </div>
         </div>
+        )}
       </div>
   );
 }

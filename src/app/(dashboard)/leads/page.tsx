@@ -14,6 +14,7 @@ import { useLeadStatsStore } from '@/lib/store/lead-stats-store';
 import { getImageUrl, getImageUrls } from '@/utils/image-utils';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Pagination } from '@/components/ui/pagination';
 import { RowsPerPage } from '@/components/ui/rows-per-page';
@@ -343,16 +344,29 @@ export default function LeadsPage() {
     return sortMap[key] || 'createdAt';
   };
 
-  // API hooks with server-side pagination, filtering, and sorting
-  const { data: leadsData, isLoading, error } = useLeads({
-    page: currentPage,
-    limit: rowsPerPage,
-    search: debouncedSearchTerm || undefined,
-    status: getStatusFromTab(activeTab) as any,
-    vehicleCondition: scrapFilter !== 'ALL' ? scrapFilter : undefined,
-    sortBy: getApiSortBy(sortKey),
-    sortOrder: sortDir,
-  });
+  // Get available vehicle conditions - memoized for performance
+  const scrapOptions = useMemo(() => ['ALL', 'JUNK', 'DAMAGED', 'WRECKED', 'ACCIDENTAL', 'FULLY_SCRAP'], []);
+  
+  // Memoize condition filter value to prevent unnecessary re-renders
+  const conditionFilterValue = useMemo(() => scrapFilter !== 'ALL' ? scrapFilter : undefined, [scrapFilter]);
+  
+  // Memoize query parameters for better performance
+  const queryParams = useMemo(() => {
+    const status = getStatusFromTab(activeTab);
+    const sortBy = getApiSortBy(sortKey);
+    return {
+      page: currentPage,
+      limit: rowsPerPage,
+      search: debouncedSearchTerm || undefined,
+      status: status as any,
+      vehicleCondition: conditionFilterValue,
+      sortBy,
+      sortOrder: sortDir,
+    };
+  }, [currentPage, rowsPerPage, debouncedSearchTerm, activeTab, conditionFilterValue, sortKey, sortDir]);
+
+  // API hooks with server-side pagination, filtering, and sorting - optimized with memoized params
+  const { data: leadsData, isLoading, error } = useLeads(queryParams);
   const deleteLeadMutation = useDeleteLead();
   const updateLeadMutation = useUpdateLead();
 
@@ -402,17 +416,12 @@ export default function LeadsPage() {
     setCurrentPage(1);
   }, [activeTab, scrapFilter, rowsPerPage]);
 
-  // Prefetch next page for better UX
+  // Prefetch next page for better UX - optimized with memoized params
   useEffect(() => {
     if (currentPage < pagination.totalPages && organizationId) {
       const nextPageParams = {
+        ...queryParams,
         page: currentPage + 1,
-        limit: rowsPerPage,
-        search: debouncedSearchTerm || undefined,
-        status: getStatusFromTab(activeTab) as any,
-        vehicleCondition: scrapFilter !== 'ALL' ? scrapFilter : undefined,
-        sortBy: getApiSortBy(sortKey),
-        sortOrder: sortDir,
         organizationId,
       };
       queryClient.prefetchQuery({
@@ -421,10 +430,7 @@ export default function LeadsPage() {
         staleTime: 3 * 60 * 1000,
       });
     }
-  }, [currentPage, rowsPerPage, debouncedSearchTerm, activeTab, scrapFilter, sortKey, sortDir, pagination.totalPages, queryClient, organizationId]);
-
-  // Get available vehicle conditions (this could be from a separate API call)
-  const scrapOptions = ['ALL', 'JUNK', 'DAMAGED', 'WRECKED', 'ACCIDENTAL', 'FULLY_SCRAP'];
+  }, [currentPage, pagination.totalPages, queryClient, organizationId, queryParams]);
 
   const handleDeleteLead = async (id: string) => {
     if (confirm('Delete this lead?')) {
@@ -577,15 +583,21 @@ export default function LeadsPage() {
             </div>
               )}
               
-             
+              {/* Filter Icon Button - Toggle filter panel */}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 active:bg-gray-200 transition-all h-9 w-9 p-0"
+                className={`border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 active:bg-gray-200 transition-all h-9 w-9 p-0 ${
+                  scrapFilter !== 'ALL' ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : ''
+                } ${
+                  isFilterOpen ? 'border-cyan-500 bg-cyan-50' : ''
+                }`}
+                title={isFilterOpen ? "Hide filters" : "Show filters"}
               >
-                <Filter className="h-4 w-4" />
+                <Filter className={`h-4 w-4 ${scrapFilter !== 'ALL' ? 'text-cyan-700' : ''}`} />
               </Button>
+              
               <Button
                 onClick={() => setIsFormOpen(true)}
                 className="bg-cyan-500 hover:bg-cyan-600 text-white h-9 w-9 p-0"
@@ -596,23 +608,61 @@ export default function LeadsPage() {
             </div>
           </div>
 
-          {/* Filter Dropdown */}
+          {/* Condition Filter - Only shown when filter icon is clicked */}
           {isFilterOpen && (
-            <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="flex items-center gap-2">
-              <Select value={scrapFilter} onValueChange={(v) => setScrapFilter(v)}>
-                  <SelectTrigger className="w-[200px] bg-white">
-                    <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Categories</SelectItem>
-                    {scrapOptions.filter(opt => opt !== 'ALL').map((opt) => (
-                    <SelectItem key={opt} value={opt}>{opt.replace(/_/g, ' ')}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200 animate-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 flex-1">
+                  <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter by Condition:</Label>
+                  <Select 
+                    value={scrapFilter} 
+                    onValueChange={(v) => {
+                      setScrapFilter(v);
+                      setCurrentPage(1); // Reset to first page when filter changes
+                    }}
+                  >
+                    <SelectTrigger className={`w-[200px] bg-white border-gray-200 hover:border-gray-300 transition-all ${
+                      scrapFilter !== 'ALL' ? 'border-cyan-500 ring-2 ring-cyan-200' : ''
+                    }`}>
+                      <SelectValue placeholder="All Categories">
+                        {scrapFilter === 'ALL' ? 'All Categories' : scrapFilter.replace(/_/g, ' ')}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All Categories</SelectItem>
+                      {scrapOptions.filter(opt => opt !== 'ALL').map((opt) => (
+                        <SelectItem key={opt} value={opt}>
+                          {opt.replace(/_/g, ' ')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {scrapFilter !== 'ALL' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setScrapFilter('ALL');
+                        setCurrentPage(1);
+                      }}
+                      className="h-8 px-2 text-gray-500 hover:text-gray-700"
+                      title="Clear filter"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsFilterOpen(false)}
+                  className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
+                  title="Close filter panel"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
           )}
         </CardHeader>
         <CardContent className="p-6">
@@ -969,9 +1019,52 @@ export default function LeadsPage() {
 
       {/* Quick View Dialog */}
       <Dialog open={!!detailsLead} onOpenChange={(open) => !open && setDetailsLead(null)}>
-        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Lead Details</DialogTitle>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto [&>button]:hidden">
+          <DialogHeader className="flex flex-row items-center justify-between pb-4 border-b border-gray-200">
+            <DialogTitle className="text-xl font-bold text-gray-900">Lead Details</DialogTitle>
+            <div className="flex items-center gap-2">
+              {detailsLead && (
+                <Button 
+                  onClick={() => {
+                    const convertedLead: Lead = {
+                      id: detailsLead.id,
+                      organizationId: detailsLead.organizationId,
+                      fullName: detailsLead.fullName || '',
+                      phone: detailsLead.phone || '',
+                      email: detailsLead.email,
+                      vehicleType: detailsLead.vehicleType as any,
+                      vehicleMake: detailsLead.vehicleMake,
+                      vehicleModel: detailsLead.vehicleModel,
+                      vehicleYear: detailsLead.vehicleYear,
+                      vehicleCondition: detailsLead.vehicleCondition as any,
+                      locationAddress: detailsLead.locationAddress,
+                      latitude: detailsLead.latitude,
+                      longitude: detailsLead.longitude,
+                      leadSource: detailsLead.leadSource as any,
+                      photos: detailsLead.photos,
+                      notes: detailsLead.notes,
+                      status: detailsLead.status as any,
+                      customerId: detailsLead.customerId,
+                      createdAt: new Date(detailsLead.createdAt),
+                      updatedAt: new Date(detailsLead.updatedAt),
+                    };
+                    setEditingLead(convertedLead);
+                    setIsFormOpen(true);
+                    setDetailsLead(null);
+                  }}
+                  className="bg-cyan-500 hover:bg-cyan-600 text-white h-10 px-4"
+                >
+                  <Edit2 className="h-4 w-4 mr-2" /> Edit
+                </Button>
+              )}
+              <Button 
+                variant="outline" 
+                onClick={() => setDetailsLead(null)}
+                className="h-10 px-4 border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all"
+              >
+                Cancel
+              </Button>
+            </div>
           </DialogHeader>
           {detailsLead && (
             <div className="space-y-4">
@@ -1002,14 +1095,53 @@ export default function LeadsPage() {
                       <div className="font-medium">{detailsLead.email}</div>
                     </>
                   )}
-                  {detailsLead.locationAddress && (
-                    <>
-                      <div className="text-muted-foreground">Address</div>
-                      <div className="font-medium">{detailsLead.locationAddress}</div>
-                    </>
-                  )}
                 </div>
               </div>
+
+              {/* Location Information */}
+              {(detailsLead.locationAddress || detailsLead.latitude || detailsLead.longitude) && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Location Information</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    {detailsLead.locationAddress && (
+                      <>
+                        <div className="text-muted-foreground">Address</div>
+                        <div className="font-medium break-words">{detailsLead.locationAddress}</div>
+                      </>
+                    )}
+                    {(detailsLead.latitude !== undefined && detailsLead.latitude !== null) && (
+                      <>
+                        <div className="text-muted-foreground">Latitude</div>
+                        <div className="font-medium font-mono text-xs">{detailsLead.latitude.toFixed(6)}</div>
+                      </>
+                    )}
+                    {(detailsLead.longitude !== undefined && detailsLead.longitude !== null) && (
+                      <>
+                        <div className="text-muted-foreground">Longitude</div>
+                        <div className="font-medium font-mono text-xs">{detailsLead.longitude.toFixed(6)}</div>
+                      </>
+                    )}
+                    {(detailsLead.latitude && detailsLead.longitude) && (
+                      <>
+                        <div className="text-muted-foreground">Map</div>
+                        <div>
+                          <a
+                            href={`https://www.google.com/maps?q=${detailsLead.latitude},${detailsLead.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-cyan-600 hover:text-cyan-700 hover:underline font-medium inline-flex items-center gap-1"
+                          >
+                            View on Google Maps
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Vehicle Information */}
               <div className="space-y-3">
@@ -1096,42 +1228,6 @@ export default function LeadsPage() {
                     </>
                   )}
                 </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2 pt-4 border-t">
-                <Button 
-                  onClick={() => {
-                  const convertedLead: Lead = {
-                    id: detailsLead.id,
-                    organizationId: detailsLead.organizationId,
-                    fullName: detailsLead.fullName || '',
-                    phone: detailsLead.phone || '',
-                    email: detailsLead.email,
-                    vehicleType: detailsLead.vehicleType as any,
-                    vehicleMake: detailsLead.vehicleMake,
-                    vehicleModel: detailsLead.vehicleModel,
-                    vehicleYear: detailsLead.vehicleYear,
-                    vehicleCondition: detailsLead.vehicleCondition as any,
-                    locationAddress: detailsLead.locationAddress,
-                    latitude: detailsLead.latitude,
-                    longitude: detailsLead.longitude,
-                    leadSource: detailsLead.leadSource as any,
-                    photos: detailsLead.photos,
-                    notes: detailsLead.notes,
-                    status: detailsLead.status as any,
-                    customerId: detailsLead.customerId,
-                    createdAt: new Date(detailsLead.createdAt),
-                    updatedAt: new Date(detailsLead.updatedAt),
-                  };
-                  setEditingLead(convertedLead);
-                  setIsFormOpen(true);
-                }}
-                  className="bg-cyan-500 hover:bg-cyan-600 text-white"
-                >
-                  <Edit2 className="h-4 w-4 mr-2" /> Edit
-                </Button>
-                <Button variant="outline" onClick={() => setDetailsLead(null)}>Close</Button>
               </div>
             </div>
           )}
