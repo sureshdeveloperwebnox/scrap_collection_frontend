@@ -169,23 +169,57 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{scrapYard ? 'Edit Scrap Yard' : 'Add New Scrap Yard'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="yardName">Scrap Yard Name</Label>
-            <Input
-              id="yardName"
-              value={formData.yardName}
-              onChange={(e) => handleInputChange('yardName', e.target.value)}
-              required
-              disabled={isLoading}
-              placeholder="e.g., Sydney Scrap Yard"
-            />
+          {/* Horizontal form fields row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="yardName">Scrap Yard Name</Label>
+              <Input
+                id="yardName"
+                value={formData.yardName}
+                onChange={(e) => handleInputChange('yardName', e.target.value)}
+                required
+                disabled={isLoading}
+                placeholder="e.g., Sydney Scrap Yard"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="managerId">Manager</Label>
+              <Select
+                value={formData.managerId || 'none'}
+                onValueChange={(value) => handleInputChange('managerId', value === 'none' ? '' : value)}
+                disabled={isLoading}
+              >
+                <SelectTrigger>
+                  <div className="flex items-center">
+                    <Users className="h-4 w-4 mr-2 text-gray-400" />
+                    <SelectValue placeholder="Select a manager" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Manager</SelectItem>
+                  {employees.map((employee: any) => {
+                    const roleName = employee.role?.name || employee.role || '';
+                    return (
+                      <SelectItem key={employee.id} value={employee.id}>
+                        {employee.fullName} {roleName ? `(${roleName})` : ''}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                Select a manager to assign to this scrap yard.
+              </p>
+            </div>
           </div>
           
+          {/* Location section - full width */}
           <GoogleMapPicker
             latitude={formData.latitude}
             longitude={formData.longitude}
@@ -197,36 +231,6 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
               setFormData(prev => ({ ...prev, address }));
             }}
           />
-
-          <div className="space-y-2">
-            <Label htmlFor="managerId">Manager</Label>
-            <Select
-              value={formData.managerId || 'none'}
-              onValueChange={(value) => handleInputChange('managerId', value === 'none' ? '' : value)}
-              disabled={isLoading}
-            >
-              <SelectTrigger>
-                <div className="flex items-center">
-                  <Users className="h-4 w-4 mr-2 text-gray-400" />
-                  <SelectValue placeholder="Select a manager" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No Manager</SelectItem>
-                {employees.map((employee: any) => {
-                  const roleName = employee.role?.name || employee.role || '';
-                  return (
-                    <SelectItem key={employee.id} value={employee.id}>
-                      {employee.fullName} {roleName ? `(${roleName})` : ''}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-gray-500">
-              Select a manager to assign to this scrap yard.
-            </p>
-          </div>
 
           <DialogFooter>
             <Button 

@@ -198,7 +198,7 @@ export function GoogleMapPicker({
                     id="address-search"
                     value={address || ''}
                     onChange={(e) => onAddressChange(e.target.value)}
-                    placeholder="🔍 Search for a location (e.g., Sydney, Melbourne, address, etc.)"
+                    placeholder="Search for a location"
                     className="pl-10"
                   />
                 </Autocomplete>
