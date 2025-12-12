@@ -61,6 +61,24 @@ export const queryKeys = {
     stats: (organizationId?: number) => [...queryKeys.vehicleTypes.all, 'stats', organizationId] as const,
   },
 
+  // Vehicle Names
+  vehicleNames: {
+    all: ['vehicle-names'] as const,
+    lists: () => [...queryKeys.vehicleNames.all, 'list'] as const,
+    list: (filters?: Record<string, any>) => [...queryKeys.vehicleNames.lists(), filters] as const,
+    details: () => [...queryKeys.vehicleNames.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.vehicleNames.details(), id] as const,
+  },
+
+  // Collector Assignments
+  collectorAssignments: {
+    all: ['collector-assignments'] as const,
+    lists: () => [...queryKeys.collectorAssignments.all, 'list'] as const,
+    list: (filters?: Record<string, any>) => [...queryKeys.collectorAssignments.lists(), filters] as const,
+    details: () => [...queryKeys.collectorAssignments.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.collectorAssignments.details(), id] as const,
+  },
+
   // Orders
   orders: {
     all: ['orders'] as const,

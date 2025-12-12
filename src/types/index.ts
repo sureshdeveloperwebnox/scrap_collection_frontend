@@ -215,3 +215,17 @@ export interface VehicleType {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Vehicle Name
+export interface VehicleName {
+  id: string;
+  name: string;
+  vehicleTypeId: number;
+  vehicleType?: VehicleType;
+  scrapYardId: string;
+  scrapYard?: ScrapYard;
+  organizationId: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
