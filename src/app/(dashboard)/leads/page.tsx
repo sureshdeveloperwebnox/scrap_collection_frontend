@@ -735,7 +735,7 @@ export default function LeadsPage() {
                       </TableHead>
                       <TableHead>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('createdAt')}>
-                          Created At 
+                          Lead Date 
                         </button>
                       </TableHead>
                       <TableHead className="w-12">Action</TableHead>
