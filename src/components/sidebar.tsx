@@ -171,25 +171,33 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
                           'flex items-center px-3 py-2.5 text-sm font-medium transition-all duration-300 relative group',
                           'transform hover:scale-105 active:scale-95',
                           isActive
-                            ? 'bg-violet-500 text-white rounded-full shadow-lg shadow-violet-500/50'
+                            ? 'bg-violet-500 text-white rounded-full shadow-lg shadow-violet-500/50 animate-glow'
                             : isHovered && section.title === 'APPS'
                             ? 'bg-violet-100 text-violet-700 rounded-full'
                             : 'text-gray-700 hover:bg-violet-100 hover:text-violet-700 rounded-lg',
-                          !isCollapsed && 'animate-in fade-in slide-in-from-left-2',
-                          !isCollapsed && `delay-[${index * 50}ms]`
+                          !isCollapsed && !isActive && 'animate-in fade-in slide-in-from-left-2',
+                          !isCollapsed && !isActive && `delay-[${index * 50}ms]`
                         )}
                         style={!isCollapsed ? { animationDelay: `${index * 50}ms` } : {}}
                         title={isCollapsed ? item.name : undefined}
                       >
+                        {/* Shining effect overlay for active item */}
+                        {isActive && (
+                          <>
+                            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shine pointer-events-none" />
+                            <div className="absolute inset-0 rounded-full animate-shine-sweep pointer-events-none" />
+                          </>
+                        )}
+                        
                         {/* Icon */}
                         <div className={cn(
-                          "flex flex-shrink-0 justify-center items-center w-5 h-5",
+                          "flex flex-shrink-0 justify-center items-center w-5 h-5 relative z-10",
                           isCollapsed ? "lg:mx-auto" : ""
                         )}>
                           <item.icon className={cn(
                             "w-5 h-5 transition-all duration-300 transform",
                             isActive 
-                              ? "text-white scale-110" 
+                              ? "text-white scale-110 drop-shadow-lg" 
                               : isHovered && section.title === 'APPS' 
                               ? "text-violet-700 scale-110 rotate-12" 
                               : "text-gray-600 group-hover:scale-110 group-hover:rotate-3"
@@ -198,8 +206,9 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
                         
                         {/* Text */}
                         <span className={cn(
-                          "ml-3 transition-all duration-300 flex-1",
-                          isCollapsed ? "lg:opacity-0 lg:w-0 lg:ml-0 lg:hidden" : "opacity-100 block animate-in fade-in"
+                          "ml-3 transition-all duration-300 flex-1 relative z-10",
+                          isCollapsed ? "lg:opacity-0 lg:w-0 lg:ml-0 lg:hidden" : "opacity-100 block",
+                          !isActive && "animate-in fade-in"
                         )}>
                           {item.name}
                         </span>
@@ -207,9 +216,9 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
                         {/* Chevron for APPS section */}
                         {item.hasChevron && !isCollapsed && (
                           <ChevronRight className={cn(
-                            "w-4 h-4 transition-all duration-300 transform",
+                            "w-4 h-4 transition-all duration-300 transform relative z-10",
                             isActive 
-                              ? "text-white translate-x-1" 
+                              ? "text-white translate-x-1 drop-shadow-lg" 
                               : isHovered && section.title === 'APPS' 
                               ? "text-violet-700 translate-x-1 scale-110" 
                               : "text-gray-400 group-hover:translate-x-1 group-hover:scale-110"

@@ -69,6 +69,27 @@
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
   }
+
+  /* Shine animation for selected menu items */
+  @keyframes shine-sweep {
+    0% {
+      background-position: -200% center;
+    }
+    100% {
+      background-position: 200% center;
+    }
+  }
+
+  .animate-shine-sweep {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shine-sweep 3s ease-in-out infinite;
+  }
 }
 
 /* Custom styles for react-phone-input-2 - Country code inside input field */

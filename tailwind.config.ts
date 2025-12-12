@@ -66,10 +66,34 @@ const config: Config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "shine": {
+          "0%": { 
+            boxShadow: "0 0 0 0 rgba(139, 92, 246, 0.4)",
+            transform: "scale(1)",
+          },
+          "50%": { 
+            boxShadow: "0 0 20px 8px rgba(139, 92, 246, 0.6)",
+            transform: "scale(1.02)",
+          },
+          "100%": { 
+            boxShadow: "0 0 0 0 rgba(139, 92, 246, 0.4)",
+            transform: "scale(1)",
+          },
+        },
+        "glow": {
+          "0%, 100%": { 
+            boxShadow: "0 0 10px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3)",
+          },
+          "50%": { 
+            boxShadow: "0 0 20px rgba(139, 92, 246, 0.8), 0 0 30px rgba(139, 92, 246, 0.5)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "shine": "shine 2s ease-in-out infinite",
+        "glow": "glow 2s ease-in-out infinite",
       },
     },
   },
