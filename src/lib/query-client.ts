@@ -53,6 +53,16 @@ export const queryKeys = {
     stats: (organizationId?: number) => [...queryKeys.leads.all, 'stats', organizationId] as const,
   },
 
+  // Customers
+  customers: {
+    all: ['customers'] as const,
+    lists: () => [...queryKeys.customers.all, 'list'] as const,
+    list: (filters?: Record<string, any>) => [...queryKeys.customers.lists(), filters] as const,
+    details: () => [...queryKeys.customers.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.customers.details(), id] as const,
+    stats: (organizationId?: number) => [...queryKeys.customers.all, 'stats', organizationId] as const,
+  },
+
   // Vehicle Types
   vehicleTypes: {
     all: ['vehicle-types'] as const,

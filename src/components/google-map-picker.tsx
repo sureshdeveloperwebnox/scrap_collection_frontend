@@ -6,10 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MapPin, Search } from 'lucide-react';
 
-const mapContainerStyle = {
+const defaultMapHeight = 450;
+
+const getMapContainerStyle = (height?: number) => ({
   width: '100%',
-  height: '450px',
-};
+  height: `${height || defaultMapHeight}px`,
+});
 
 const defaultCenter = {
   lat: -25.2744, // Australia center
@@ -23,6 +25,7 @@ interface GoogleMapPickerProps {
   address?: string;
   onAddressChange?: (address: string) => void;
   showCoordinates?: boolean; // Option to show/hide latitude/longitude input fields
+  mapHeight?: number; // Custom map height in pixels
 }
 
 export function GoogleMapPicker({
@@ -32,7 +35,9 @@ export function GoogleMapPicker({
   address,
   onAddressChange,
   showCoordinates = true, // Default to showing coordinates
+  mapHeight = defaultMapHeight, // Default height
 }: GoogleMapPickerProps) {
+  const mapContainerStyle = useMemo(() => getMapContainerStyle(mapHeight), [mapHeight]);
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const addressInputRef = useRef<HTMLInputElement>(null);
@@ -263,14 +268,14 @@ export function GoogleMapPicker({
   }
 
   return (
-    <div className="space-y-4">
-        <div className="space-y-2">
+    <div className="space-y-4 w-full">
+        <div className="space-y-2 w-full">
           <Label>Location</Label>
           
           {/* Search box above the map */}
           {onAddressChange && (
-            <div className="space-y-2 mb-3">
-              <div className="relative">
+            <div className="space-y-2 mb-3 w-full">
+              <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-10" />
                 <Autocomplete
                   onLoad={onLoad}
@@ -286,7 +291,7 @@ export function GoogleMapPicker({
                     value={address || ''}
                     onChange={(e) => onAddressChange(e.target.value)}
                     placeholder="Search for a location"
-                    className="pl-10"
+                    className="pl-10 w-full"
                   />
                 </Autocomplete>
               </div>
@@ -296,20 +301,22 @@ export function GoogleMapPicker({
             </div>
           )}
 
-          <div className="border rounded-md overflow-hidden relative">
-            <GoogleMap
-              mapContainerStyle={mapContainerStyle}
-              center={center}
-              zoom={latitude && longitude && latitude !== 0 && longitude !== 0 ? 15 : 5}
-              onClick={onMapClick}
-              options={{
-                streetViewControl: false,
-                mapTypeControl: false,
-                fullscreenControl: true,
-              }}
-            >
-              {position && <Marker position={position} />}
-            </GoogleMap>
+          <div className="border rounded-md overflow-hidden relative w-full p-0 m-0">
+            <div className="w-full" style={{ width: '100%' }}>
+              <GoogleMap
+                mapContainerStyle={mapContainerStyle}
+                center={center}
+                zoom={latitude && longitude && latitude !== 0 && longitude !== 0 ? 15 : 5}
+                onClick={onMapClick}
+                options={{
+                  streetViewControl: false,
+                  mapTypeControl: false,
+                  fullscreenControl: true,
+                }}
+              >
+                {position && <Marker position={position} />}
+              </GoogleMap>
+            </div>
           </div>
           <p className="text-xs text-gray-500">
             Click on the map to select a location. The address will be automatically filled.

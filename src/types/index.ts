@@ -106,6 +106,12 @@ export interface Customer {
   address?: string;
   latitude?: number;
   longitude?: number;
+  vehicleType?: VehicleTypeEnum;
+  vehicleMake?: string;
+  vehicleModel?: string;
+  vehicleNumber?: string;
+  vehicleYear?: number;
+  vehicleCondition?: VehicleConditionEnum;
   accountStatus: CustomerStatus;
   joinedDate: Date;
   organizationId: number;
