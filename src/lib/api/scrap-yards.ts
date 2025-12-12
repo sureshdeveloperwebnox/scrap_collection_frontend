@@ -33,22 +33,9 @@ export const scrapYardsApi = {
     return response.data;
   },
 
-  // Update scrap yard current load
-  updateCurrentLoad: async (id: string, currentLoad: number): Promise<ScrapYard> => {
-    const response = await apiClient.patch(`/scrap-yards/${id}/load`, { currentLoad });
-    return response.data;
-  },
-
-  // Get scrap yard capacity status
-  getCapacityStatus: async (): Promise<{
-    totalCapacity: number;
-    totalCurrentLoad: number;
-    utilizationPercentage: number;
-    nearCapacityYards: ScrapYard[];
-    availableCapacity: number;
-  }> => {
-    const response = await apiClient.get('/scrap-yards/capacity-status');
-    return response.data;
+  // Delete scrap yard
+  deleteScrapYard: async (id: string): Promise<void> => {
+    await apiClient.delete(`/scrap-yards/${id}`);
   },
 
   // Get scrap yards by region
@@ -62,9 +49,6 @@ export const scrapYardsApi = {
     total: number;
     active: number;
     maintenance: number;
-    totalCapacity: number;
-    totalCurrentLoad: number;
-    averageUtilization: number;
     byState: Record<string, number>;
   }> => {
     const response = await apiClient.get('/scrap-yards/stats');

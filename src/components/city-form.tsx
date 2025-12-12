@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { City } from '@/lib/api/cities';
 import { useCreateCity, useUpdateCity } from '@/hooks/use-cities';
 import { toast } from 'sonner';
+import { GoogleMapPicker } from '@/components/google-map-picker';
 
 interface CityFormProps {
   city?: City;
@@ -106,7 +107,7 @@ export function CityForm({ city, isOpen, onClose, onSubmit }: CityFormProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{city ? 'Edit City' : 'Add New City'}</DialogTitle>
         </DialogHeader>
@@ -123,37 +124,13 @@ export function CityForm({ city, isOpen, onClose, onSubmit }: CityFormProps) {
             />
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="latitude">Latitude</Label>
-            <Input
-              id="latitude"
-              type="number"
-              step="any"
-              value={formData.latitude}
-              onChange={(e) => handleInputChange('latitude', parseFloat(e.target.value) || 0)}
-              required
-              disabled={isLoading}
-              placeholder="-90 to 90"
-              min={-90}
-              max={90}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="longitude">Longitude</Label>
-            <Input
-              id="longitude"
-              type="number"
-              step="any"
-              value={formData.longitude}
-              onChange={(e) => handleInputChange('longitude', parseFloat(e.target.value) || 0)}
-              required
-              disabled={isLoading}
-              placeholder="-180 to 180"
-              min={-180}
-              max={180}
-            />
-          </div>
+          <GoogleMapPicker
+            latitude={formData.latitude}
+            longitude={formData.longitude}
+            onLocationChange={(lat, lng) => {
+              setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
+            }}
+          />
 
           {/* Only show active toggle when editing */}
           {city && (

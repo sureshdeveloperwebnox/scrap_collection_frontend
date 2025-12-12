@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Settings, MapPin } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function SettingsLayout({
@@ -17,11 +17,6 @@ export default function SettingsLayout({
       name: 'Admin Settings',
       href: '/settings/admin',
       icon: Settings,
-    },
-    {
-      name: 'Work Zone',
-      href: '/settings/work-zone',
-      icon: MapPin,
     },
   ];
 
