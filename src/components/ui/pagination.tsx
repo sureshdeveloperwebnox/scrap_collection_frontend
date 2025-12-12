@@ -61,7 +61,7 @@ const Pagination = React.forwardRef<HTMLDivElement, PaginationProps>(
           size="sm"
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className="h-9 w-9 p-0"
+          className="h-9 w-9 p-0 rounded-md border-gray-200 hover:bg-gray-50 disabled:opacity-50"
         >
           <ChevronLeft className="h-4 w-4" />
           <span className="sr-only">Previous page</span>
@@ -86,8 +86,10 @@ const Pagination = React.forwardRef<HTMLDivElement, PaginationProps>(
               size="sm"
               onClick={() => onPageChange(pageNum)}
               className={cn(
-                "h-9 w-9 p-0",
-                isActive && "bg-primary text-primary-foreground"
+                "h-9 w-9 p-0 rounded-md",
+                isActive 
+                  ? "bg-cyan-500 text-white hover:bg-cyan-600" 
+                  : "border-gray-200 hover:bg-gray-50"
               )}
             >
               {pageNum}
@@ -100,7 +102,7 @@ const Pagination = React.forwardRef<HTMLDivElement, PaginationProps>(
           size="sm"
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
-          className="h-9 w-9 p-0"
+          className="h-9 w-9 p-0 rounded-md border-gray-200 hover:bg-gray-50 disabled:opacity-50"
         >
           <ChevronRight className="h-4 w-4" />
           <span className="sr-only">Next page</span>

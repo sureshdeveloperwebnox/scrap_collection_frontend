@@ -56,8 +56,8 @@ export default function DashboardPage() {
           
           <div className="p-4 rounded-lg border border-gray-200 transition-shadow cursor-pointer hover:shadow-md">
             <div className="flex items-center space-x-3">
-              <div className="flex justify-center items-center w-10 h-10 bg-violet-100 rounded-lg">
-                <span className="text-violet-600">📊</span>
+              <div className="flex justify-center items-center w-10 h-10 bg-cyan-100 rounded-lg">
+                <span className="text-cyan-600">📊</span>
               </div>
               <div>
                 <h3 className="font-medium text-gray-900">View Reports</h3>

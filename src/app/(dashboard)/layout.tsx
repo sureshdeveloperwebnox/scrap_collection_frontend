@@ -52,7 +52,7 @@ export default function DashboardLayout({
         <div className={cn(
           "flex-1 flex flex-col transition-all duration-300 min-w-0",
           // Adjust main content based on sidebar collapse state (desktop only)
-          !isMobile && sidebarCollapsed ? "lg:ml-20" : !isMobile ? "lg:ml-[272px]" : "ml-0"
+          !isMobile && sidebarCollapsed ? "lg:ml-20" : !isMobile ? "lg:ml-[260px]" : "ml-0"
         )}>
           <Header 
             onToggleSidebar={toggleSidebar} 

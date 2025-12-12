@@ -225,7 +225,7 @@ export default function CustomersPage() {
           <h1 className="text-3xl font-bold">Customers</h1>
           <p className="text-gray-600 mt-1">{isLoading ? 'Loading...' : `${totalCustomers} Total Customers`}</p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)} className="hidden sm:inline-flex bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+        <Button onClick={() => setIsFormOpen(true)} className="hidden sm:inline-flex bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
           <Plus className="mr-2 h-4 w-4" />
           Add Customer
         </Button>
@@ -332,7 +332,7 @@ export default function CustomersPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredSortedCustomers.map((customer) => (
-                      <TableRow key={customer.id} className="even:bg-muted/50 border-b hover:bg-gradient-to-r hover:from-violet-50 hover:to-purple-50 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md" onClick={() => setDetailsCustomer(customer)}>
+                      <TableRow key={customer.id} className="even:bg-muted/50 border-b hover:bg-gradient-to-r hover:from-cyan-50 hover:to-purple-50 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md" onClick={() => setDetailsCustomer(customer)}>
                         <TableCell className="font-medium">{customer.name}</TableCell>
                         <TableCell>
                           <div>
@@ -397,7 +397,7 @@ export default function CustomersPage() {
                                 setEditingCustomer(convertedCustomer);
                                 setIsFormOpen(true);
                               }}
-                              className="h-8 w-8 p-0 hover:bg-violet-50 text-violet-600 transition-all duration-200"
+                              className="h-8 w-8 p-0 hover:bg-cyan-50 text-cyan-600 transition-all duration-200"
                             >
                               <Edit2 className="h-4 w-4" />
                             </Button>
@@ -427,7 +427,7 @@ export default function CustomersPage() {
               {/* Mobile cards */}
               <div className="sm:hidden space-y-3">
                 {filteredSortedCustomers.map((customer) => (
-                  <div key={customer.id} className="rounded-lg border bg-card p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:bg-gradient-to-br hover:from-violet-50 hover:to-purple-50 cursor-pointer" onClick={() => setDetailsCustomer(customer)}>
+                  <div key={customer.id} className="rounded-lg border bg-card p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:bg-gradient-to-br hover:from-cyan-50 hover:to-purple-50 cursor-pointer" onClick={() => setDetailsCustomer(customer)}>
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="font-semibold">{customer.name}</div>
@@ -472,7 +472,7 @@ export default function CustomersPage() {
                         } as unknown as Customer;
                         setEditingCustomer(convertedCustomer);
                         setIsFormOpen(true);
-                      }} className="hover:bg-violet-50 text-violet-600 transition-all duration-200">
+                      }} className="hover:bg-cyan-50 text-cyan-600 transition-all duration-200">
                         <Edit2 className="h-4 w-4 mr-1" /> Edit
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleDeleteCustomer(customer.id.toString())} className="hover:bg-rose-50 text-rose-600 transition-all duration-200">
@@ -488,7 +488,7 @@ export default function CustomersPage() {
       </Card>
 
       {/* Sticky Add button for mobile */}
-      <Button onClick={() => setIsFormOpen(true)} className="sm:hidden fixed bottom-6 right-6 rounded-full shadow-xl bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white transform hover:scale-110 transition-all duration-200 hover:shadow-2xl">
+      <Button onClick={() => setIsFormOpen(true)} className="sm:hidden fixed bottom-6 right-6 rounded-full shadow-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white transform hover:scale-110 transition-all duration-200 hover:shadow-2xl">
         <Plus className="mr-2 h-4 w-4" /> Add Customer
       </Button>
 

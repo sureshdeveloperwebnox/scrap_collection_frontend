@@ -62,8 +62,8 @@ export default function SignInPage() {
           {/* Mobile Header */}
           <div className="bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 p-3 sm:p-4 text-center flex-shrink-0 relative overflow-hidden">
             {/* Mobile decorative elements */}
-            <div className="absolute top-2 left-2 w-16 h-4 bg-gradient-to-r from-violet-400 to-purple-400 rounded-full opacity-60"></div>
-            <div className="absolute top-4 right-3 w-12 h-3 bg-gradient-to-r from-violet-400 to-purple-400 rounded-full opacity-60"></div>
+            <div className="absolute top-2 left-2 w-16 h-4 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full opacity-60"></div>
+            <div className="absolute top-4 right-3 w-12 h-3 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full opacity-60"></div>
             <div className="absolute left-3 bottom-4 w-14 h-3 bg-gradient-to-r from-orange-300 to-yellow-400 rounded-full opacity-60"></div>
             <div className="absolute right-2 bottom-2 w-18 h-4 bg-gradient-to-r from-pink-300 to-orange-400 rounded-full opacity-60"></div>
             
@@ -126,7 +126,7 @@ export default function SignInPage() {
                     />
                     <span className="ml-2 text-xs text-gray-600">Remember</span>
                   </label>
-                  <a href="#" className="text-xs text-violet-600 hover:underline text-center">
+                  <a href="#" className="text-xs text-cyan-600 hover:underline text-center">
                     Forgot password?
                   </a>
                 </div>
@@ -134,7 +134,7 @@ export default function SignInPage() {
                 <button
                   type="submit"
                   disabled={signInMutation.isPending || isLoading}
-                  className="py-2 w-full font-medium text-white bg-gradient-to-r from-violet-500 to-violet-600 rounded-lg transition-colors hover:from-violet-600 hover:to-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  className="py-2 w-full font-medium text-white bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-lg transition-colors hover:from-cyan-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
                   {signInMutation.isPending || isLoading ? 'Signing in...' : 'LOGIN'}
                 </button>
@@ -172,7 +172,7 @@ export default function SignInPage() {
               
               <p className="mt-4 text-xs text-center text-gray-600">
                 Don't have an account?{' '}
-                <Link href="/auth/signup" className="text-violet-600 hover:underline">
+                <Link href="/auth/signup" className="text-cyan-600 hover:underline">
                   Sign up
                 </Link>
               </p>
@@ -185,10 +185,10 @@ export default function SignInPage() {
           {/* Left side - Welcome Section */}
           <div className="flex relative flex-1 justify-center items-center p-12 bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900">
             {/* Simplified decorative elements */}
-            <div className="absolute top-20 left-20 w-32 h-8 bg-gradient-to-r from-violet-400 to-purple-400 rounded-full opacity-80"></div>
-            <div className="absolute top-32 right-40 w-24 h-6 bg-gradient-to-r from-violet-400 to-purple-400 rounded-full opacity-80"></div>
-            <div className="absolute left-32 bottom-40 w-28 h-7 bg-gradient-to-r from-violet-300 to-purple-400 rounded-full opacity-80"></div>
-            <div className="absolute right-20 bottom-20 w-36 h-8 bg-gradient-to-r from-violet-300 to-purple-400 rounded-full opacity-80"></div>
+            <div className="absolute top-20 left-20 w-32 h-8 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full opacity-80"></div>
+            <div className="absolute top-32 right-40 w-24 h-6 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full opacity-80"></div>
+            <div className="absolute left-32 bottom-40 w-28 h-7 bg-gradient-to-r from-cyan-300 to-purple-400 rounded-full opacity-80"></div>
+            <div className="absolute right-20 bottom-20 w-36 h-8 bg-gradient-to-r from-cyan-300 to-purple-400 rounded-full opacity-80"></div>
             
             <div className="z-10 text-center text-white">
               <h1 className="mb-6 text-6xl font-bold">
@@ -252,7 +252,7 @@ export default function SignInPage() {
                     />
                     <span className="ml-2 text-sm text-gray-600">Remember</span>
                   </label>
-                  <a href="#" className="text-sm text-violet-600 hover:underline">
+                  <a href="#" className="text-sm text-cyan-600 hover:underline">
                     Forgot password?
                   </a>
                 </div>
@@ -260,7 +260,7 @@ export default function SignInPage() {
                 <button
                   type="submit"
                   disabled={signInMutation.isPending || isLoading}
-                  className="py-3 w-full font-medium text-white bg-gradient-to-r from-violet-500 to-violet-600 rounded-lg transition-colors hover:from-violet-600 hover:to-violet-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="py-3 w-full font-medium text-white bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-lg transition-colors hover:from-cyan-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {signInMutation.isPending || isLoading ? 'Signing in...' : 'LOGIN'}
                 </button>
@@ -298,7 +298,7 @@ export default function SignInPage() {
               
               <p className="mt-6 text-sm text-center text-gray-600">
                 Don't have an account?{' '}
-                <Link href="/auth/signup" className="text-violet-600 hover:underline">
+                <Link href="/auth/signup" className="text-cyan-600 hover:underline">
                   Sign up
                 </Link>
               </p>

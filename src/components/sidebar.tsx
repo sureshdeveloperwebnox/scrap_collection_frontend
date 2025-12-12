@@ -29,7 +29,7 @@ type NavigationItem = {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  hasChevron?: boolean;
+  submenu?: NavigationItem[];
 };
 
 // Navigation structure matching the image design
@@ -46,17 +46,17 @@ const navigationSections: Array<{
   {
     title: 'APPS',
     items: [
-      { name: 'Leads', href: '/leads', icon: Users, hasChevron: true },
-      { name: 'Customers', href: '/customers', icon: CircleUserRound, hasChevron: true },
-      { name: 'Orders', href: '/orders', icon: ShoppingCart, hasChevron: true },
-      { name: 'Vehicle Types', href: '/vehicle-types', icon: Car, hasChevron: true },
-      { name: 'Collectors', href: '/collectors', icon: Truck, hasChevron: true },
-      { name: 'Pickup Requests', href: '/pickup-requests', icon: ClipboardList, hasChevron: true },
-      { name: 'Scrap Yards', href: '/scrap-yards', icon: Building2, hasChevron: true },
-      { name: 'Payments', href: '/payments', icon: CreditCard, hasChevron: true },
-      { name: 'Employees', href: '/employees', icon: UserCheck, hasChevron: true },
-      { name: 'Reports', href: '/reports', icon: BarChart3, hasChevron: true },
-      { name: 'Settings', href: '/settings', icon: Settings, hasChevron: true },
+      { name: 'Leads', href: '/leads', icon: Users },
+      { name: 'Customers', href: '/customers', icon: CircleUserRound },
+      { name: 'Orders', href: '/orders', icon: ShoppingCart },
+      { name: 'Vehicle Types', href: '/vehicle-types', icon: Car },
+      { name: 'Collectors', href: '/collectors', icon: Truck },
+      { name: 'Pickup Requests', href: '/pickup-requests', icon: ClipboardList },
+      { name: 'Scrap Yards', href: '/scrap-yards', icon: Building2 },
+      { name: 'Payments', href: '/payments', icon: CreditCard },
+      { name: 'Employees', href: '/employees', icon: UserCheck },
+      { name: 'Reports', href: '/reports', icon: BarChart3 },
+      { name: 'Settings', href: '/settings', icon: Settings },
     ]
   }
 ];
@@ -84,17 +84,17 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
       
       <div 
         className={cn(
-          "fixed left-0 top-0 flex flex-col bg-violet-50 transition-all duration-300 ease-in-out",
-          "z-50 shadow-xl",
+          "fixed left-0 top-0 flex flex-col bg-white transition-all duration-300 ease-in-out",
+          "z-50 shadow-xl border-r border-gray-200",
           "w-64 rounded-r-3xl",
-          "m-2",
+          "my-2 ml-2 mr-0",
           "h-[calc(100vh-1rem)]",
           isCollapsed ? "lg:w-16" : "lg:w-64",
           isOpen ? "translate-x-0 animate-in slide-in-from-left-5" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* Header with Logo and Name */}
-        <div className="flex flex-shrink-0 justify-between items-center px-4 py-4 border-b border-violet-100 relative min-h-[80px]">
+        <div className="flex flex-shrink-0 justify-between items-center pl-4 pr-1 py-4 border-b border-gray-200 relative min-h-[80px]">
           <div className={cn(
             "flex items-center transition-all duration-200 w-full",
             isCollapsed ? "lg:justify-center" : "justify-start space-x-3"
@@ -131,7 +131,7 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
           {/* Close button for mobile */}
           <button
             onClick={onToggle}
-            className="lg:hidden absolute top-4 right-4 flex items-center justify-center w-8 h-8 text-gray-600 rounded-lg hover:bg-violet-100 transition-all duration-200 transform hover:scale-110 active:scale-95"
+            className="lg:hidden absolute top-4 right-1 flex items-center justify-center w-8 h-8 text-gray-600 rounded-lg hover:bg-gray-100 transition-all duration-200 transform hover:scale-110 active:scale-95"
           >
             <X className="w-5 h-5 transition-transform duration-200 hover:rotate-90" />
           </button>
@@ -139,12 +139,12 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
         
         {/* Navigation Sections */}
         <div className="overflow-y-auto overflow-x-hidden flex-1 scrollbar-hide">
-          <nav className="px-3 py-4 space-y-6">
+          <nav className="pl-3 pr-1 py-4 space-y-6">
             {navigationSections.map((section) => (
               <div key={section.title} className="space-y-2">
                 {/* Section Title */}
                 <h3 className={cn(
-                  "font-semibold text-gray-400 text-xs uppercase tracking-wider px-3 transition-all duration-300",
+                  "font-semibold text-gray-400 text-xs uppercase tracking-wider pl-3 pr-1 transition-all duration-300",
                   isCollapsed ? "lg:opacity-0 lg:hidden" : "opacity-100 block animate-in fade-in slide-in-from-left-1"
                 )}>
                   {section.title}
@@ -168,13 +168,13 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
                         onMouseEnter={() => setHoveredItem(item.name)}
                         onMouseLeave={() => setHoveredItem(null)}
                         className={cn(
-                          'flex items-center px-3 py-2.5 text-sm font-medium transition-all duration-300 relative group',
+                          'flex items-center py-2.5 text-sm font-medium transition-all duration-300 relative group',
                           'transform hover:scale-105 active:scale-95',
                           isActive
-                            ? 'bg-violet-500 text-white rounded-full shadow-lg shadow-violet-500/50 animate-glow'
+                            ? 'bg-cyan-500 text-white rounded-r-full shadow-lg shadow-cyan-500/50 animate-glow pl-3 pr-1'
                             : isHovered && section.title === 'APPS'
-                            ? 'bg-violet-100 text-violet-700 rounded-full'
-                            : 'text-gray-700 hover:bg-violet-100 hover:text-violet-700 rounded-lg',
+                            ? 'bg-gray-100 text-gray-900 rounded-r-full pl-3 pr-1'
+                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 rounded-lg px-3',
                           !isCollapsed && !isActive && 'animate-in fade-in slide-in-from-left-2',
                           !isCollapsed && !isActive && `delay-[${index * 50}ms]`
                         )}
@@ -184,8 +184,8 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
                         {/* Shining effect overlay for active item */}
                         {isActive && (
                           <>
-                            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shine pointer-events-none" />
-                            <div className="absolute inset-0 rounded-full animate-shine-sweep pointer-events-none" />
+                            <div className="absolute inset-0 rounded-r-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shine pointer-events-none" />
+                            <div className="absolute inset-0 rounded-r-full animate-shine-sweep pointer-events-none" />
                           </>
                         )}
                         
@@ -199,7 +199,7 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
                             isActive 
                               ? "text-white scale-110 drop-shadow-lg" 
                               : isHovered && section.title === 'APPS' 
-                              ? "text-violet-700 scale-110 rotate-12" 
+                              ? "text-gray-900 scale-110 rotate-12" 
                               : "text-gray-600 group-hover:scale-110 group-hover:rotate-3"
                           )} />
                         </div>
@@ -213,14 +213,14 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
                           {item.name}
                         </span>
                         
-                        {/* Chevron for APPS section */}
-                        {item.hasChevron && !isCollapsed && (
+                        {/* Chevron - only show if item has submenu */}
+                        {item.submenu && item.submenu.length > 0 && !isCollapsed && (
                           <ChevronRight className={cn(
                             "w-4 h-4 transition-all duration-300 transform relative z-10",
                             isActive 
                               ? "text-white translate-x-1 drop-shadow-lg" 
                               : isHovered && section.title === 'APPS' 
-                              ? "text-violet-700 translate-x-1 scale-110" 
+                              ? "text-gray-900 translate-x-1 scale-110" 
                               : "text-gray-400 group-hover:translate-x-1 group-hover:scale-110"
                           )} />
                         )}
@@ -242,12 +242,12 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
 
         {/* User Profile Card at Bottom */}
         <div className={cn(
-          "flex-shrink-0 p-3 mx-3 mb-3 bg-violet-100 rounded-xl border border-violet-200 transition-all duration-300",
+          "flex-shrink-0 p-3 ml-3 mr-1 mb-3 bg-gray-50 rounded-xl border border-gray-200 transition-all duration-300",
           isCollapsed ? "lg:opacity-0 lg:hidden" : "opacity-100 block animate-in fade-in slide-in-from-bottom-2"
         )}>
           <div className="flex items-center space-x-3">
             {/* Avatar */}
-            <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-violet-600 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 transform hover:scale-110 hover:rotate-12 shadow-md hover:shadow-lg">
+            <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 transform hover:scale-110 hover:rotate-12 shadow-md hover:shadow-lg">
               <span className="text-white font-semibold text-sm">
                 {user?.name?.charAt(0).toUpperCase() || 'U'}
               </span>
@@ -269,7 +269,7 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
                 const { logout } = useAuthStore.getState();
                 logout();
               }}
-              className="flex-shrink-0 p-1.5 text-gray-600 hover:text-gray-900 hover:bg-violet-200 rounded-lg transition-all duration-300 transform hover:scale-110 hover:rotate-12 active:scale-95"
+              className="flex-shrink-0 p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-lg transition-all duration-300 transform hover:scale-110 hover:rotate-12 active:scale-95"
             >
               <LogOut className="w-4 h-4 transition-transform duration-300" />
             </button>

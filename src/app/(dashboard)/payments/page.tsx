@@ -126,7 +126,7 @@ export default function PaymentsPage() {
             <CardTitle className="text-sm font-medium">Refunded Amount</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-violet-600">
+            <div className="text-2xl font-bold text-cyan-600">
               ${refundedAmount.toLocaleString()}
             </div>
           </CardContent>

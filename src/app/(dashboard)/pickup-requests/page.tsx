@@ -92,7 +92,7 @@ export default function PickupRequestsPage() {
             <CardTitle className="text-sm font-medium">Assigned</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-violet-600">
+            <div className="text-2xl font-bold text-cyan-600">
               {pickupRequests.filter(r => r.status === 'ASSIGNED').length}
             </div>
           </CardContent>

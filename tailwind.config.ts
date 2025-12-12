@@ -27,6 +27,18 @@ const config: Config = {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
+        cyan: {
+          50: "#e0f7fa",
+          100: "#b2ebf2",
+          200: "#80deea",
+          300: "#4dd0e1",
+          400: "#26c6da",
+          500: "rgb(45, 186, 237)",
+          600: "#00acc1",
+          700: "#0097a7",
+          800: "#00838f",
+          900: "#006064",
+        },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
@@ -68,24 +80,24 @@ const config: Config = {
         },
         "shine": {
           "0%": { 
-            boxShadow: "0 0 0 0 rgba(139, 92, 246, 0.4)",
+            boxShadow: "0 0 0 0 rgba(45, 186, 237, 0.4)",
             transform: "scale(1)",
           },
           "50%": { 
-            boxShadow: "0 0 20px 8px rgba(139, 92, 246, 0.6)",
+            boxShadow: "0 0 20px 8px rgba(45, 186, 237, 0.6)",
             transform: "scale(1.02)",
           },
           "100%": { 
-            boxShadow: "0 0 0 0 rgba(139, 92, 246, 0.4)",
+            boxShadow: "0 0 0 0 rgba(45, 186, 237, 0.4)",
             transform: "scale(1)",
           },
         },
         "glow": {
           "0%, 100%": { 
-            boxShadow: "0 0 10px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3)",
+            boxShadow: "0 0 10px rgba(45, 186, 237, 0.5), 0 0 20px rgba(45, 186, 237, 0.3)",
           },
           "50%": { 
-            boxShadow: "0 0 20px rgba(139, 92, 246, 0.8), 0 0 30px rgba(139, 92, 246, 0.5)",
+            boxShadow: "0 0 20px rgba(45, 186, 237, 0.8), 0 0 30px rgba(45, 186, 237, 0.5)",
           },
         },
       },

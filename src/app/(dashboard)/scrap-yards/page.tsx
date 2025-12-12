@@ -149,7 +149,7 @@ export default function ScrapYardsPage() {
             <CardTitle className="text-sm font-medium">Total Capacity</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-violet-600">{totalCapacity.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-cyan-600">{totalCapacity.toLocaleString()}</div>
           </CardContent>
         </Card>
         <Card>
@@ -157,7 +157,7 @@ export default function ScrapYardsPage() {
             <CardTitle className="text-sm font-medium">Current Load</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-violet-600">{totalCurrentLoad.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-cyan-600">{totalCurrentLoad.toLocaleString()}</div>
           </CardContent>
         </Card>
         <Card>

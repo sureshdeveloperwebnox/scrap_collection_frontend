@@ -36,12 +36,12 @@ export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) 
   }, [appsDropdownOpen]);
   
   return (
-    <header className="bg-gradient-to-r from-violet-50 to-white shadow-sm border border-violet-200 rounded-2xl h-16 flex items-center justify-between px-4 mx-4 mt-4">
+    <header className="bg-white shadow-sm border border-gray-200 rounded-2xl h-16 flex items-center justify-between px-4 ml-2 mr-4 mt-4">
       <div className="flex flex-1 items-center min-w-0 space-x-4">
         {/* Hamburger Menu Button */}
         <button
           onClick={onToggleSidebar}
-          className="flex items-center justify-center w-9 h-9 text-gray-600 rounded-lg hover:bg-violet-50 hover:text-violet-600 transition-all duration-200 flex-shrink-0"
+          className="flex items-center justify-center w-9 h-9 text-gray-600 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 flex-shrink-0"
           title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
         >
           <Menu className="w-5 h-5" />
@@ -52,7 +52,7 @@ export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) 
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setAppsDropdownOpen(!appsDropdownOpen)}
-              className="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all"
+              className="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
             >
               <span>Apps</span>
               <ChevronDown className={cn(
@@ -63,28 +63,28 @@ export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) 
             
             {/* Dropdown Menu */}
             {appsDropdownOpen && (
-              <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-violet-100 py-1 z-50">
-                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600">
+              <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
                   All Apps
                 </button>
-                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-600">
+                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
                   Recent Apps
                 </button>
               </div>
             )}
           </div>
           
-          <button className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all">
+          <button className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all">
             <MessageCircle className="w-4 h-4 mr-1.5" />
             <span>Chat</span>
           </button>
           
-          <button className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all">
+          <button className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all">
             <Calendar className="w-4 h-4 mr-1.5" />
             <span>Calendar</span>
           </button>
           
-          <button className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all">
+          <button className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all">
             <Mail className="w-4 h-4 mr-1.5" />
             <span>Email</span>
           </button>
@@ -98,7 +98,7 @@ export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) 
           <input
             type="text"
             placeholder="Try to searching..."
-            className="w-full pl-10 pr-4 py-2 text-sm border border-violet-200 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white"
+            className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 bg-gray-50"
           />
         </div>
       </div>
@@ -106,25 +106,25 @@ export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) 
       {/* Right Side Icons and User */}
       <div className="flex flex-shrink-0 items-center space-x-3">
         {/* Dark Mode Toggle */}
-        <button className="p-2 text-gray-600 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all">
+        <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all">
           <Moon className="w-5 h-5" />
         </button>
         
         {/* Chat Icon */}
-        <button className="p-2 text-gray-600 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all relative">
+        <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all relative">
           <MessageCircle className="w-5 h-5" />
           <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
         
         {/* Notifications */}
-        <button className="p-2 text-gray-600 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all relative">
+        <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all relative">
           <Bell className="w-5 h-5" />
           <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
         
         {/* User Profile */}
-        <div className="flex items-center space-x-2 pl-3 border-l border-violet-200">
-          <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-violet-600 rounded-full flex items-center justify-center flex-shrink-0">
+        <div className="flex items-center space-x-2 pl-3 border-l border-gray-200">
+          <div className="w-8 h-8 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-white font-semibold text-xs">
               {user?.name?.charAt(0).toUpperCase() || 'M'}
             </span>
