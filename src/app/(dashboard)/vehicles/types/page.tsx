@@ -237,21 +237,12 @@ export default function VehicleTypesPage() {
                           Name {getSortIcon('name')}
                         </button>
                       </th>
-                      <th className="text-left p-4">Icon</th>
                       <th className="text-left p-4">
                         <button
                           onClick={() => handleSort('isActive')}
                           className="flex items-center hover:text-primary"
                         >
                           Status {getSortIcon('isActive')}
-                        </button>
-                      </th>
-                      <th className="text-left p-4">
-                        <button
-                          onClick={() => handleSort('createdAt')}
-                          className="flex items-center hover:text-primary"
-                        >
-                          Created {getSortIcon('createdAt')}
                         </button>
                       </th>
                       <th className="text-right p-4">Actions</th>
@@ -262,19 +253,9 @@ export default function VehicleTypesPage() {
                       <tr key={vehicleType.id} className="border-b hover:bg-muted/50">
                         <td className="p-4 font-medium">{vehicleType.name}</td>
                         <td className="p-4">
-                          {vehicleType.icon ? (
-                            <span className="text-sm text-gray-500">{vehicleType.icon}</span>
-                          ) : (
-                            <span className="text-sm text-gray-400">—</span>
-                          )}
-                        </td>
-                        <td className="p-4">
                           <Badge variant={vehicleType.isActive ? 'default' : 'secondary'}>
                             {vehicleType.isActive ? 'Active' : 'Inactive'}
                           </Badge>
-                        </td>
-                        <td className="p-4 text-sm text-gray-600">
-                          {new Date(vehicleType.createdAt).toLocaleDateString()}
                         </td>
                         <td className="p-4">
                           <div className="flex items-center justify-end gap-2">

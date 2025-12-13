@@ -228,9 +228,12 @@ export interface VehicleName {
   name: string;
   vehicleTypeId: number;
   vehicleType?: VehicleType;
-  scrapYardId: string;
-  scrapYard?: ScrapYard;
   organizationId: number;
+  make?: string;
+  model?: string;
+  condition?: VehicleConditionEnum;
+  year?: number;
+  vehicleId?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

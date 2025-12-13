@@ -12,7 +12,6 @@ export const useVehicleNames = (params?: {
   isActive?: boolean;
   organizationId?: number;
   vehicleTypeId?: number;
-  scrapYardId?: string;
   sortBy?: 'name' | 'isActive' | 'createdAt' | 'updatedAt';
   sortOrder?: 'asc' | 'desc';
 }) => {
@@ -44,9 +43,12 @@ export const useCreateVehicleName = () => {
 
   return useMutation({
     mutationFn: (vehicleNameData: {
-      name: string;
+      name?: string; // Optional - will be auto-generated from make and model if not provided
       vehicleTypeId: number;
-      scrapYardId: string;
+      make?: string;
+      model?: string;
+      year?: number;
+      vehicleId: string; // Required
       isActive?: boolean;
     }) => vehicleNamesApi.createVehicleName({
       ...vehicleNameData,

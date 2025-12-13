@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { VehicleName } from '@/types';
+import { VehicleName, VehicleConditionEnum } from '@/types';
 
 export interface ApiResponse<T> {
   version: string;
@@ -19,7 +19,6 @@ export const vehicleNamesApi = {
     isActive?: boolean;
     organizationId?: number;
     vehicleTypeId?: number;
-    scrapYardId?: string;
     sortBy?: 'name' | 'isActive' | 'createdAt' | 'updatedAt';
     sortOrder?: 'asc' | 'desc';
   }): Promise<ApiResponse<{
@@ -46,9 +45,12 @@ export const vehicleNamesApi = {
   // Create new vehicle name
   createVehicleName: async (vehicleNameData: {
     organizationId: number;
-    name: string;
+    name?: string; // Optional - will be auto-generated from make and model if not provided
     vehicleTypeId: number;
-    scrapYardId: string;
+    make?: string;
+    model?: string;
+    year?: number;
+    vehicleId: string; // Required
     isActive?: boolean;
   }): Promise<ApiResponse<VehicleName>> => {
     const response = await apiClient.post('/vehicle-names', vehicleNameData);
@@ -59,7 +61,10 @@ export const vehicleNamesApi = {
   updateVehicleName: async (id: string, vehicleNameData: {
     name?: string;
     vehicleTypeId?: number;
-    scrapYardId?: string;
+    make?: string;
+    model?: string;
+    year?: number;
+    vehicleId?: string;
     isActive?: boolean;
   }): Promise<ApiResponse<VehicleName>> => {
     const response = await apiClient.put(`/vehicle-names/${id}`, vehicleNameData);

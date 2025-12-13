@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useVehicleTypes } from '@/hooks/use-vehicle-types';
-import { useScrapYards } from '@/hooks/use-scrap-yards';
 import { useVehicleNames, useCreateVehicleName, useUpdateVehicleName, useDeleteVehicleName } from '@/hooks/use-vehicle-names';
 import { VehicleName, VehicleType, ScrapYard } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Plus, Search, Edit, Trash2, MoreVertical, Car, Building2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, MoreVertical, Car } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,9 +53,8 @@ export default function VehicleNamesPage() {
     search: debouncedSearchTerm || undefined,
   });
 
-  // Fetch vehicle types and scrap yards for dropdowns
+  // Fetch vehicle types for dropdowns
   const { data: vehicleTypesData } = useVehicleTypes({ page: 1, limit: 100 });
-  const { data: scrapYardsData } = useScrapYards({ page: 1, limit: 100 });
 
   const createVehicleNameMutation = useCreateVehicleName();
   const updateVehicleNameMutation = useUpdateVehicleName();
@@ -67,10 +65,6 @@ export default function VehicleNamesPage() {
     return apiResponse?.data?.vehicleTypes || [];
   }, [vehicleTypesData]) as VehicleType[];
 
-  const scrapYards = useMemo(() => {
-    const apiResponse = scrapYardsData as any;
-    return apiResponse?.data?.scrapYards || [];
-  }, [scrapYardsData]) as ScrapYard[];
 
   // Handle API response structure
   const apiResponse = vehicleNamesData as unknown as ApiResponse;
@@ -115,10 +109,12 @@ export default function VehicleNamesPage() {
   };
 
   const handleSubmit = async (formData: {
-    name: string;
+    name?: string;
     vehicleTypeId: number;
-    scrapYardId: string;
-    isActive?: boolean;
+    make?: string;
+    model?: string;
+    year?: number;
+    vehicleId: string;
   }) => {
     try {
       if (editingVehicleName) {
@@ -217,9 +213,7 @@ export default function VehicleNamesPage() {
                     <TableRow>
                       <TableHead>Vehicle Name</TableHead>
                       <TableHead>Vehicle Type</TableHead>
-                      <TableHead>Scrap Yard</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Created</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -240,22 +234,9 @@ export default function VehicleNamesPage() {
                           )}
                         </TableCell>
                         <TableCell>
-                          {vehicleName.scrapYard ? (
-                            <div className="flex items-center space-x-2">
-                              <Building2 className="h-3 w-3 text-gray-400" />
-                              <span className="text-sm">{vehicleName.scrapYard.yardName}</span>
-                            </div>
-                          ) : (
-                            <span className="text-gray-400 text-sm">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
                           <Badge variant={vehicleName.isActive ? 'default' : 'secondary'}>
                             {vehicleName.isActive ? 'Active' : 'Inactive'}
                           </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-gray-600">
-                          {new Date(vehicleName.createdAt).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-2">
@@ -329,7 +310,6 @@ export default function VehicleNamesPage() {
           <VehicleNameForm
             vehicleName={editingVehicleName}
             vehicleTypes={vehicleTypes}
-            scrapYards={scrapYards}
             onSubmit={handleSubmit}
             onCancel={() => {
               setIsFormOpen(false);
@@ -347,51 +327,56 @@ export default function VehicleNamesPage() {
 function VehicleNameForm({
   vehicleName,
   vehicleTypes,
-  scrapYards,
   onSubmit,
   onCancel,
   isLoading,
 }: {
   vehicleName?: VehicleName;
   vehicleTypes: VehicleType[];
-  scrapYards: ScrapYard[];
-  onSubmit: (data: { name: string; vehicleTypeId: number; scrapYardId: string; isActive?: boolean }) => void;
+  onSubmit: (data: { name?: string; vehicleTypeId: number; make?: string; model?: string; year?: number; vehicleId: string }) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }) {
-  const [name, setName] = useState(vehicleName?.name || '');
   const [vehicleTypeId, setVehicleTypeId] = useState<string>(vehicleName?.vehicleTypeId.toString() || '');
-  const [scrapYardId, setScrapYardId] = useState(vehicleName?.scrapYardId || '');
-  const [isActive, setIsActive] = useState(vehicleName?.isActive ?? true);
+  const [make, setMake] = useState((vehicleName as any)?.make || '');
+  const [model, setModel] = useState((vehicleName as any)?.model || '');
+  const [year, setYear] = useState<string>((vehicleName as any)?.year?.toString() || '');
+  const [vehicleId, setVehicleId] = useState((vehicleName as any)?.vehicleId || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !vehicleTypeId || !scrapYardId) {
-      toast.error('Please fill in all required fields');
+    if (!vehicleTypeId) {
+      toast.error('Please select a vehicle type');
       return;
     }
+    if (!make) {
+      toast.error('Please provide make');
+      return;
+    }
+    if (!model) {
+      toast.error('Please provide model');
+      return;
+    }
+    if (!vehicleId || vehicleId.trim() === '') {
+      toast.error('Please provide vehicle ID');
+      return;
+    }
+    
+    // Auto-generate name from make and model
+    const generatedName = `${make} ${model}`.trim();
+    
     onSubmit({
-      name,
+      name: generatedName,
       vehicleTypeId: parseInt(vehicleTypeId),
-      scrapYardId,
-      isActive,
+      make: make,
+      model: model,
+      year: year ? parseInt(year) : undefined,
+      vehicleId: vehicleId,
     });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="name">Vehicle Name *</Label>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g., Toyota Camry"
-          required
-          disabled={isLoading}
-        />
-      </div>
-
       <div className="space-y-2">
         <Label htmlFor="vehicleType">Vehicle Type *</Label>
         <Select value={vehicleTypeId} onValueChange={setVehicleTypeId} required disabled={isLoading}>
@@ -409,29 +394,53 @@ function VehicleNameForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="scrapYard">Scrap Yard *</Label>
-        <Select value={scrapYardId} onValueChange={setScrapYardId} required disabled={isLoading}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select scrap yard" />
-          </SelectTrigger>
-          <SelectContent>
-            {scrapYards.filter(sy => sy.isActive !== false).map((sy) => (
-              <SelectItem key={sy.id} value={sy.id}>
-                {sy.yardName}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="isActive"
-          checked={isActive}
-          onCheckedChange={setIsActive}
+        <Label htmlFor="make">Make *</Label>
+        <Input
+          id="make"
+          value={make}
+          onChange={(e) => setMake(e.target.value)}
+          placeholder="e.g., Toyota"
+          required
           disabled={isLoading}
         />
-        <Label htmlFor="isActive">Active</Label>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="model">Model *</Label>
+        <Input
+          id="model"
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          placeholder="e.g., Camry"
+          required
+          disabled={isLoading}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="year">Year</Label>
+        <Input
+          id="year"
+          type="number"
+          value={year}
+          onChange={(e) => setYear(e.target.value)}
+          placeholder="e.g., 2020"
+          min="1900"
+          max={new Date().getFullYear() + 1}
+          disabled={isLoading}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="vehicleId">Vehicle ID *</Label>
+        <Input
+          id="vehicleId"
+          value={vehicleId}
+          onChange={(e) => setVehicleId(e.target.value)}
+          placeholder="Enter vehicle ID"
+          required
+          disabled={isLoading}
+        />
       </div>
 
       <DialogFooter>
