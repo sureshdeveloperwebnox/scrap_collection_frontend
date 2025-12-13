@@ -25,17 +25,28 @@ export const useCustomerStats = () => {
   });
 
   // Sync stats to Zustand store whenever data changes
+  // Only update if the new stats are different to avoid unnecessary re-renders
   useEffect(() => {
     if (data?.data) {
       const stats = data.data;
-      // Map backend stats to frontend format
-      setStats({
+      const newStats = {
         total: stats.total || 0,
         active: stats.active || 0,
         inactive: stats.inactive || 0,
         vip: stats.vip || 0,
         blocked: stats.blocked || 0,
-      });
+      };
+      
+      // Only update if stats have actually changed
+      const currentStats = useCustomerStatsStore.getState().stats;
+      if (!currentStats || 
+          currentStats.total !== newStats.total ||
+          currentStats.active !== newStats.active ||
+          currentStats.inactive !== newStats.inactive ||
+          currentStats.vip !== newStats.vip ||
+          currentStats.blocked !== newStats.blocked) {
+        setStats(newStats);
+      }
     }
   }, [data, setStats]);
 

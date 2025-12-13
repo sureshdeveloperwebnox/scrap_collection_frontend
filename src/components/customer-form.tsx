@@ -23,6 +23,8 @@ interface CustomerFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit?: (customer: Partial<Customer>) => void;
+  isConverting?: boolean; // Indicates if this is converting a lead to customer
+  onSuccess?: (createdCustomer: Customer) => void; // Callback after successful creation
 }
 
 // Zod validation schema for customer form
@@ -104,7 +106,7 @@ const updateCustomerSchema = createCustomerSchema.partial().extend({
     .optional(),
 });
 
-export function CustomerForm({ customer, isOpen, onClose, onSubmit }: CustomerFormProps) {
+export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting = false, onSuccess }: CustomerFormProps) {
   const [phoneError, setPhoneError] = useState<string | undefined>(undefined);
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -180,8 +182,9 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit }: CustomerFo
 
   // Initialize form data when customer prop changes
   useEffect(() => {
-    if (customer && isOpen) {
-      // Parse existing phone number
+    // Initialize form data when customer is provided (for editing) or when converting (pre-filled from lead)
+    if (customer && isOpen && customer.id) {
+      // Parse existing phone number (only for editing existing customer with valid ID)
       let phoneValue = customer.phone || '';
       
       // Validate vehicleType against API vehicle types
@@ -210,32 +213,57 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit }: CustomerFo
       setPhoneError(undefined);
       setPhoneTouched(false);
       setValidationErrors({});
-    } else if (!customer && isOpen) {
-      // Reset form for new customer
-      const defaultVehicleType = availableVehicleTypes.length > 0
-        ? mapVehicleTypeNameToEnum(availableVehicleTypes[0].name)
-        : undefined;
+    } else if ((!customer || !customer.id || isConverting) && isOpen) {
+      // Initialize form for new customer or when converting from lead
+      // If converting, use customer data (from lead) but treat as new customer
+      const initialData = isConverting && customer ? {
+        organizationId: customer.organizationId || organizationId,
+        name: customer.name || '',
+        phone: customer.phone || '',
+        email: customer.email || '',
+        address: customer.address || '',
+        latitude: customer.latitude,
+        longitude: customer.longitude,
+        vehicleType: customer.vehicleType,
+        vehicleMake: customer.vehicleMake || '',
+        vehicleModel: customer.vehicleModel || '',
+        vehicleNumber: customer.vehicleNumber || '',
+        vehicleYear: customer.vehicleYear,
+        vehicleCondition: customer.vehicleCondition,
+        accountStatus: customer.accountStatus || 'ACTIVE',
+      } : null;
       
-      setFormData({
-        organizationId,
-        name: '',
-        phone: '',
-        email: '',
-        address: '',
-        latitude: undefined,
-        longitude: undefined,
-        vehicleType: defaultVehicleType,
-        vehicleMake: '',
-        vehicleModel: '',
-        vehicleYear: undefined,
-        vehicleCondition: undefined,
-        accountStatus: 'ACTIVE',
-      });
+      if (initialData) {
+        // Pre-fill form with lead data when converting
+        setFormData(initialData);
+      } else {
+        // Reset form for new customer
+        const defaultVehicleType = availableVehicleTypes.length > 0
+          ? mapVehicleTypeNameToEnum(availableVehicleTypes[0].name)
+          : undefined;
+        
+        setFormData({
+          organizationId,
+          name: '',
+          phone: '',
+          email: '',
+          address: '',
+          latitude: undefined,
+          longitude: undefined,
+          vehicleType: defaultVehicleType,
+          vehicleMake: '',
+          vehicleModel: '',
+          vehicleNumber: '',
+          vehicleYear: undefined,
+          vehicleCondition: undefined,
+          accountStatus: 'ACTIVE',
+        });
+      }
       setPhoneError(undefined);
       setPhoneTouched(false);
       setValidationErrors({});
     }
-  }, [customer, isOpen, organizationId, availableVehicleTypes.length, vehicleTypesLoading]);
+  }, [customer, isOpen, organizationId, availableVehicleTypes.length, vehicleTypesLoading, isConverting]);
 
   // API mutations
   const createCustomerMutation = useCreateCustomer();
@@ -264,8 +292,12 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit }: CustomerFo
     setValidationErrors({});
     setPhoneTouched(true);
 
+    // Determine if this is a create or update operation
+    // If converting or customer has no valid ID, treat as create
+    const isCreateOperation = isConverting || !customer || !customer.id;
+    
     // Validate with Zod
-    const schema = customer ? updateCustomerSchema : createCustomerSchema;
+    const schema = isCreateOperation ? createCustomerSchema : updateCustomerSchema;
     const validationResult = schema.safeParse({
       ...formData,
       organizationId,
@@ -364,17 +396,27 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit }: CustomerFo
     }
 
     try {
-      if (customer) {
-        // Update existing customer
+      if (isCreateOperation) {
+        // Create new customer (including when converting from lead)
+        const response = await createCustomerMutation.mutateAsync(submitData);
+        const createdCustomer = (response as { data: Customer })?.data || response as Customer;
+        
+        // Only show toast if onSuccess callback is not provided (let parent handle it)
+        if (!onSuccess) {
+          toast.success(isConverting ? 'Customer converted successfully!' : 'Customer created successfully!');
+        }
+        
+        // Call onSuccess callback if provided (for navigation/highlighting)
+        if (onSuccess && createdCustomer) {
+          onSuccess(createdCustomer);
+        }
+      } else {
+        // Update existing customer (only when customer has valid ID and not converting)
         await updateCustomerMutation.mutateAsync({
-          id: customer.id,
+          id: customer!.id,
           data: submitData
         });
         toast.success('Customer updated successfully!');
-      } else {
-        // Create new customer
-        await createCustomerMutation.mutateAsync(submitData);
-        toast.success('Customer created successfully!');
       }
       
       if (onSubmit) {
@@ -419,10 +461,10 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit }: CustomerFo
           <div className="flex items-start justify-between">
             <div>
           <DialogTitle className="text-3xl font-bold text-gray-900">
-            {customer ? 'Edit Customer' : 'Create Customer'}
+            {isConverting ? 'Convert Customer' : customer ? 'Edit Customer' : 'Create Customer'}
           </DialogTitle>
           <p className="text-sm text-gray-600 mt-2">
-            {customer ? 'Update customer information' : 'Fill in the details to create a new customer'}
+            {isConverting ? 'Review and complete customer details from lead' : customer ? 'Update customer information' : 'Fill in the details to create a new customer'}
           </p>
             </div>
             <div className="flex items-center gap-3">
@@ -444,10 +486,10 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit }: CustomerFo
                 {isLoading ? (
                   <>
                     <div className="mr-2 h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    {customer ? 'Updating...' : 'Creating...'}
+                    {isConverting ? 'Converting...' : customer ? 'Updating...' : 'Creating...'}
                   </>
                 ) : (
-                  customer ? 'Update Customer' : 'Create Customer'
+                  isConverting ? 'Convert Customer' : customer ? 'Update Customer' : 'Create Customer'
                 )}
               </Button>
             </div>
