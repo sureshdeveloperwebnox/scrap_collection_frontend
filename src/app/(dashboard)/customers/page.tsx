@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CustomerForm } from '@/components/customer-form';
 import { Customer, CustomerStatus, VehicleTypeEnum, VehicleConditionEnum } from '@/types';
-import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal, Download, Filter, Check, X, Crown, Shield, UserX } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal, Download, Filter, Check, X, Crown, Shield, UserX, Car } from 'lucide-react';
 import { useCustomers, useDeleteCustomer, useUpdateCustomer } from '@/hooks/use-customers';
 import { useCustomerStats } from '@/hooks/use-customer-stats';
 import { useCustomerStatsStore } from '@/lib/store/customer-stats-store';
@@ -284,6 +284,7 @@ export default function CustomersPage() {
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [detailsCustomer, setDetailsCustomer] = useState<ApiCustomer | null>(null);
+  const [vehicleDetailsCustomer, setVehicleDetailsCustomer] = useState<ApiCustomer | null>(null);
   
   // Selection state
   const [selectedCustomers, setSelectedCustomers] = useState<Set<string>>(new Set());
@@ -758,40 +759,19 @@ export default function CustomersPage() {
                           <TableCell className="text-gray-700">{customer.email || 'N/A'}</TableCell>
                           <TableCell>
                             {(customer.vehicleType || customer.vehicleMake || customer.vehicleModel || customer.vehicleNumber || customer.vehicleCondition) ? (
-                              <div className="flex flex-col gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200 min-w-[220px]">
-                                {customer.vehicleType && (
-                                  <div className="flex items-center justify-between gap-3">
-                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide text-right flex-shrink-0 w-20">Type</span>
-                                    <span className="px-2.5 py-1 bg-cyan-100 text-cyan-700 rounded-md text-xs font-medium capitalize flex-1 text-left">{customer.vehicleType}</span>
-                                  </div>
-                                )}
-                                {customer.vehicleMake && (
-                                  <div className="flex items-center justify-between gap-3">
-                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide text-right flex-shrink-0 w-20">Make</span>
-                                    <span className="text-sm font-medium text-gray-900 flex-1 text-left">{customer.vehicleMake}</span>
-                                  </div>
-                                )}
-                                {customer.vehicleModel && (
-                                  <div className="flex items-center justify-between gap-3">
-                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide text-right flex-shrink-0 w-20">Model</span>
-                                    <span className="text-sm font-medium text-gray-900 flex-1 text-left">{customer.vehicleModel}</span>
-                                  </div>
-                                )}
-                                {customer.vehicleNumber && (
-                                  <div className="flex items-center justify-between gap-3">
-                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide text-right flex-shrink-0 w-20">Number</span>
-                                    <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-mono font-semibold flex-1 text-left">{customer.vehicleNumber}</span>
-                                  </div>
-                                )}
-                                {customer.vehicleCondition && (
-                                  <div className="flex items-center justify-between gap-3">
-                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide text-right flex-shrink-0 w-20">Condition</span>
-                                    <span className="px-2.5 py-1 bg-orange-100 text-orange-700 rounded-md text-xs font-medium capitalize flex-1 text-left">{String(customer.vehicleCondition).replace(/_/g, ' ')}</span>
-                                  </div>
-                                )}
-                              </div>
+                              <Button
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setVehicleDetailsCustomer(customer);
+                                }}
+                                className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all"
+                              >
+                                <Car className="h-4 w-4 mr-2" />
+                                <span className="text-sm font-medium">View Vehicle</span>
+                              </Button>
                             ) : (
-                              <div className="text-gray-400 text-sm italic text-center">No vehicle info</div>
+                              <div className="text-gray-400 text-sm italic">No vehicle info</div>
                             )}
                           </TableCell>
                           <TableCell>
@@ -914,40 +894,19 @@ export default function CustomersPage() {
                       <div className="text-muted-foreground">Vehicle</div>
                       <div>
                         {(customer.vehicleType || customer.vehicleMake || customer.vehicleModel || customer.vehicleNumber || customer.vehicleCondition) ? (
-                          <div className="flex flex-col gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            {customer.vehicleType && (
-                              <div className="flex items-center justify-between gap-3">
-                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide text-right flex-shrink-0 w-20">Type</span>
-                                <span className="px-2.5 py-1 bg-cyan-100 text-cyan-700 rounded-md text-xs font-medium capitalize flex-1 text-left">{customer.vehicleType}</span>
-                              </div>
-                            )}
-                            {customer.vehicleMake && (
-                              <div className="flex items-center justify-between gap-3">
-                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide text-right flex-shrink-0 w-20">Make</span>
-                                <span className="text-sm font-medium text-gray-900 flex-1 text-left">{customer.vehicleMake}</span>
-                              </div>
-                            )}
-                            {customer.vehicleModel && (
-                              <div className="flex items-center justify-between gap-3">
-                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide text-right flex-shrink-0 w-20">Model</span>
-                                <span className="text-sm font-medium text-gray-900 flex-1 text-left">{customer.vehicleModel}</span>
-                              </div>
-                            )}
-                            {customer.vehicleNumber && (
-                              <div className="flex items-center justify-between gap-3">
-                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide text-right flex-shrink-0 w-20">Number</span>
-                                <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-mono font-semibold flex-1 text-left">{customer.vehicleNumber}</span>
-                              </div>
-                            )}
-                            {customer.vehicleCondition && (
-                              <div className="flex items-center justify-between gap-3">
-                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide text-right flex-shrink-0 w-20">Condition</span>
-                                <span className="px-2.5 py-1 bg-orange-100 text-orange-700 rounded-md text-xs font-medium capitalize flex-1 text-left">{String(customer.vehicleCondition).replace(/_/g, ' ')}</span>
-                              </div>
-                            )}
-                          </div>
+                          <Button
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setVehicleDetailsCustomer(customer);
+                            }}
+                            className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all w-full justify-start"
+                          >
+                            <Car className="h-4 w-4 mr-2" />
+                            <span className="text-sm font-medium">View Vehicle</span>
+                          </Button>
                         ) : (
-                          <div className="text-gray-400 text-sm italic text-center">No vehicle info</div>
+                          <div className="text-gray-400 text-sm italic">No vehicle info</div>
                         )}
                       </div>
                       <div className="text-muted-foreground">Created</div>
@@ -1230,6 +1189,98 @@ export default function CustomersPage() {
                   <div className="font-medium">{formatDateHuman(detailsCustomer.createdAt)}</div>
                 </div>
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Vehicle Details Dialog */}
+      <Dialog open={!!vehicleDetailsCustomer} onOpenChange={(open) => !open && setVehicleDetailsCustomer(null)}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto [&>button]:hidden">
+          <DialogHeader className="flex flex-row items-center justify-between pb-4 border-b border-gray-200">
+            <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <Car className="h-5 w-5 text-cyan-600" />
+              Vehicle Details
+            </DialogTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setVehicleDetailsCustomer(null)}
+                className="h-10 px-4 border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all"
+              >
+                Close
+              </Button>
+            </div>
+          </DialogHeader>
+
+          {vehicleDetailsCustomer && (
+            <div className="space-y-6">
+              {/* Customer Info Header */}
+              <div className="flex items-center gap-4 pb-4 border-b border-gray-200">
+                <CustomerAvatar 
+                  name={vehicleDetailsCustomer.name || 'N/A'} 
+                  size="md"
+                />
+                <div>
+                  <div className="text-lg font-bold text-gray-900">{vehicleDetailsCustomer.name || 'N/A'}</div>
+                  {vehicleDetailsCustomer.email && (
+                    <div className="text-sm text-gray-600 mt-1">{vehicleDetailsCustomer.email}</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Vehicle Information */}
+              {(vehicleDetailsCustomer.vehicleType || vehicleDetailsCustomer.vehicleMake || vehicleDetailsCustomer.vehicleModel || vehicleDetailsCustomer.vehicleNumber || vehicleDetailsCustomer.vehicleYear || vehicleDetailsCustomer.vehicleCondition) ? (
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-4 border border-cyan-200">
+                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4 flex items-center gap-2">
+                      Vehicle Information
+                    </h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      {vehicleDetailsCustomer.vehicleType && (
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Type</span>
+                          <span className="px-3 py-1.5 bg-cyan-100 text-cyan-700 rounded-md text-sm font-medium capitalize">{vehicleDetailsCustomer.vehicleType}</span>
+                        </div>
+                      )}
+                      {vehicleDetailsCustomer.vehicleMake && (
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Make</span>
+                          <span className="text-sm font-medium text-gray-900">{vehicleDetailsCustomer.vehicleMake}</span>
+                        </div>
+                      )}
+                      {vehicleDetailsCustomer.vehicleModel && (
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Model</span>
+                          <span className="text-sm font-medium text-gray-900">{vehicleDetailsCustomer.vehicleModel}</span>
+                        </div>
+                      )}
+                      {vehicleDetailsCustomer.vehicleNumber && (
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Number</span>
+                          <span className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md text-sm font-mono font-semibold">{vehicleDetailsCustomer.vehicleNumber}</span>
+                        </div>
+                      )}
+                      {vehicleDetailsCustomer.vehicleYear && (
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Year</span>
+                          <span className="text-sm font-medium text-gray-900">{vehicleDetailsCustomer.vehicleYear}</span>
+                        </div>
+                      )}
+                      {vehicleDetailsCustomer.vehicleCondition && (
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Condition</span>
+                          <span className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-md text-sm font-medium capitalize">{String(vehicleDetailsCustomer.vehicleCondition).replace(/_/g, ' ')}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-400">
+                  <Car className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm font-medium">No vehicle information available</p>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

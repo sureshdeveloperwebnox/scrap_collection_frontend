@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { LeadForm } from '@/components/lead-form';
 import { Lead } from '@/types';
-import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal, Download, Filter, Check, X } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal, Download, Filter, Check, X, Car } from 'lucide-react';
 import { useLeads, useDeleteLead, useUpdateLead } from '@/hooks/use-leads';
 import { useLeadStats } from '@/hooks/use-lead-stats';
 import { useLeadStatsStore } from '@/lib/store/lead-stats-store';
@@ -301,6 +301,7 @@ export default function LeadsPage() {
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [detailsLead, setDetailsLead] = useState<ApiLead | null>(null);
+  const [vehicleDetailsLead, setVehicleDetailsLead] = useState<ApiLead | null>(null);
   
   // Selection state
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
@@ -726,8 +727,7 @@ export default function LeadsPage() {
                         </button>
                       </TableHead>
                       <TableHead>Phone</TableHead>
-                      <TableHead>Vehicle Type</TableHead>
-                      <TableHead>Condition</TableHead>
+                      <TableHead>Vehicle</TableHead>
                       <TableHead>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('status')}>
                           Status 
@@ -808,8 +808,23 @@ export default function LeadsPage() {
                               <div className="text-gray-900">{lead.phone || 'N/A'}</div>
                             </div>
                           </TableCell>
-                          <TableCell className="capitalize text-gray-700">{lead.vehicleType || 'N/A'}</TableCell>
-                          <TableCell className="capitalize text-gray-700">{String(lead.vehicleCondition || '').replace(/_/g, ' ')}</TableCell>
+                          <TableCell>
+                            {(lead.vehicleType || lead.vehicleMake || lead.vehicleModel || lead.vehicleYear || lead.vehicleCondition) ? (
+                              <Button
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setVehicleDetailsLead(lead);
+                                }}
+                                className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all"
+                              >
+                                <Car className="h-4 w-4 mr-2" />
+                                <span className="text-sm font-medium">View Vehicle</span>
+                              </Button>
+                            ) : (
+                              <div className="text-gray-400 text-sm italic">No vehicle info</div>
+                            )}
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
                               <Select value={lead.status} onValueChange={(v) => onInlineStatusChange(lead, v)}>
@@ -911,9 +926,23 @@ export default function LeadsPage() {
                       <div className="text-muted-foreground">Phone</div>
                       <div>{lead.phone || 'N/A'}</div>
                       <div className="text-muted-foreground">Vehicle</div>
-                      <div className="capitalize">{lead.vehicleType || 'N/A'}</div>
-                      <div className="text-muted-foreground">Condition</div>
-                      <div className="capitalize">{String(lead.vehicleCondition || '').replace(/_/g, ' ')}</div>
+                      <div>
+                        {(lead.vehicleType || lead.vehicleMake || lead.vehicleModel || lead.vehicleYear || lead.vehicleCondition) ? (
+                          <Button
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setVehicleDetailsLead(lead);
+                            }}
+                            className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all w-full justify-start"
+                          >
+                            <Car className="h-4 w-4 mr-2" />
+                            <span className="text-sm font-medium">View Vehicle</span>
+                          </Button>
+                        ) : (
+                          <div className="text-gray-400 text-sm italic">No vehicle info</div>
+                        )}
+                      </div>
                       <div className="text-muted-foreground">Created</div>
                       <div>{formatDateHuman(lead.createdAt)}</div>
                     </div>
@@ -1230,6 +1259,93 @@ export default function LeadsPage() {
                   )}
                 </div>
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Vehicle Details Dialog */}
+      <Dialog open={!!vehicleDetailsLead} onOpenChange={(open) => !open && setVehicleDetailsLead(null)}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto [&>button]:hidden">
+          <DialogHeader className="flex flex-row items-center justify-between pb-4 border-b border-gray-200">
+            <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <Car className="h-5 w-5 text-cyan-600" />
+              Vehicle Details
+            </DialogTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setVehicleDetailsLead(null)}
+                className="h-10 px-4 border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all"
+              >
+                Close
+              </Button>
+            </div>
+          </DialogHeader>
+
+          {vehicleDetailsLead && (
+            <div className="space-y-6">
+              {/* Lead Info Header */}
+              <div className="flex items-center gap-4 pb-4 border-b border-gray-200">
+                <LeadAvatar 
+                  name={vehicleDetailsLead.fullName || 'N/A'} 
+                  imageUrl={vehicleDetailsLead.photos && vehicleDetailsLead.photos.length > 0 ? getImageUrl(vehicleDetailsLead.photos[0]) : null}
+                  size="md"
+                />
+                <div>
+                  <div className="text-lg font-bold text-gray-900">{vehicleDetailsLead.fullName || 'N/A'}</div>
+                  {vehicleDetailsLead.email && (
+                    <div className="text-sm text-gray-600 mt-1">{vehicleDetailsLead.email}</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Vehicle Information */}
+              {(vehicleDetailsLead.vehicleType || vehicleDetailsLead.vehicleMake || vehicleDetailsLead.vehicleModel || vehicleDetailsLead.vehicleYear || vehicleDetailsLead.vehicleCondition) ? (
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-4 border border-cyan-200">
+                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4 flex items-center gap-2">
+                      Vehicle Information
+                    </h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      {vehicleDetailsLead.vehicleType && (
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Type</span>
+                          <span className="px-3 py-1.5 bg-cyan-100 text-cyan-700 rounded-md text-sm font-medium capitalize">{vehicleDetailsLead.vehicleType}</span>
+                        </div>
+                      )}
+                      {vehicleDetailsLead.vehicleMake && (
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Make</span>
+                          <span className="text-sm font-medium text-gray-900">{vehicleDetailsLead.vehicleMake}</span>
+                        </div>
+                      )}
+                      {vehicleDetailsLead.vehicleModel && (
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Model</span>
+                          <span className="text-sm font-medium text-gray-900">{vehicleDetailsLead.vehicleModel}</span>
+                        </div>
+                      )}
+                      {vehicleDetailsLead.vehicleYear && (
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Year</span>
+                          <span className="text-sm font-medium text-gray-900">{vehicleDetailsLead.vehicleYear}</span>
+                        </div>
+                      )}
+                      {vehicleDetailsLead.vehicleCondition && (
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Condition</span>
+                          <span className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-md text-sm font-medium capitalize">{String(vehicleDetailsLead.vehicleCondition).replace(/_/g, ' ')}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-400">
+                  <Car className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm font-medium">No vehicle information available</p>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
