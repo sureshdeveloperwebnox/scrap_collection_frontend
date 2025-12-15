@@ -16,7 +16,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <GoogleMapsProvider>
           <AuthProvider>
             <LoadingProvider>
-              {children}
+            {children}
             </LoadingProvider>
           </AuthProvider>
         </GoogleMapsProvider>
