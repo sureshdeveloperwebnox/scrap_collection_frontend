@@ -39,14 +39,27 @@ export const useCustomers = (params?: {
   return useQuery({
     queryKey: queryKeys.customers.list(queryParams),
     queryFn: async () => {
-      // Check Zustand cache first
+      // Check Zustand cache first for instant data
       const cached = getCachedData(cacheKey);
       if (cached) {
-        // Return cached data immediately, but still fetch in background
+        // Return cached data immediately, but still fetch in background for freshness
+        // This provides instant UI updates while ensuring data accuracy
+        const backgroundFetch = customersApi.getCustomers(queryParams).then((response) => {
+          // Update cache with fresh data
+          if (response?.data?.customers && response?.data?.pagination) {
+            setCachedData(cacheKey, response.data.customers, response.data.pagination);
+          }
+          return response;
+        }).catch(() => {
+          // Silently fail background fetch, use cached data
+          return { data: { customers: cached.customers, pagination: cached.pagination } };
+        });
+        
+        // Return cached data immediately
         return { data: { customers: cached.customers, pagination: cached.pagination } };
       }
       
-      // Fetch from API
+      // Fetch from API if no cache
       const response = await customersApi.getCustomers(queryParams);
       
       // Store in Zustand cache
@@ -57,7 +70,7 @@ export const useCustomers = (params?: {
       return response;
     },
     placeholderData: (previousData) => {
-      // First check Zustand cache
+      // First check Zustand cache for instant data
       const cached = getCachedData(cacheKey);
       if (cached) {
         return { data: { customers: cached.customers, pagination: cached.pagination } };
@@ -69,6 +82,7 @@ export const useCustomers = (params?: {
     gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache for 10 minutes
     refetchOnWindowFocus: false, // Don't refetch on window focus for better performance
     refetchOnMount: false, // Use cached data if available
+    refetchInterval: false, // Don't auto-refetch, rely on mutations for updates
   });
 };
 
@@ -81,38 +95,125 @@ export const useCustomer = (id: string) => {
   });
 };
 
-// Create customer mutation
+// Create customer mutation with optimistic updates
 export const useCreateCustomer = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const organizationId = user?.organizationId;
   const { incrementStatus } = useCustomerStatsStore();
-  const { invalidateCache } = useCustomersCacheStore();
+  const { invalidateCache, addCustomerToCache } = useCustomersCacheStore();
 
   return useMutation({
     mutationFn: (customerData: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>) => 
       customersApi.createCustomer({ ...customerData, organizationId }),
-    onSuccess: (newCustomer) => {
-      // Update Zustand store - increment ACTIVE status count by default
-      incrementStatus('ACTIVE');
+    onMutate: async (newCustomerData) => {
+      // Cancel outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: queryKeys.customers.lists() });
       
-      // Invalidate Zustand cache to force fresh fetch
-      invalidateCache();
+      // Snapshot previous values for rollback
+      const previousQueries = queryClient.getQueriesData({ queryKey: queryKeys.customers.lists() });
       
-      // Invalidate all customers list queries (all pages and filters)
-      queryClient.invalidateQueries({ queryKey: queryKeys.customers.lists() });
+      // Create optimistic customer object
+      const optimisticCustomer: Customer = {
+        ...newCustomerData,
+        id: `temp-${Date.now()}`, // Temporary ID
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        joinedDate: newCustomerData.joinedDate || new Date(),
+      };
       
-      // Invalidate stats query
-      queryClient.invalidateQueries({ queryKey: queryKeys.customers.stats(organizationId) });
+      // Optimistically add to Zustand cache for instant visibility
+      addCustomerToCache(optimisticCustomer);
       
-      // Optionally add the new customer to the cache
-      const customerData = (newCustomer as { data: Customer })?.data || newCustomer;
-      if (customerData?.id) {
-        queryClient.setQueryData(queryKeys.customers.detail(customerData.id), { data: customerData });
+      // Optimistically update TanStack Query cache
+      queryClient.setQueriesData(
+        { queryKey: queryKeys.customers.lists() },
+        (old: any) => {
+          if (!old?.data) return old;
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              customers: [optimisticCustomer, ...(old.data.customers || [])],
+              pagination: {
+                ...old.data.pagination,
+                total: (old.data.pagination?.total || 0) + 1,
+              },
+            },
+          };
+        }
+      );
+      
+      // Optimistically update stats
+      incrementStatus(newCustomerData.accountStatus || 'ACTIVE');
+      
+      return { previousQueries, optimisticCustomer };
+    },
+    onError: (err, newCustomerData, context) => {
+      // Rollback on error
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
       
-      // Invalidate dashboard stats as they might be affected
+      // Rollback Zustand cache
+      invalidateCache();
+      
+      // Rollback stats
+      const status = newCustomerData.accountStatus || 'ACTIVE';
+      useCustomerStatsStore.getState().decrementStatus(status);
+    },
+    onSuccess: (newCustomer, variables, context) => {
+      // Extract the actual customer from API response
+      const createdCustomer = (newCustomer as { data: Customer })?.data || newCustomer as Customer;
+      
+      // Replace optimistic customer with real one in Zustand cache
+      if (context?.optimisticCustomer) {
+        invalidateCache(); // Clear optimistic entry
+        addCustomerToCache(createdCustomer); // Add real customer
+      }
+      
+      // Update TanStack Query cache with real customer data
+      queryClient.setQueriesData(
+        { queryKey: queryKeys.customers.lists() },
+        (old: any) => {
+          if (!old?.data) return old;
+          // Replace optimistic customer with real one
+          const customers = old.data.customers.map((c: Customer) =>
+            c.id === context?.optimisticCustomer?.id ? createdCustomer : c
+          );
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              customers,
+            },
+          };
+        }
+      );
+      
+      // Set detail query
+      if (createdCustomer?.id) {
+        queryClient.setQueryData(queryKeys.customers.detail(createdCustomer.id), { data: createdCustomer });
+      }
+      
+      // Stats were already updated optimistically in onMutate
+      // Just ensure they're correct by refetching in background (non-blocking)
+      // Use a small delay to allow optimistic update to be visible first
+      setTimeout(() => {
+        queryClient.invalidateQueries({ 
+          queryKey: queryKeys.customers.stats(organizationId),
+          refetchType: 'active' // Only refetch active queries, not all
+        });
+      }, 500);
+      
+      // Invalidate dashboard stats
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats() });
+    },
+    onSettled: () => {
+      // Refetch to ensure consistency (but use cached data if available)
+      queryClient.invalidateQueries({ queryKey: queryKeys.customers.lists() });
     },
   });
 };

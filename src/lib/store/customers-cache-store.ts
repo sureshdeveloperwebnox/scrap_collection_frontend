@@ -30,6 +30,9 @@ interface CustomersCacheState {
   
   // Remove a customer from all cached pages
   removeCustomerFromCache: (customerId: string) => void;
+  
+  // Add a new customer to all relevant cached pages (optimistic update)
+  addCustomerToCache: (newCustomer: Customer, queryKey?: string) => void;
 }
 
 const generateQueryKey = (params: Record<string, any>): string => {
@@ -143,6 +146,53 @@ export const useCustomersCacheStore = create<CustomersCacheState>()(
                 },
               };
             });
+            
+            return { cachedPages: newCachedPages };
+          });
+        },
+
+        addCustomerToCache: (newCustomer: Customer, queryKey?: string) => {
+          set((state) => {
+            const newCachedPages = { ...state.cachedPages };
+            
+            if (queryKey) {
+              // Add to specific cache entry
+              const cached = newCachedPages[queryKey];
+              if (cached) {
+                // Check if customer already exists
+                const exists = cached.customers.some(c => c.id === newCustomer.id);
+                if (!exists) {
+                  newCachedPages[queryKey] = {
+                    ...cached,
+                    customers: [newCustomer, ...cached.customers], // Add to beginning
+                    pagination: {
+                      ...cached.pagination,
+                      total: cached.pagination.total + 1,
+                    },
+                  };
+                }
+              }
+            } else {
+              // Add to all cache entries that match the customer's status
+              Object.keys(newCachedPages).forEach((key) => {
+                const cached = newCachedPages[key];
+                // Check if this cache entry should include this customer
+                // (e.g., if it's "All" tab or matches the customer's status)
+                const shouldInclude = true; // For now, add to all caches for instant visibility
+                const exists = cached.customers.some(c => c.id === newCustomer.id);
+                
+                if (shouldInclude && !exists) {
+                  newCachedPages[key] = {
+                    ...cached,
+                    customers: [newCustomer, ...cached.customers], // Add to beginning
+                    pagination: {
+                      ...cached.pagination,
+                      total: cached.pagination.total + 1,
+                    },
+                  };
+                }
+              });
+            }
             
             return { cachedPages: newCachedPages };
           });

@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { LeadForm } from '@/components/lead-form';
-import { Lead } from '@/types';
-import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal, Download, Filter, Check, X, Car } from 'lucide-react';
+import { CustomerForm } from '@/components/customer-form';
+import { Lead, Customer, CustomerStatus } from '@/types';
+import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal, Download, Filter, Check, X, Car, UserPlus } from 'lucide-react';
 import { useLeads, useDeleteLead, useUpdateLead } from '@/hooks/use-leads';
 import { useLeadStats } from '@/hooks/use-lead-stats';
 import { useLeadStatsStore } from '@/lib/store/lead-stats-store';
@@ -26,6 +27,7 @@ import { useAuthStore } from '@/lib/store/auth-store';
 import { leadsApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 
 // Dynamically import Lottie for better performance
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -302,6 +304,11 @@ export default function LeadsPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [detailsLead, setDetailsLead] = useState<ApiLead | null>(null);
   const [vehicleDetailsLead, setVehicleDetailsLead] = useState<ApiLead | null>(null);
+  const [convertingCustomer, setConvertingCustomer] = useState<Customer | undefined>(undefined);
+  const [isCustomerFormOpen, setIsCustomerFormOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [leadToDelete, setLeadToDelete] = useState<ApiLead | null>(null);
+  const router = useRouter();
   
   // Selection state
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
@@ -433,16 +440,49 @@ export default function LeadsPage() {
     }
   }, [currentPage, pagination.totalPages, queryClient, organizationId, queryParams]);
 
-  const handleDeleteLead = async (id: string) => {
-    if (confirm('Delete this lead?')) {
-      try {
-        await deleteLeadMutation.mutateAsync(id);
-        toast.success('Lead deleted');
-      } catch (error) {
-        console.error('Error deleting lead:', error);
-        toast.error('Failed to delete lead');
-      }
+  const handleDeleteClick = (lead: ApiLead) => {
+    setLeadToDelete(lead);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!leadToDelete) return;
+    
+    try {
+      await deleteLeadMutation.mutateAsync(leadToDelete.id);
+      toast.success(`Lead "${leadToDelete.fullName || 'N/A'}" deleted successfully`);
+      setDeleteConfirmOpen(false);
+      setLeadToDelete(null);
+    } catch (error) {
+      console.error('Error deleting lead:', error);
+      toast.error('Failed to delete lead');
     }
+  };
+
+  const handleConvertToCustomer = (lead: ApiLead) => {
+    // Create customer object with pre-filled data from lead
+    // Note: id is intentionally omitted/empty to ensure POST API is used
+    const convertedCustomer: Customer = {
+      id: '', // Empty ID ensures POST (create) API is used, not PUT (update)
+      organizationId: lead.organizationId,
+      name: lead.fullName || '',
+      phone: lead.phone || '',
+      email: lead.email,
+      address: lead.locationAddress,
+      latitude: lead.latitude,
+      longitude: lead.longitude,
+      vehicleType: lead.vehicleType as any,
+      vehicleMake: lead.vehicleMake,
+      vehicleModel: lead.vehicleModel,
+      vehicleYear: lead.vehicleYear,
+      vehicleCondition: lead.vehicleCondition as any,
+      accountStatus: 'ACTIVE' as CustomerStatus,
+      joinedDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    setConvertingCustomer(convertedCustomer);
+    setIsCustomerFormOpen(true);
   };
 
   const toggleSort = (key: SortKey) => {
@@ -858,14 +898,14 @@ export default function LeadsPage() {
                           <TableCell className="text-gray-600">
                             {formatDateHuman(lead.createdAt)}
                           </TableCell>
-                          <TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                                   <MoreHorizontal className="h-4 w-4 text-gray-600" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
                                 <DropdownMenuItem onClick={() => setDetailsLead(lead)}>
                                   <Eye className="h-4 w-4 mr-2" />
                                   View
@@ -879,7 +919,18 @@ export default function LeadsPage() {
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
-                                  onClick={() => handleDeleteLead(lead.id)}
+                                  onClick={() => handleConvertToCustomer(lead)}
+                                  className="text-cyan-600 focus:text-cyan-600"
+                                >
+                                  <UserPlus className="h-4 w-4 mr-2" />
+                                  Convert Customer
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteClick(lead);
+                                  }}
                                   className="text-red-600 focus:text-red-600"
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
@@ -946,7 +997,7 @@ export default function LeadsPage() {
                       <div className="text-muted-foreground">Created</div>
                       <div>{formatDateHuman(lead.createdAt)}</div>
                     </div>
-                    <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="mt-3 flex items-center gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
                       <Button 
                         variant="ghost" 
                         size="sm" 
@@ -984,7 +1035,7 @@ export default function LeadsPage() {
                         };
                         setEditingLead(convertedLead);
                         setIsFormOpen(true);
-                        }} 
+                      }} 
                         className="bg-cyan-50/50 hover:bg-cyan-100 text-cyan-600 hover:text-cyan-700 transition-all duration-200 border border-cyan-200/50 hover:border-cyan-300 shadow-sm hover:shadow-md z-10 relative"
                         title="Edit Lead"
                       >
@@ -993,7 +1044,19 @@ export default function LeadsPage() {
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        onClick={() => handleDeleteLead(lead.id)} 
+                        onClick={() => handleConvertToCustomer(lead)} 
+                        className="bg-green-50/50 hover:bg-green-100 text-green-600 hover:text-green-700 transition-all duration-200 border border-green-200/50 hover:border-green-300 shadow-sm hover:shadow-md z-10 relative"
+                        title="Convert to Customer"
+                      >
+                        <UserPlus className="h-4 w-4 mr-1" /> Convert
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(lead);
+                        }} 
                         className="bg-red-50/50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all duration-200 border border-red-200/50 hover:border-red-300 shadow-sm hover:shadow-md z-10 relative"
                         title="Delete Lead"
                         disabled={deleteLeadMutation.isPending}
@@ -1359,6 +1422,92 @@ export default function LeadsPage() {
           setEditingLead(undefined);
         }}
       />
+
+      <CustomerForm
+        customer={convertingCustomer}
+        isOpen={isCustomerFormOpen}
+        isConverting={true}
+        onClose={() => {
+          setIsCustomerFormOpen(false);
+          setConvertingCustomer(undefined);
+        }}
+        onSuccess={(createdCustomer) => {
+          // Navigate to customers page with highlight parameter
+          router.push(`/customers?highlight=${createdCustomer.id}`);
+          toast.success(`Customer "${createdCustomer.name}" converted successfully!`);
+        }}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="sm:max-w-[425px] [&>button]:hidden">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 className="h-5 w-5 text-red-600" />
+              </div>
+              Delete Lead
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-600 mb-4">
+              Are you sure you want to delete this lead? This action cannot be undone.
+            </p>
+            {leadToDelete && (
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <LeadAvatar 
+                    name={leadToDelete.fullName || 'N/A'} 
+                    imageUrl={leadToDelete.photos && leadToDelete.photos.length > 0 ? getImageUrl(leadToDelete.photos[0]) : null}
+                    size="md"
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {leadToDelete.fullName || 'N/A'}
+                    </p>
+                    {leadToDelete.email && (
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {leadToDelete.email}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                setLeadToDelete(null);
+              }}
+              disabled={deleteLeadMutation.isPending}
+              className="border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleteLeadMutation.isPending}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deleteLeadMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Lead
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

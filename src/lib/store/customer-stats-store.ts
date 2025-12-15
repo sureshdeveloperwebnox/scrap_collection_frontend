@@ -52,14 +52,26 @@ export const useCustomerStatsStore = create<CustomerStatsState>()(
       },
 
       updateCount: (status: keyof CustomerStats, change: number) => {
-        const currentStats = get().stats || initialStats;
-        set({
-          stats: {
-            ...currentStats,
-            [status]: Math.max(0, (currentStats[status] || 0) + change),
-            total: Math.max(0, currentStats.total + change),
-          },
-        });
+        const currentStats = get().stats;
+        if (!currentStats) {
+          // If stats don't exist, initialize with the change
+          const newStats = { ...initialStats };
+          if (status !== 'total') {
+            newStats[status] = Math.max(0, change);
+            newStats.total = Math.max(0, change);
+          } else {
+            newStats.total = Math.max(0, change);
+          }
+          set({ stats: newStats });
+        } else {
+          set({
+            stats: {
+              ...currentStats,
+              [status]: Math.max(0, (currentStats[status] || 0) + change),
+              total: Math.max(0, currentStats.total + change),
+            },
+          });
+        }
       },
 
       incrementStatus: (status: 'ACTIVE' | 'INACTIVE' | 'VIP' | 'BLOCKED') => {
