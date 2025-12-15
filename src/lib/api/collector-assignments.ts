@@ -8,6 +8,11 @@ export interface CollectorAssignment {
     fullName: string;
     email: string;
     phone: string;
+    scrapYard?: {
+      id: string;
+      yardName: string;
+      address: string;
+    };
   };
   vehicleNameId?: string;
   vehicleName?: {
@@ -80,6 +85,7 @@ export const collectorAssignmentsApi = {
     collectorId: string;
     vehicleNameId?: string;
     cityId?: number;
+    scrapYardId?: string;
     isActive?: boolean;
   }): Promise<ApiResponse<CollectorAssignment>> => {
     const response = await apiClient.post('/collector-assignments', assignmentData);

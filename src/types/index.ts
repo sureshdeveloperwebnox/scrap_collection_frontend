@@ -83,6 +83,11 @@ export interface Employee {
   deviceToken?: string;
   organizationId: number;
   scrapYardId?: string;
+  scrapYard?: {
+    id: string;
+    yardName: string;
+    address: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }

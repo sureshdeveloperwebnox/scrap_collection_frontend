@@ -23,11 +23,6 @@ export default function VehiclesLayout({
       href: '/vehicles/names',
       icon: List,
     },
-    {
-      name: 'Collector Assignment',
-      href: '/vehicles/collectors',
-      icon: UserCheck,
-    },
   ];
 
   return (

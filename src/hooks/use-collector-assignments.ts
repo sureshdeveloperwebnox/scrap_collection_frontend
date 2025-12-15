@@ -47,6 +47,7 @@ export const useCreateCollectorAssignment = () => {
       collectorId: string;
       vehicleNameId?: string;
       cityId?: number;
+      scrapYardId?: string;
       isActive?: boolean;
     }) => collectorAssignmentsApi.createCollectorAssignment({
       ...assignmentData,
