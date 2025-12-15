@@ -162,7 +162,7 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
     const found = findVehicleTypeByEnum(formData.vehicleType);
     return found ? mapVehicleTypeNameToEnum(found.name) : undefined;
   };
-
+  
   const [formData, setFormData] = useState({
     organizationId: organizationId,
     name: '',
@@ -236,28 +236,28 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
       if (initialData) {
         // Pre-fill form with lead data when converting
         setFormData(initialData);
-      } else {
-        // Reset form for new customer
+    } else {
+      // Reset form for new customer
         const defaultVehicleType = availableVehicleTypes.length > 0
           ? mapVehicleTypeNameToEnum(availableVehicleTypes[0].name)
           : undefined;
         
-        setFormData({
+      setFormData({
           organizationId,
-          name: '',
-          phone: '',
-          email: '',
-          address: '',
-          latitude: undefined,
-          longitude: undefined,
+        name: '',
+        phone: '',
+        email: '',
+        address: '',
+        latitude: undefined,
+        longitude: undefined,
           vehicleType: defaultVehicleType,
           vehicleMake: '',
           vehicleModel: '',
           vehicleNumber: '',
           vehicleYear: undefined,
           vehicleCondition: undefined,
-          accountStatus: 'ACTIVE',
-        });
+        accountStatus: 'ACTIVE',
+      });
       }
       setPhoneError(undefined);
       setPhoneTouched(false);
@@ -327,7 +327,7 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
       }
       return;
     }
-
+    
     // Additional phone validation
     if (formData.phone && formData.phone.trim() !== '' && formData.phone !== '+') {
       try {
@@ -505,7 +505,7 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
           <div className="space-y-5">
                 <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Customer Information</h3>
                 <div className="grid grid-cols-1 gap-5">
-              <div className="space-y-2">
+            <div className="space-y-2">
                 <Label htmlFor="name" className="text-sm font-medium text-gray-700">Name *</Label>
                 <div className="relative">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
@@ -513,23 +513,23 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                       <User className="h-5 w-5 text-cyan-600" />
                     </div>
                   </div>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  required
-                  disabled={isLoading}
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                required
+                disabled={isLoading}
                     className={`pl-14 h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${
                       validationErrors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
                     }`}
                     placeholder="Enter customer name"
-                />
+              />
                 </div>
                 {validationErrors.name && (
                   <p className="text-sm text-red-600 mt-1">{validationErrors.name}</p>
                 )}
-              </div>
-              <div className="space-y-2">
+            </div>
+            <div className="space-y-2">
                 <Label htmlFor="phone" className="text-sm font-medium text-gray-700">Phone *</Label>
                 <div className="flex flex-col gap-2">
                   <PhoneInput
@@ -626,50 +626,50 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
                     <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
                       <Mail className="h-5 w-5 text-cyan-600" />
-                    </div>
-                  </div>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  disabled={isLoading}
+            </div>
+          </div>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              disabled={isLoading}
                     className={`pl-14 h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${
                       validationErrors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
                     }`}
                     placeholder="Enter email address"
-                />
-                </div>
+            />
+          </div>
                 {validationErrors.email && (
                   <p className="text-sm text-red-600 mt-1">{validationErrors.email}</p>
                 )}
-              </div>
-              <div className="space-y-2">
+            </div>
+            <div className="space-y-2">
                 <Label htmlFor="accountStatus" className="text-sm font-medium text-gray-700">Account Status *</Label>
-                <Select 
-                  value={formData.accountStatus} 
-                  onValueChange={(value) => handleInputChange('accountStatus', value as CustomerStatus)}
-                  disabled={isLoading}
-                >
+            <Select 
+              value={formData.accountStatus} 
+              onValueChange={(value) => handleInputChange('accountStatus', value as CustomerStatus)}
+              disabled={isLoading}
+            >
                   <SelectTrigger className={`h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${
                     validationErrors.accountStatus ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
                   }`}>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ACTIVE">Active</SelectItem>
                     <SelectItem value="INACTIVE">Inactive</SelectItem>
                     <SelectItem value="VIP">VIP</SelectItem>
-                    <SelectItem value="BLOCKED">Blocked</SelectItem>
-                  </SelectContent>
-                </Select>
+                <SelectItem value="BLOCKED">Blocked</SelectItem>
+              </SelectContent>
+            </Select>
                 {validationErrors.accountStatus && (
                   <p className="text-sm text-red-600 mt-1">{validationErrors.accountStatus}</p>
                 )}
               </div>
             </div>
           </div>
-            </div>
+          </div>
 
             {/* Right Column */}
             <div className="space-y-6 lg:sticky lg:top-4">
@@ -730,7 +730,7 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                     <Select 
                       value={formData.vehicleCondition || ''}
                       onValueChange={(value) => handleInputChange('vehicleCondition', value as VehicleConditionEnum)}
-                      disabled={isLoading}
+              disabled={isLoading}
                     >
                       <SelectTrigger className={`h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${
                         validationErrors.vehicleCondition ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
@@ -802,7 +802,7 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                     <Select 
                       value={formData.vehicleYear?.toString() || ''}
                       onValueChange={(value) => handleInputChange('vehicleYear', parseInt(value) || undefined)}
-                      disabled={isLoading}
+              disabled={isLoading}
                     >
                       <SelectTrigger className="h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all">
                         <div className="flex items-center gap-2">
@@ -851,13 +851,13 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                     />
                     {validationErrors.address && (
                       <p className="text-sm text-red-600 mt-1">{validationErrors.address}</p>
-                    )}
+              )}
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          </form>
+        </form>
         </div>
       </DialogContent>
     </Dialog>

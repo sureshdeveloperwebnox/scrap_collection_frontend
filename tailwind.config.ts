@@ -39,6 +39,9 @@ const config: Config = {
           800: "#00838f",
           900: "#006064",
         },
+        'primary-dark': '#6D28D9',
+        'primary-light': '#A78BFA',
+        'muted-text': '#6B7280',
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",

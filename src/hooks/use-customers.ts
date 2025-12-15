@@ -102,7 +102,7 @@ export const useCreateCustomer = () => {
   const organizationId = user?.organizationId;
   const { incrementStatus } = useCustomerStatsStore();
   const { invalidateCache, addCustomerToCache } = useCustomersCacheStore();
-
+  
   return useMutation({
     mutationFn: (customerData: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>) => 
       customersApi.createCustomer({ ...customerData, organizationId }),
@@ -188,7 +188,7 @@ export const useCreateCustomer = () => {
             data: {
               ...old.data,
               customers,
-            },
+    },
           };
         }
       );
@@ -225,9 +225,9 @@ export const useUpdateCustomer = () => {
   const organizationId = user?.organizationId;
   const { incrementStatus, decrementStatus } = useCustomerStatsStore();
   const { updateCustomerInCache } = useCustomersCacheStore();
-
+  
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Customer> }) => 
+    mutationFn: ({ id, data }: { id: string; data: Partial<Customer> }) =>
       customersApi.updateCustomer(id, data),
     onMutate: async (variables) => {
       // Cancel outgoing refetches
@@ -290,7 +290,7 @@ export const useDeleteCustomer = () => {
   const organizationId = user?.organizationId;
   const { decrementStatus } = useCustomerStatsStore();
   const { removeCustomerFromCache } = useCustomersCacheStore();
-
+  
   return useMutation({
     mutationFn: (id: string) => customersApi.deleteCustomer(id),
     onMutate: async (deletedId) => {
@@ -339,9 +339,9 @@ export const useDeleteCustomer = () => {
 // Bulk update customers mutation
 export const useBulkUpdateCustomers = () => {
   const queryClient = useQueryClient();
-
+  
   return useMutation({
-    mutationFn: ({ ids, updates }: { ids: string[]; updates: Partial<Customer> }) => 
+    mutationFn: ({ ids, updates }: { ids: string[]; updates: Partial<Customer> }) =>
       customersApi.bulkUpdateCustomers(ids, updates),
     onSuccess: () => {
       // Invalidate all customers queries to ensure consistency
@@ -357,7 +357,7 @@ export const useConvertLeadToCustomer = () => {
   const { user } = useAuthStore();
   const organizationId = user?.organizationId;
   const { incrementStatus } = useCustomerStatsStore();
-
+  
   return useMutation({
     mutationFn: (leadId: string) => 
       customersApi.convertLeadToCustomer(leadId),

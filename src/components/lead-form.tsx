@@ -570,8 +570,8 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
         }
       } else {
         // Generic error message
-        const errorMessage = error?.response?.data?.message || error?.message || 'An error occurred';
-        toast.error(lead ? `Failed to update lead: ${errorMessage}` : `Failed to create lead: ${errorMessage}`);
+      const errorMessage = error?.response?.data?.message || error?.message || 'An error occurred';
+      toast.error(lead ? `Failed to update lead: ${errorMessage}` : `Failed to create lead: ${errorMessage}`);
       }
     }
   };
@@ -790,14 +790,14 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
                   )}
               </div>
             </div>
-              <div className="space-y-2">
+            <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email *</Label>
-                <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                    <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
-                      <Mail className="h-5 w-5 text-cyan-600" />
-                    </div>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+                  <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
+                    <Mail className="h-5 w-5 text-cyan-600" />
                   </div>
+                </div>
               <Input
                 id="email"
                 type="email"
@@ -1037,7 +1037,7 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
                   {validationErrors.locationAddress && (
                     <p className="text-sm text-red-600 mt-1">{validationErrors.locationAddress}</p>
                   )}
-                </div>
+            </div>
           </div>
 
           {/* Photos */}

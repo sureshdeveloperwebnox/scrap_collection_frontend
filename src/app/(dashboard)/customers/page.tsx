@@ -414,7 +414,7 @@ export default function CustomersPage() {
       }, 300);
     }
   }, [highlightedCustomerId, customers]);
-  
+
   const totalCustomers = pagination.total;
 
   // Map stats to tab counts
@@ -464,14 +464,14 @@ export default function CustomersPage() {
   const handleDeleteConfirm = async () => {
     if (!customerToDelete) return;
     
-    try {
+      try {
       await deleteCustomerMutation.mutateAsync(customerToDelete.id);
       toast.success(`Customer "${customerToDelete.name}" deleted successfully`);
       setDeleteConfirmOpen(false);
       setCustomerToDelete(null);
-    } catch (error) {
-      console.error('Error deleting customer:', error);
-      toast.error('Failed to delete customer');
+      } catch (error) {
+        console.error('Error deleting customer:', error);
+        toast.error('Failed to delete customer');
     }
   };
 
@@ -654,16 +654,16 @@ export default function CustomersPage() {
                       <SelectValue placeholder="All Categories">
                         {scrapFilter === 'ALL' ? 'All Categories' : scrapFilter.replace(/_/g, ' ')}
                       </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL">All Categories</SelectItem>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Categories</SelectItem>
                       {scrapOptions.filter(opt => opt !== 'ALL').map((opt) => (
                         <SelectItem key={opt} value={opt}>
                           {opt.replace(/_/g, ' ')}
                         </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  ))}
+                </SelectContent>
+              </Select>
                   {scrapFilter !== 'ALL' && (
                     <Button
                       variant="ghost"
@@ -678,7 +678,7 @@ export default function CustomersPage() {
                       <X className="h-4 w-4" />
                     </Button>
                   )}
-                </div>
+            </div>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -688,7 +688,7 @@ export default function CustomersPage() {
                 >
                   <X className="h-4 w-4" />
                 </Button>
-              </div>
+          </div>
             </div>
           )}
         </CardHeader>
@@ -731,7 +731,7 @@ export default function CustomersPage() {
                                     </span>
                                   </span>
                                   {isActive && <span className={`absolute left-0 right-0 -bottom-0.5 h-0.5 ${style.underline} rounded`} />}
-                                </button>
+                        </button>
                               );
                             })}
                           </div>
@@ -788,7 +788,7 @@ export default function CustomersPage() {
                           )}
                           onClick={() => setDetailsCustomer(customer)}
                             >
-                          <TableCell>
+                        <TableCell>
                             <Checkbox
                               checked={selectedCustomers.has(customer.id)}
                               onCheckedChange={(checked) => handleSelectCustomer(customer.id, checked as boolean)}
@@ -807,25 +807,25 @@ export default function CustomersPage() {
                               </div>
                           </div>
                         </TableCell>
-                          <TableCell>
+                        <TableCell>
                             <div>
                               <div className="text-gray-900">{customer.phone || 'N/A'}</div>
-                            </div>
-                          </TableCell>
+                          </div>
+                        </TableCell>
                           <TableCell className="text-gray-700">{customer.email || 'N/A'}</TableCell>
-                          <TableCell>
+                        <TableCell>
                             {(customer.vehicleType || customer.vehicleMake || customer.vehicleModel || customer.vehicleNumber || customer.vehicleCondition) ? (
-                              <Button
-                                variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                            <Button 
+                              variant="ghost" 
+                              onClick={(e) => {
+                                e.stopPropagation();
                                   setVehicleDetailsCustomer(customer);
-                                }}
+                              }}
                                 className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all"
-                              >
+                            >
                                 <Car className="h-4 w-4 mr-2" />
                                 <span className="text-sm font-medium">View Vehicle</span>
-                              </Button>
+                            </Button>
                             ) : (
                               <div className="text-gray-400 text-sm italic">No vehicle info</div>
                             )}
@@ -876,13 +876,13 @@ export default function CustomersPage() {
                                   View
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => {
-                                  const convertedCustomer: Customer = {
+                                const convertedCustomer: Customer = {
                                     id: customer.id,
-                                    organizationId: customer.organizationId,
-                                    name: customer.name,
+                                  organizationId: customer.organizationId,
+                                  name: customer.name,
                                     phone: customer.phone,
-                                    email: customer.email,
-                                    address: customer.address,
+                                  email: customer.email,
+                                  address: customer.address,
                                     latitude: customer.latitude,
                                     longitude: customer.longitude,
                                     vehicleType: customer.vehicleType,
@@ -893,23 +893,23 @@ export default function CustomersPage() {
                                     vehicleCondition: customer.vehicleCondition,
                                     accountStatus: customer.accountStatus,
                                     joinedDate: new Date(customer.joinedDate || customer.createdAt),
-                                    createdAt: new Date(customer.createdAt),
-                                    updatedAt: new Date(customer.updatedAt),
+                                  createdAt: new Date(customer.createdAt),
+                                  updatedAt: new Date(customer.updatedAt),
                                   };
-                                  setEditingCustomer(convertedCustomer);
-                                  setIsFormOpen(true);
+                                setEditingCustomer(convertedCustomer);
+                                setIsFormOpen(true);
                                 }}>
                                   <Edit2 className="h-4 w-4 mr-2" />
                                   Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                              onClick={(e) => {
+                                e.stopPropagation();
                                     handleDeleteClick(customer);
-                                  }}
+                              }}
                                   className="text-red-600 focus:text-red-600"
-                                >
+                            >
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   Delete
                                 </DropdownMenuItem>
@@ -952,7 +952,7 @@ export default function CustomersPage() {
                       <div>
                         <div className="font-semibold">{customer.name || 'N/A'}</div>
                         {customer.email && <div className="text-sm text-muted-foreground">{customer.email}</div>}
-                        </div>
+                      </div>
                       </div>
                       <StatusBadge status={customer.accountStatus} />
                     </div>
@@ -1088,16 +1088,16 @@ export default function CustomersPage() {
           <DialogHeader className="flex flex-row items-center justify-between pb-4 border-b border-gray-200">
             <DialogTitle className="text-xl font-bold text-gray-900">Customer Details</DialogTitle>
             <div className="flex items-center gap-2">
-              {detailsCustomer && (
+          {detailsCustomer && (
                 <Button 
                   onClick={() => {
-                    const convertedCustomer: Customer = {
+                  const convertedCustomer: Customer = {
                       id: detailsCustomer.id,
-                      organizationId: detailsCustomer.organizationId,
-                      name: detailsCustomer.name,
+                    organizationId: detailsCustomer.organizationId,
+                    name: detailsCustomer.name,
                       phone: detailsCustomer.phone,
-                      email: detailsCustomer.email,
-                      address: detailsCustomer.address,
+                    email: detailsCustomer.email,
+                    address: detailsCustomer.address,
                       latitude: detailsCustomer.latitude,
                       longitude: detailsCustomer.longitude,
                       vehicleType: detailsCustomer.vehicleType,
@@ -1108,11 +1108,11 @@ export default function CustomersPage() {
                       vehicleCondition: detailsCustomer.vehicleCondition,
                       accountStatus: detailsCustomer.accountStatus,
                       joinedDate: new Date(detailsCustomer.joinedDate || detailsCustomer.createdAt),
-                      createdAt: new Date(detailsCustomer.createdAt),
-                      updatedAt: new Date(detailsCustomer.updatedAt),
+                    createdAt: new Date(detailsCustomer.createdAt),
+                    updatedAt: new Date(detailsCustomer.updatedAt),
                     };
-                    setEditingCustomer(convertedCustomer);
-                    setIsFormOpen(true);
+                  setEditingCustomer(convertedCustomer);
+                  setIsFormOpen(true);
                     setDetailsCustomer(null);
                   }}
                   className="bg-cyan-500 hover:bg-cyan-600 text-white h-10 px-4"
@@ -1127,7 +1127,7 @@ export default function CustomersPage() {
               >
                 Cancel
               </Button>
-            </div>
+              </div>
           </DialogHeader>
           {detailsCustomer && (
             <div className="space-y-4">

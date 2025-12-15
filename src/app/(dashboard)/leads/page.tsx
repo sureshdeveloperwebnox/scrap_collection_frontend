@@ -363,13 +363,13 @@ export default function LeadsPage() {
     const status = getStatusFromTab(activeTab);
     const sortBy = getApiSortBy(sortKey);
     return {
-      page: currentPage,
-      limit: rowsPerPage,
-      search: debouncedSearchTerm || undefined,
+    page: currentPage,
+    limit: rowsPerPage,
+    search: debouncedSearchTerm || undefined,
       status: status as any,
       vehicleCondition: conditionFilterValue,
       sortBy,
-      sortOrder: sortDir,
+    sortOrder: sortDir,
     };
   }, [currentPage, rowsPerPage, debouncedSearchTerm, activeTab, conditionFilterValue, sortKey, sortDir]);
 
@@ -448,15 +448,15 @@ export default function LeadsPage() {
   const handleDeleteConfirm = async () => {
     if (!leadToDelete) return;
     
-    try {
+      try {
       await deleteLeadMutation.mutateAsync(leadToDelete.id);
       toast.success(`Lead "${leadToDelete.fullName || 'N/A'}" deleted successfully`);
       setDeleteConfirmOpen(false);
       setLeadToDelete(null);
-    } catch (error) {
-      console.error('Error deleting lead:', error);
-      toast.error('Failed to delete lead');
-    }
+      } catch (error) {
+        console.error('Error deleting lead:', error);
+        toast.error('Failed to delete lead');
+      }
   };
 
   const handleConvertToCustomer = (lead: ApiLead) => {
@@ -668,16 +668,16 @@ export default function LeadsPage() {
                       <SelectValue placeholder="All Categories">
                         {scrapFilter === 'ALL' ? 'All Categories' : scrapFilter.replace(/_/g, ' ')}
                       </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL">All Categories</SelectItem>
-                      {scrapOptions.filter(opt => opt !== 'ALL').map((opt) => (
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Categories</SelectItem>
+                    {scrapOptions.filter(opt => opt !== 'ALL').map((opt) => (
                         <SelectItem key={opt} value={opt}>
                           {opt.replace(/_/g, ' ')}
                         </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  ))}
+                </SelectContent>
+              </Select>
                   {scrapFilter !== 'ALL' && (
                     <Button
                       variant="ghost"
@@ -702,8 +702,8 @@ export default function LeadsPage() {
                 >
                   <X className="h-4 w-4" />
                 </Button>
-              </div>
             </div>
+          </div>
           )}
         </CardHeader>
         <CardContent className="p-6">
@@ -1035,7 +1035,7 @@ export default function LeadsPage() {
                         };
                         setEditingLead(convertedLead);
                         setIsFormOpen(true);
-                      }} 
+                        }} 
                         className="bg-cyan-50/50 hover:bg-cyan-100 text-cyan-600 hover:text-cyan-700 transition-all duration-200 border border-cyan-200/50 hover:border-cyan-300 shadow-sm hover:shadow-md z-10 relative"
                         title="Edit Lead"
                       >
@@ -1196,12 +1196,12 @@ export default function LeadsPage() {
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Location Information</h3>
                   <div className="grid grid-cols-2 gap-3 text-sm">
-                    {detailsLead.locationAddress && (
-                      <>
-                        <div className="text-muted-foreground">Address</div>
+                  {detailsLead.locationAddress && (
+                    <>
+                      <div className="text-muted-foreground">Address</div>
                         <div className="font-medium break-words">{detailsLead.locationAddress}</div>
-                      </>
-                    )}
+                    </>
+                  )}
                     {(detailsLead.latitude !== undefined && detailsLead.latitude !== null) && (
                       <>
                         <div className="text-muted-foreground">Latitude</div>
@@ -1229,10 +1229,10 @@ export default function LeadsPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                             </svg>
                           </a>
-                        </div>
+                </div>
                       </>
                     )}
-                  </div>
+              </div>
                 </div>
               )}
 
@@ -1336,13 +1336,13 @@ export default function LeadsPage() {
               Vehicle Details
             </DialogTitle>
             <div className="flex items-center gap-2">
-              <Button
+                <Button 
                 onClick={() => setVehicleDetailsLead(null)}
                 className="h-10 px-4 border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all"
-              >
+                >
                 Close
-              </Button>
-            </div>
+                </Button>
+              </div>
           </DialogHeader>
 
           {vehicleDetailsLead && (

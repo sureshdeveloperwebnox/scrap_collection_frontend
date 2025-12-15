@@ -303,19 +303,19 @@ export function GoogleMapPicker({
 
           <div className="border rounded-md overflow-hidden relative w-full p-0 m-0">
             <div className="w-full" style={{ width: '100%' }}>
-              <GoogleMap
-                mapContainerStyle={mapContainerStyle}
-                center={center}
-                zoom={latitude && longitude && latitude !== 0 && longitude !== 0 ? 15 : 5}
-                onClick={onMapClick}
-                options={{
-                  streetViewControl: false,
-                  mapTypeControl: false,
-                  fullscreenControl: true,
-                }}
-              >
-                {position && <Marker position={position} />}
-              </GoogleMap>
+            <GoogleMap
+              mapContainerStyle={mapContainerStyle}
+              center={center}
+              zoom={latitude && longitude && latitude !== 0 && longitude !== 0 ? 15 : 5}
+              onClick={onMapClick}
+              options={{
+                streetViewControl: false,
+                mapTypeControl: false,
+                fullscreenControl: true,
+              }}
+            >
+              {position && <Marker position={position} />}
+            </GoogleMap>
             </div>
           </div>
           <p className="text-xs text-gray-500">

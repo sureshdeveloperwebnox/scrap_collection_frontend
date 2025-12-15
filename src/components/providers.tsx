@@ -5,6 +5,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { queryClient } from '@/lib/query-client';
 import { AuthProvider } from './auth-provider';
 import { GoogleMapsProvider } from './google-maps-provider';
+import { LoadingProvider } from './loading-provider';
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '569647250637-hjfil6urujje9gu70j65clao3kubtrmj.apps.googleusercontent.com';
 
@@ -14,7 +15,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
         <GoogleMapsProvider>
           <AuthProvider>
-            {children}
+            <LoadingProvider>
+              {children}
+            </LoadingProvider>
           </AuthProvider>
         </GoogleMapsProvider>
       </GoogleOAuthProvider>

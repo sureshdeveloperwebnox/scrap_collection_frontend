@@ -84,10 +84,10 @@ export const customersApi = {
   // Get single customer statistics
   getCustomerDetailStats: async (customerId: string): Promise<{
     data: {
-      totalOrders: number;
-      totalSpent: number;
-      lastOrderDate?: string;
-      averageOrderValue: number;
+    totalOrders: number;
+    totalSpent: number;
+    lastOrderDate?: string;
+    averageOrderValue: number;
     };
   }> => {
     const response = await apiClient.get(`/customers/${customerId}/stats`);
