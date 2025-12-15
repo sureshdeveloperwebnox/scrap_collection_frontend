@@ -30,6 +30,7 @@ type NavigationItem = {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   submenu?: NavigationItem[];
+  hasChevron?: boolean;
 };
 
 // Navigation structure matching the image design
@@ -49,7 +50,7 @@ const navigationSections: Array<{
       { name: 'Leads', href: '/leads', icon: Users, hasChevron: true },
       { name: 'Customers', href: '/customers', icon: CircleUserRound, hasChevron: true },
       { name: 'Orders', href: '/orders', icon: ShoppingCart, hasChevron: true },
-      { name: 'Vehicles', href: '/vehicles/types', icon: Car, hasChevron: true },
+      { name: 'Transport', href: '/vehicles/types', icon: Car, hasChevron: true },
       { name: 'Pickup Requests', href: '/pickup-requests', icon: ClipboardList, hasChevron: true },
       { name: 'Scrap Yards', href: '/scrap-yards', icon: Building2, hasChevron: true },
       { name: 'Payments', href: '/payments', icon: CreditCard, hasChevron: true },

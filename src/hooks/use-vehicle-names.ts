@@ -49,6 +49,7 @@ export const useCreateVehicleName = () => {
       model?: string;
       year?: number;
       vehicleId: string; // Required
+      condition?: VehicleName['condition'];
       isActive?: boolean;
     }) => vehicleNamesApi.createVehicleName({
       ...vehicleNameData,

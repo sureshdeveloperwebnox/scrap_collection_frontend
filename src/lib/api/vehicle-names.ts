@@ -51,6 +51,7 @@ export const vehicleNamesApi = {
     model?: string;
     year?: number;
     vehicleId: string; // Required
+    condition?: VehicleConditionEnum;
     isActive?: boolean;
   }): Promise<ApiResponse<VehicleName>> => {
     const response = await apiClient.post('/vehicle-names', vehicleNameData);
@@ -65,6 +66,7 @@ export const vehicleNamesApi = {
     model?: string;
     year?: number;
     vehicleId?: string;
+    condition?: VehicleConditionEnum;
     isActive?: boolean;
   }): Promise<ApiResponse<VehicleName>> => {
     const response = await apiClient.put(`/vehicle-names/${id}`, vehicleNameData);

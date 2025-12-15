@@ -213,6 +213,10 @@ export default function VehicleNamesPage() {
                     <TableRow>
                       <TableHead>Vehicle Name</TableHead>
                       <TableHead>Vehicle Type</TableHead>
+                      <TableHead>Make</TableHead>
+                      <TableHead>Model</TableHead>
+                      <TableHead>Year</TableHead>
+                      <TableHead>Vehicle ID</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -229,6 +233,34 @@ export default function VehicleNamesPage() {
                         <TableCell>
                           {vehicleName.vehicleType ? (
                             <Badge variant="outline">{vehicleName.vehicleType.name}</Badge>
+                          ) : (
+                            <span className="text-gray-400 text-sm">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {vehicleName.make ? (
+                            <span className="text-sm">{vehicleName.make}</span>
+                          ) : (
+                            <span className="text-gray-400 text-sm">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {vehicleName.model ? (
+                            <span className="text-sm">{vehicleName.model}</span>
+                          ) : (
+                            <span className="text-gray-400 text-sm">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {vehicleName.year ? (
+                            <span className="text-sm">{vehicleName.year}</span>
+                          ) : (
+                            <span className="text-gray-400 text-sm">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {vehicleName.vehicleId ? (
+                            <span className="text-sm font-mono">{vehicleName.vehicleId}</span>
                           ) : (
                             <span className="text-gray-400 text-sm">—</span>
                           )}
