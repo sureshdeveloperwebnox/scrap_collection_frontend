@@ -386,7 +386,7 @@ export default function VehicleNamesPage() {
                       <TableHead>Vehicle Type</TableHead>
 
                       <TableHead>Status</TableHead>
-                      <TableHead>Created</TableHead>
+                      {/* <TableHead>Created</TableHead> */}
                       <TableHead className="w-12">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -441,7 +441,7 @@ export default function VehicleNamesPage() {
                               </Select>
                             </div>
                           </TableCell>
-                          <TableCell className="text-gray-500">{new Date(vehicleName.createdAt).toLocaleDateString()}</TableCell>
+                          {/* <TableCell className="text-gray-500">{new Date(vehicleName.createdAt).toLocaleDateString()}</TableCell> */}
                           <TableCell>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
