@@ -766,10 +766,7 @@ export default function ScrapManagementPage() {
                             <Checkbox className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500" />
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-3">
-                              <CategoryIcon />
-                              <span className="font-medium text-gray-900">{category.name}</span>
-                            </div>
+                            <span className="font-medium text-gray-900">{category.name}</span>
                           </TableCell>
                           <TableCell>
                             <span className="text-sm text-gray-600 line-clamp-2 max-w-md">
@@ -854,10 +851,7 @@ export default function ScrapManagementPage() {
                             <Checkbox className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500" />
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-3">
-                              <ScrapNameIcon />
-                              <span className="font-medium text-gray-900">{name.name}</span>
-                            </div>
+                            <span className="font-medium text-gray-900">{name.name}</span>
                           </TableCell>
                           <TableCell>
                             {name.scrapCategory && (
