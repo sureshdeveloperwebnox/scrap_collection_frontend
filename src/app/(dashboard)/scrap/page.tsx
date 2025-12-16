@@ -1061,42 +1061,85 @@ function ScrapCategoryForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="name">Category Name *</Label>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Enter category name"
-          required
-          className="mt-1"
-        />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-5">
+        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Category Information</h3>
+        <div className="grid grid-cols-1 gap-5">
+          <div className="space-y-2">
+            <Label htmlFor="category-name" className="text-sm font-medium text-gray-700">
+              Category Name *
+            </Label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                  <svg className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                </div>
+              </div>
+              <Input
+                id="category-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter category name"
+                required
+                disabled={isLoading}
+                className="pl-16 h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-purple-400 focus:ring-purple-200 focus:ring-2 transition-all"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="category-description" className="text-sm font-medium text-gray-700">
+              Description
+            </Label>
+            <div className="relative">
+              <div className="absolute left-4 top-4 z-10">
+                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                  <svg className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                  </svg>
+                </div>
+              </div>
+              <Textarea
+                id="category-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Enter description (optional)"
+                disabled={isLoading}
+                className="pl-16 pt-3 rounded-xl border-gray-200 bg-white shadow-sm focus:border-purple-400 focus:ring-purple-200 focus:ring-2 transition-all resize-none"
+                rows={4}
+              />
+            </div>
+          </div>
+        </div>
       </div>
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Enter description (optional)"
-          className="mt-1"
-          rows={3}
-        />
-      </div>
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isLoading}
+          className="h-12 px-6 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading} className="bg-cyan-500 hover:bg-cyan-600">
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            'Save'
-          )}
+        <Button
+          type="submit"
+          disabled={isLoading}
+          variant="outline"
+          className="relative overflow-hidden group h-12 px-8 rounded-xl border-2 border-purple-500 text-purple-600 hover:bg-white hover:text-purple-700 hover:border-purple-400 font-bold shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:shadow-[0_0_25px_rgba(168,85,247,0.5)] transition-all transform hover:scale-105 active:scale-95 bg-white backdrop-blur-sm"
+        >
+          <span className="absolute inset-0 w-full h-full -translate-x-full group-hover:animate-shimmer bg-gradient-to-r from-transparent via-purple-300/50 to-transparent z-0 skew-x-12" />
+          <span className="relative z-10 flex items-center gap-2">
+            {isLoading ? (
+              <>
+                <div className="mr-2 h-5 w-5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                Saving...
+              </>
+            ) : (
+              category ? 'Update Category' : 'Create Category'
+            )}
+          </span>
         </Button>
       </div>
     </form>
@@ -1127,57 +1170,107 @@ function ScrapNameForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="name">Scrap Name *</Label>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Enter scrap name"
-          required
-          className="mt-1"
-        />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-5">
+        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Scrap Name Information</h3>
+        <div className="grid grid-cols-1 gap-5">
+          <div className="space-y-2">
+            <Label htmlFor="scrap-name" className="text-sm font-medium text-gray-700">
+              Scrap Name *
+            </Label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+                <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
+                  <svg className="h-5 w-5 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                </div>
+              </div>
+              <Input
+                id="scrap-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter scrap name"
+                required
+                disabled={isLoading}
+                className="pl-16 h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="scrap-category" className="text-sm font-medium text-gray-700">
+              Category *
+            </Label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+                <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
+                  <svg className="h-5 w-5 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                </div>
+              </div>
+              <Select value={scrapCategoryId} onValueChange={setScrapCategoryId} required disabled={isLoading}>
+                <SelectTrigger className="pl-16 h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-gray-700">Status</Label>
+            <div className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-gray-50">
+              <Switch
+                id="scrap-isActive"
+                checked={isActive}
+                onCheckedChange={setIsActive}
+                disabled={isLoading}
+                className="data-[state=checked]:bg-green-500"
+              />
+              <Label htmlFor="scrap-isActive" className="cursor-pointer text-sm font-medium text-gray-700">
+                {isActive ? (
+                  <span className="text-green-600">Active</span>
+                ) : (
+                  <span className="text-gray-500">Inactive</span>
+                )}
+              </Label>
+            </div>
+          </div>
+        </div>
       </div>
-      <div>
-        <Label htmlFor="category">Category *</Label>
-        <Select value={scrapCategoryId} onValueChange={setScrapCategoryId} required>
-          <SelectTrigger className="mt-1">
-            <SelectValue placeholder="Select category" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex items-center gap-2">
-        <Switch
-          id="isActive"
-          checked={isActive}
-          onCheckedChange={setIsActive}
-          className="data-[state=checked]:bg-green-500"
-        />
-        <Label htmlFor="isActive" className="cursor-pointer">
-          Active
-        </Label>
-      </div>
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isLoading}
+          className="h-12 px-6 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading} className="bg-cyan-500 hover:bg-cyan-600">
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            'Save'
-          )}
+        <Button
+          type="submit"
+          disabled={isLoading}
+          variant="outline"
+          className="relative overflow-hidden group h-12 px-8 rounded-xl border-2 border-cyan-500 text-cyan-600 hover:bg-white hover:text-cyan-700 hover:border-cyan-400 font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 active:scale-95 bg-white backdrop-blur-sm"
+        >
+          <span className="absolute inset-0 w-full h-full -translate-x-full group-hover:animate-shimmer bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent z-0 skew-x-12" />
+          <span className="relative z-10 flex items-center gap-2">
+            {isLoading ? (
+              <>
+                <div className="mr-2 h-5 w-5 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin" />
+                Saving...
+              </>
+            ) : (
+              scrapName ? 'Update Scrap Name' : 'Create Scrap Name'
+            )}
+          </span>
         </Button>
       </div>
     </form>
