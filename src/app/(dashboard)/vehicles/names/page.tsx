@@ -610,8 +610,23 @@ function VehicleNameForm({
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading} className="bg-cyan-600 hover:bg-cyan-700">
-          {vehicleName ? 'Update' : 'Create'}
+        <Button
+          type="submit"
+          disabled={isLoading}
+          variant="outline"
+          className="relative overflow-hidden group h-12 px-8 rounded-xl border-2 border-cyan-500 text-cyan-600 hover:bg-white hover:text-cyan-700 hover:border-cyan-400 font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 active:scale-95 bg-white backdrop-blur-sm"
+        >
+          <span className="absolute inset-0 w-full h-full -translate-x-full group-hover:animate-shimmer bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent z-0 skew-x-12" />
+          <span className="relative z-10 flex items-center gap-2">
+            {isLoading ? (
+              <>
+                <div className="mr-2 h-5 w-5 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin" />
+                {vehicleName ? 'Updating...' : 'Creating...'}
+              </>
+            ) : (
+              vehicleName ? 'Update' : 'Create'
+            )}
+          </span>
         </Button>
       </DialogFooter>
     </form>

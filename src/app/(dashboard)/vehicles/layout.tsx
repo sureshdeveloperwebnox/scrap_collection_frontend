@@ -23,11 +23,6 @@ export default function VehiclesLayout({
       href: '/vehicles/names',
       icon: List,
     },
-    {
-      name: 'Collector Assignment',
-      href: '/vehicles/collectors',
-      icon: UserCheck,
-    },
   ];
 
   return (
@@ -38,7 +33,7 @@ export default function VehiclesLayout({
           {vehiclesMenu.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-            
+
             return (
               <Link
                 key={item.href}

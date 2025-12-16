@@ -30,6 +30,7 @@ type NavigationItem = {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   submenu?: NavigationItem[];
+  hasChevron?: boolean;
 };
 
 // Navigation structure matching the image design
@@ -55,6 +56,7 @@ const navigationSections: Array<{
         { name: 'Scrap Yards', href: '/scrap-yards', icon: Building2, hasChevron: true },
         { name: 'Payments', href: '/payments', icon: CreditCard, hasChevron: true },
         { name: 'Employees', href: '/employees', icon: UserCheck, hasChevron: true },
+        { name: 'Collectors', href: '/collectors', icon: Truck, hasChevron: true },
         { name: 'Reports', href: '/reports', icon: BarChart3, hasChevron: true },
         { name: 'Settings', href: '/settings', icon: Settings, hasChevron: true },
       ]
@@ -65,6 +67,7 @@ interface SidebarProps {
   isOpen?: boolean;
   onToggle?: () => void;
   isCollapsed?: boolean;
+  onCollapse?: (collapsed: boolean) => void;
 }
 
 export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: SidebarProps) {

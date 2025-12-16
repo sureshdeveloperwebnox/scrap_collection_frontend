@@ -83,25 +83,30 @@ const config: Config = {
           to: { height: "0" },
         },
         "shine": {
-          "0%": { 
+          "0%": {
             boxShadow: "0 0 0 0 rgba(45, 186, 237, 0.4)",
             transform: "scale(1)",
           },
-          "50%": { 
+          "50%": {
             boxShadow: "0 0 20px 8px rgba(45, 186, 237, 0.6)",
             transform: "scale(1.02)",
           },
-          "100%": { 
+          "100%": {
             boxShadow: "0 0 0 0 rgba(45, 186, 237, 0.4)",
             transform: "scale(1)",
           },
         },
         "glow": {
-          "0%, 100%": { 
+          "0%, 100%": {
             boxShadow: "0 0 10px rgba(45, 186, 237, 0.5), 0 0 20px rgba(45, 186, 237, 0.3)",
           },
-          "50%": { 
+          "50%": {
             boxShadow: "0 0 20px rgba(45, 186, 237, 0.8), 0 0 30px rgba(45, 186, 237, 0.5)",
+          },
+        },
+        "shimmer": {
+          "100%": {
+            "transform": "translateX(100%)",
           },
         },
       },
@@ -110,6 +115,7 @@ const config: Config = {
         "accordion-up": "accordion-up 0.2s ease-out",
         "shine": "shine 2s ease-in-out infinite",
         "glow": "glow 2s ease-in-out infinite",
+        "shimmer": "shimmer 2s infinite",
       },
     },
   },

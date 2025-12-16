@@ -27,7 +27,8 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Plus, Search, Edit, Trash2, Tags, X, Filter, Loader2, MoreHorizontal } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Tags, X, Filter, Loader2, MoreHorizontal, FileText, Layers } from 'lucide-react';
+import { z } from 'zod';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -864,7 +865,7 @@ export default function ScrapModulePage() {
 
       {/* Category Form Dialog */}
       <Dialog open={isCategoryFormOpen} onOpenChange={setIsCategoryFormOpen}>
-        <DialogContent>
+        <DialogContent onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>
               {editingCategory ? 'Edit Scrap Category' : 'Add Scrap Category'}
@@ -884,7 +885,7 @@ export default function ScrapModulePage() {
 
       {/* Scrap Name Form Dialog */}
       <Dialog open={isNameFormOpen} onOpenChange={setIsNameFormOpen}>
-        <DialogContent>
+        <DialogContent onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>{editingName ? 'Edit Scrap Name' : 'Add Scrap Name'}</DialogTitle>
           </DialogHeader>
@@ -904,6 +905,19 @@ export default function ScrapModulePage() {
   );
 }
 
+// Zod Schemas
+const createCategorySchema = z.object({
+  name: z.string().min(2, 'Category name must be at least 2 characters').max(50, 'Category name cannot exceed 50 characters').trim(),
+  description: z.string().max(250, 'Description cannot exceed 250 characters').optional().or(z.literal('')),
+  isActive: z.boolean().optional(),
+});
+
+const createScrapNameSchema = z.object({
+  name: z.string().min(2, 'Scrap name must be at least 2 characters').max(50, 'Scrap name cannot exceed 50 characters').trim(),
+  scrapCategoryId: z.string().min(1, 'Please select a category'),
+  isActive: z.boolean().optional(),
+});
+
 // Form Components
 function ScrapCategoryForm({
   category,
@@ -919,57 +933,114 @@ function ScrapCategoryForm({
   const [name, setName] = useState(category?.name || '');
   const [description, setDescription] = useState(category?.description || '');
   const [isActive, setIsActive] = useState(category?.isActive ?? true);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
-      toast.error('Category name is required');
+    setValidationErrors({});
+
+    const result = createCategorySchema.safeParse({ name, description, isActive });
+
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[issue.path[0] as string] = issue.message;
+        }
+      });
+      setValidationErrors(errors);
+
+      const firstError = result.error.issues[0];
+      if (firstError) toast.error(firstError.message);
       return;
     }
-    onSubmit({
-      name: name.trim(),
-      description: description.trim() || undefined,
-      isActive,
-    });
+
+    onSubmit(result.data);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="name">Category Name *</Label>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g., Cars, Metals, Electronics"
-          disabled={isLoading}
-        />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-2">
+        <Label htmlFor="name" className="text-sm font-medium text-gray-700">Category Name *</Label>
+        <div className="relative">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+            <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
+              <Tags className="h-5 w-5 text-cyan-600" />
+            </div>
+          </div>
+          <Input
+            id="name"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (validationErrors.name) setValidationErrors({ ...validationErrors, name: '' });
+            }}
+            placeholder="e.g., Cars, Metals, Electronics"
+            disabled={isLoading}
+            className={`pl-14 h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${validationErrors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''}`}
+          />
+        </div>
+        {validationErrors.name && <p className="text-sm text-red-600 mt-1">{validationErrors.name}</p>}
       </div>
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <Input
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Optional description for this scrap category"
-          disabled={isLoading}
-        />
+      <div className="space-y-2">
+        <Label htmlFor="description" className="text-sm font-medium text-gray-700">Description</Label>
+        <div className="relative">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+            <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
+              <FileText className="h-5 w-5 text-cyan-600" />
+            </div>
+          </div>
+          <Input
+            id="description"
+            value={description}
+            onChange={(e) => {
+              setDescription(e.target.value);
+              if (validationErrors.description) setValidationErrors({ ...validationErrors, description: '' });
+            }}
+            placeholder="Optional description for this scrap category"
+            disabled={isLoading}
+            className={`pl-14 h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${validationErrors.description ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''}`}
+          />
+        </div>
+        {validationErrors.description && <p className="text-sm text-red-600 mt-1">{validationErrors.description}</p>}
       </div>
-      <div className="flex items-center justify-between">
-        <Label htmlFor="active">Active Status</Label>
+      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+        <Label htmlFor="active" className="text-sm font-medium text-gray-700">Active Status</Label>
         <Switch
           id="active"
           checked={isActive}
           onCheckedChange={setIsActive}
           disabled={isLoading}
+          className="data-[state=checked]:bg-cyan-500"
         />
       </div>
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+      <div className="flex justify-end gap-3 pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isLoading}
+          className="h-12 px-6 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all hover:shadow-md disabled:opacity-50"
+        >
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading} className="bg-cyan-500 hover:bg-cyan-600">
-          {isLoading ? 'Saving...' : category ? 'Update' : 'Create'}
+        <Button
+          type="submit"
+          disabled={isLoading}
+          variant="outline"
+          className="relative overflow-hidden group h-12 px-8 rounded-xl border-2 border-cyan-500 text-cyan-600 hover:bg-white hover:text-cyan-700 hover:border-cyan-400 font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 active:scale-95 bg-white backdrop-blur-sm"
+        >
+          <span className="absolute inset-0 w-full h-full -translate-x-full group-hover:animate-shimmer bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent z-0 skew-x-12" />
+          <span className="relative z-10 flex items-center gap-2">
+            {isLoading ? (
+              <>
+                <div className="mr-2 h-5 w-5 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin" />
+                {category ? 'Updating...' : 'Creating...'}
+              </>
+            ) : (
+              category ? 'Update' : 'Create'
+            )}
+          </span>
         </Button>
       </div>
     </form>
@@ -994,36 +1065,66 @@ function ScrapNameForm({
     scrapName?.scrapCategoryId || '',
   );
   const [isActive, setIsActive] = useState(scrapName?.isActive ?? true);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !scrapCategoryId) {
-      toast.error('Please fill in all required fields');
+    setValidationErrors({});
+
+    const result = createScrapNameSchema.safeParse({ name, scrapCategoryId, isActive });
+
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[issue.path[0] as string] = issue.message;
+        }
+      });
+      setValidationErrors(errors);
+
+      const firstError = result.error.issues[0];
+      if (firstError) toast.error(firstError.message);
       return;
     }
-    onSubmit({
-      name: name.trim(),
-      scrapCategoryId,
-      isActive,
-    });
+
+    onSubmit(result.data);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="name">Scrap Name *</Label>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g., Aluminum Cans, Copper Wire"
-          disabled={isLoading}
-        />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-2">
+        <Label htmlFor="name" className="text-sm font-medium text-gray-700">Scrap Name *</Label>
+        <div className="relative">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+            <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
+              <Layers className="h-5 w-5 text-cyan-600" />
+            </div>
+          </div>
+          <Input
+            id="name"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (validationErrors.name) setValidationErrors({ ...validationErrors, name: '' });
+            }}
+            placeholder="e.g., Aluminum Cans, Copper Wire"
+            disabled={isLoading}
+            className={`pl-14 h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${validationErrors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''}`}
+          />
+        </div>
+        {validationErrors.name && <p className="text-sm text-red-600 mt-1">{validationErrors.name}</p>}
       </div>
-      <div>
-        <Label htmlFor="category">Category *</Label>
-        <Select value={scrapCategoryId} onValueChange={setScrapCategoryId} disabled={isLoading}>
-          <SelectTrigger>
+      <div className="space-y-2">
+        <Label htmlFor="category" className="text-sm font-medium text-gray-700">Category *</Label>
+        <Select
+          value={scrapCategoryId}
+          onValueChange={(val) => {
+            setScrapCategoryId(val);
+            if (validationErrors.scrapCategoryId) setValidationErrors({ ...validationErrors, scrapCategoryId: '' });
+          }}
+          disabled={isLoading}
+        >
+          <SelectTrigger className={`h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${validationErrors.scrapCategoryId ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''}`}>
             <SelectValue placeholder="Select a category" />
           </SelectTrigger>
           <SelectContent>
@@ -1034,22 +1135,45 @@ function ScrapNameForm({
             ))}
           </SelectContent>
         </Select>
+        {validationErrors.scrapCategoryId && <p className="text-sm text-red-600 mt-1">{validationErrors.scrapCategoryId}</p>}
       </div>
-      <div className="flex items-center justify-between">
-        <Label htmlFor="active">Active Status</Label>
+      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+        <Label htmlFor="active" className="text-sm font-medium text-gray-700">Active Status</Label>
         <Switch
           id="active"
           checked={isActive}
           onCheckedChange={setIsActive}
           disabled={isLoading}
+          className="data-[state=checked]:bg-cyan-500"
         />
       </div>
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+      <div className="flex justify-end gap-3 pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isLoading}
+          className="h-12 px-6 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all hover:shadow-md disabled:opacity-50"
+        >
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading} className="bg-cyan-500 hover:bg-cyan-600">
-          {isLoading ? 'Saving...' : scrapName ? 'Update' : 'Create'}
+        <Button
+          type="submit"
+          disabled={isLoading}
+          variant="outline"
+          className="relative overflow-hidden group h-12 px-8 rounded-xl border-2 border-cyan-500 text-cyan-600 hover:bg-white hover:text-cyan-700 hover:border-cyan-400 font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 active:scale-95 bg-white backdrop-blur-sm"
+        >
+          <span className="absolute inset-0 w-full h-full -translate-x-full group-hover:animate-shimmer bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent z-0 skew-x-12" />
+          <span className="relative z-10 flex items-center gap-2">
+            {isLoading ? (
+              <>
+                <div className="mr-2 h-5 w-5 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin" />
+                {scrapName ? 'Updating...' : 'Creating...'}
+              </>
+            ) : (
+              scrapName ? 'Update' : 'Create'
+            )}
+          </span>
         </Button>
       </div>
     </form>

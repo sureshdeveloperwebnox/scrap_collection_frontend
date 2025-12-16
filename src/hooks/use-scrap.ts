@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { scrapApi, ScrapCategoryDto, ScrapNameDto } from '@/lib/api/scrap';
-import { queryKeys } from '@/lib/query-client';
 import { useAuthStore } from '@/lib/store/auth-store';
 
 // Scrap Categories
@@ -45,11 +44,36 @@ export const useCreateScrapCategory = () => {
 export const useUpdateScrapCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { name?: string; description?: string } }) =>
+    mutationFn: ({ id, data }: { id: string; data: { name?: string; description?: string; isActive?: boolean } }) =>
       scrapApi.updateScrapCategory(id, data),
-    onSuccess: (_result, variables) => {
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['scrap-categories'] });
+      const previousCategories = queryClient.getQueriesData({ queryKey: ['scrap-categories'] });
+
+      queryClient.setQueriesData({ queryKey: ['scrap-categories'] }, (old: any) => {
+        if (!old?.data?.scrapCategories) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            scrapCategories: old.data.scrapCategories.map((cat: ScrapCategoryDto) =>
+              cat.id === id ? { ...cat, ...data } : cat
+            ),
+          },
+        };
+      });
+
+      return { previousCategories };
+    },
+    onError: (_err, _newTodo, context) => {
+      if (context?.previousCategories) {
+        context.previousCategories.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['scrap-categories'] });
-      queryClient.invalidateQueries({ queryKey: ['scrap-categories', 'detail', variables.id] });
     },
   });
 };
@@ -58,9 +82,32 @@ export const useDeleteScrapCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => scrapApi.deleteScrapCategory(id),
-    onSuccess: (_result, id) => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['scrap-categories'] });
+      const previousCategories = queryClient.getQueriesData({ queryKey: ['scrap-categories'] });
+
+      queryClient.setQueriesData({ queryKey: ['scrap-categories'] }, (old: any) => {
+        if (!old?.data?.scrapCategories) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            scrapCategories: old.data.scrapCategories.filter((cat: ScrapCategoryDto) => cat.id !== id),
+          },
+        };
+      });
+
+      return { previousCategories };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousCategories) {
+        context.previousCategories.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['scrap-categories'] });
-      queryClient.invalidateQueries({ queryKey: ['scrap-categories', 'detail', id] });
     },
   });
 };
@@ -116,9 +163,34 @@ export const useUpdateScrapName = () => {
       id: string;
       data: { name?: string; scrapCategoryId?: string; isActive?: boolean };
     }) => scrapApi.updateScrapName(id, data),
-    onSuccess: (_result, variables) => {
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['scrap-names'] });
+      const previousNames = queryClient.getQueriesData({ queryKey: ['scrap-names'] });
+
+      queryClient.setQueriesData({ queryKey: ['scrap-names'] }, (old: any) => {
+        if (!old?.data?.scrapNames) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            scrapNames: old.data.scrapNames.map((item: ScrapNameDto) =>
+              item.id === id ? { ...item, ...data } : item
+            ),
+          },
+        };
+      });
+
+      return { previousNames };
+    },
+    onError: (_err, _newTodo, context) => {
+      if (context?.previousNames) {
+        context.previousNames.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['scrap-names'] });
-      queryClient.invalidateQueries({ queryKey: ['scrap-names', 'detail', variables.id] });
     },
   });
 };
@@ -127,10 +199,32 @@ export const useDeleteScrapName = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => scrapApi.deleteScrapName(id),
-    onSuccess: (_result, id) => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['scrap-names'] });
+      const previousNames = queryClient.getQueriesData({ queryKey: ['scrap-names'] });
+
+      queryClient.setQueriesData({ queryKey: ['scrap-names'] }, (old: any) => {
+        if (!old?.data?.scrapNames) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            scrapNames: old.data.scrapNames.filter((item: ScrapNameDto) => item.id !== id),
+          },
+        };
+      });
+
+      return { previousNames };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousNames) {
+        context.previousNames.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['scrap-names'] });
-      queryClient.invalidateQueries({ queryKey: ['scrap-names', 'detail', id] });
     },
   });
 };
-
