@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useVehicleTypes } from '@/hooks/use-vehicle-types';
 
-import { useVehicleNames, useCreateVehicleName, useUpdateVehicleName, useDeleteVehicleName } from '@/hooks/use-vehicle-names';
+import { useVehicleNames, useCreateVehicleName, useUpdateVehicleName, useDeleteVehicleName, useVehicleNameStats } from '@/hooks/use-vehicle-names';
 import { VehicleName, VehicleType, ScrapYard } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -146,6 +146,9 @@ export default function VehicleNamesPage() {
     setSortBy,
     setSortOrder
   } = useVehicleNameStore();
+
+  const { data: statsData } = useVehicleNameStats();
+  const stats = statsData || { total: 0, active: 0, inactive: 0 };
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -355,13 +358,18 @@ export default function VehicleNamesPage() {
                           {(['All', 'Active', 'Inactive'] as TabKey[]).map((tab) => {
                             const style = getTabStyle(tab);
                             const isActive = activeTab === tab;
+                            const count = tab === 'All' ? stats.total : tab === 'Active' ? stats.active : stats.inactive;
+
                             return (
                               <button
                                 key={tab}
                                 onClick={() => handleTabChange(tab)}
-                                className={`relative px-4 py-2 text-sm font-medium transition-all rounded-t-md ${isActive ? `${style.activeText} ${style.activeBg}` : 'text-gray-600 hover:bg-gray-100'}`}
+                                className={`relative px-4 py-2 text-sm font-medium transition-all rounded-t-md flex items-center gap-2 ${isActive ? `${style.activeText} ${style.activeBg}` : 'text-gray-600 hover:bg-gray-100'}`}
                               >
                                 {tab}
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${style.count}`}>
+                                  {count}
+                                </span>
                                 {isActive && <span className={`absolute left-0 right-0 -bottom-0.5 h-0.5 ${style.underline}`} />}
                               </button>
                             );

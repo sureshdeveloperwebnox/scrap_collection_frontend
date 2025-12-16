@@ -160,3 +160,24 @@ export const useDeleteVehicleName = () => {
     },
   });
 };
+
+// Get vehicle name stats
+export const useVehicleNameStats = () => {
+  const { user } = useAuthStore();
+  const organizationId = user?.organizationId;
+
+  return useQuery({
+    queryKey: queryKeys.vehicleNames.stats(organizationId),
+    queryFn: async () => {
+      if (!organizationId) {
+        throw new Error('Organization ID is required');
+      }
+      const response = await vehicleNamesApi.getVehicleNameStats(organizationId);
+      return response.data;
+    },
+    enabled: !!organizationId,
+    staleTime: 1 * 60 * 1000,
+    gcTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
+};

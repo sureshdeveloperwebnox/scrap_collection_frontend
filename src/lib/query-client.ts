@@ -80,6 +80,7 @@ export const queryKeys = {
     list: (filters?: Record<string, any>) => [...queryKeys.vehicleNames.lists(), filters] as const,
     details: () => [...queryKeys.vehicleNames.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.vehicleNames.details(), id] as const,
+    stats: (organizationId?: number) => [...queryKeys.vehicleNames.all, 'stats', organizationId] as const,
   },
 
   // Collector Assignments

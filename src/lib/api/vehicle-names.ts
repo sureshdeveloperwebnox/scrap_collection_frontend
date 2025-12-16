@@ -71,4 +71,13 @@ export const vehicleNamesApi = {
     const response = await apiClient.delete(`/vehicle-names/${id}`);
     return response.data;
   },
+  // Get vehicle name stats
+  getVehicleNameStats: async (organizationId: number): Promise<ApiResponse<{
+    total: number;
+    active: number;
+    inactive: number;
+  }>> => {
+    const response = await apiClient.get(`/vehicle-names/stats/${organizationId}`);
+    return response.data;
+  },
 };
