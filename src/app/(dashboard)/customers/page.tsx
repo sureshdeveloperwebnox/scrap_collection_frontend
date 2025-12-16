@@ -136,18 +136,18 @@ type SortKey = 'name' | 'createdAt' | 'accountStatus';
 function formatDateHuman(dateStr: string): string {
   // Use a consistent date parsing to avoid hydration issues
   const date = new Date(dateStr);
-  
+
   // Only use relative dates on client side to avoid hydration mismatch
   if (typeof window !== 'undefined') {
-  const today = new Date();
-  const yday = new Date();
-  yday.setDate(today.getDate() - 1);
+    const today = new Date();
+    const yday = new Date();
+    yday.setDate(today.getDate() - 1);
 
-  const isSameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
-  if (isSameDay(date, today)) return 'Today';
-  if (isSameDay(date, yday)) return 'Yesterday';
+    const isSameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+    if (isSameDay(date, today)) return 'Today';
+    if (isSameDay(date, yday)) return 'Yesterday';
   }
-  
+
   // Format: DD Mon, YYYY (e.g., "01 Dec, 2027")
   // Use UTC methods for consistency between server and client
   const day = date.getUTCDate().toString().padStart(2, '0');
@@ -186,13 +186,13 @@ function getTabStyle(tab: TabKey) {
 }
 
 // Reusable Customer Avatar Component - Always shows first letter, no images
-function CustomerAvatar({ 
-  name, 
-  imageUrl, 
+function CustomerAvatar({
+  name,
+  imageUrl,
   size = 'md',
   className = ''
-}: { 
-  name: string; 
+}: {
+  name: string;
   imageUrl?: string | null;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
@@ -203,7 +203,7 @@ function CustomerAvatar({
     md: 'w-10 h-10 text-sm',
     lg: 'w-16 h-16 text-lg'
   };
-  
+
   return (
     <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-300 ${className}`}>
       <span className="text-white font-semibold leading-none">
@@ -216,9 +216,9 @@ function CustomerAvatar({
 function StatusBadge({ status, showDropdownIcon = false }: { status: string; showDropdownIcon?: boolean }) {
   const display = toDisplayStatus(status);
   const base = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap';
-  
+
   let badgeContent = null;
-  
+
   if (display === 'Active') {
     badgeContent = (
       <span className={`${base} bg-green-100 text-green-800`}>
@@ -259,7 +259,7 @@ function StatusBadge({ status, showDropdownIcon = false }: { status: string; sho
       </span>
     );
   }
-  
+
   return badgeContent;
 }
 
@@ -267,11 +267,11 @@ export default function CustomersPage() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const organizationId = user?.organizationId;
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  
+
   // Filter and search state
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -280,7 +280,7 @@ export default function CustomersPage() {
   const [editingCustomer, setEditingCustomer] = useState<Customer | undefined>();
   const [activeTab, setActiveTab] = useState<'All' | 'Active' | 'Inactive' | 'VIP' | 'Blocked'>('All');
   const [scrapFilter, setScrapFilter] = useState<string>('ALL');
-  
+
   // Sorting state
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -292,14 +292,14 @@ export default function CustomersPage() {
   const highlightedRowRef = useRef<HTMLTableRowElement | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
-  
+
   // Selection state
   const [selectedCustomers, setSelectedCustomers] = useState<Set<string>>(new Set());
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  
+
   // Mounted state to prevent hydration mismatch
   const [mounted, setMounted] = useState(false);
-  
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -313,7 +313,7 @@ export default function CustomersPage() {
       setTimeout(() => {
         const newSearchParams = new URLSearchParams(searchParams.toString());
         newSearchParams.delete('highlight');
-        const newUrl = newSearchParams.toString() 
+        const newUrl = newSearchParams.toString()
           ? `${window.location.pathname}?${newSearchParams.toString()}`
           : window.location.pathname;
         router.replace(newUrl);
@@ -355,10 +355,10 @@ export default function CustomersPage() {
 
   // Get available scrap categories - memoized for performance
   const scrapOptions = useMemo(() => ['ALL', 'JUNK', 'DAMAGED', 'WRECKED', 'ACCIDENTAL', 'FULLY_SCRAP'], []);
-  
+
   // Memoize category filter value to prevent unnecessary re-renders
   const categoryFilterValue = useMemo(() => scrapFilter !== 'ALL' ? scrapFilter : undefined, [scrapFilter]);
-  
+
   // Memoize query parameters for better performance
   const queryParams = useMemo(() => {
     const status = getStatusFromTab(activeTab);
@@ -381,7 +381,7 @@ export default function CustomersPage() {
 
   // Fetch and sync customer stats to Zustand store
   useCustomerStats();
-  
+
   // Get stats from Zustand store - ensure we always have stats object
   const stats = useCustomerStatsStore((state) => state.stats) || {
     total: 0,
@@ -402,14 +402,14 @@ export default function CustomersPage() {
     hasNextPage: false,
     hasPreviousPage: false
   }, [apiResponse]);
-  
+
   // Scroll to highlighted row when data is loaded (must be after customers declaration)
   useEffect(() => {
     if (highlightedCustomerId && highlightedRowRef.current && customers && customers.length > 0) {
       setTimeout(() => {
-        highlightedRowRef.current?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center' 
+        highlightedRowRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
         });
       }, 300);
     }
@@ -463,15 +463,15 @@ export default function CustomersPage() {
 
   const handleDeleteConfirm = async () => {
     if (!customerToDelete) return;
-    
-      try {
+
+    try {
       await deleteCustomerMutation.mutateAsync(customerToDelete.id);
       toast.success(`Customer "${customerToDelete.name}" deleted successfully`);
       setDeleteConfirmOpen(false);
       setCustomerToDelete(null);
-      } catch (error) {
-        console.error('Error deleting customer:', error);
-        toast.error('Failed to delete customer');
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      toast.error('Failed to delete customer');
     }
   };
 
@@ -525,18 +525,18 @@ export default function CustomersPage() {
       }
 
       const normalizedStatus = value.toUpperCase() as CustomerStatus;
-      
+
       // Don't update if status hasn't changed
       if (customer.accountStatus.toUpperCase() === normalizedStatus) {
         return;
       }
 
-      await updateCustomerMutation.mutateAsync({ 
-        id: String(customer.id), 
-        data: { accountStatus: normalizedStatus } 
+      await updateCustomerMutation.mutateAsync({
+        id: String(customer.id),
+        data: { accountStatus: normalizedStatus }
       });
       toast.success('Status updated successfully');
-      
+
       // Zustand store will be updated automatically by the mutation hook
     } catch (e: any) {
       const errorMessage = e?.response?.data?.message || e?.message || 'Failed to update status';
@@ -577,15 +577,15 @@ export default function CustomersPage() {
               >
                 <Search className="h-4 w-4" />
               </Button>
-              
+
               {/* Search Input - shown when isSearchOpen is true */}
               {isSearchOpen && (
                 <div className="relative">
-              <Input
-                type="text"
+                  <Input
+                    type="text"
                     placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     onBlur={() => {
                       // Keep search open if there's a search term
                       if (!searchTerm) {
@@ -607,24 +607,22 @@ export default function CustomersPage() {
                       <X className="h-4 w-4" />
                     </button>
                   )}
-            </div>
+                </div>
               )}
-              
+
               {/* Filter Icon Button - Toggle filter panel */}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 active:bg-gray-200 transition-all h-9 w-9 p-0 ${
-                  scrapFilter !== 'ALL' ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : ''
-                } ${
-                  isFilterOpen ? 'border-cyan-500 bg-cyan-50' : ''
-                }`}
+                className={`border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 active:bg-gray-200 transition-all h-9 w-9 p-0 ${scrapFilter !== 'ALL' ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : ''
+                  } ${isFilterOpen ? 'border-cyan-500 bg-cyan-50' : ''
+                  }`}
                 title={isFilterOpen ? "Hide filters" : "Show filters"}
               >
                 <Filter className={`h-4 w-4 ${scrapFilter !== 'ALL' ? 'text-cyan-700' : ''}`} />
               </Button>
-              
+
               <Button
                 onClick={() => setIsFormOpen(true)}
                 className="bg-cyan-500 hover:bg-cyan-600 text-white h-9 w-9 p-0"
@@ -641,29 +639,28 @@ export default function CustomersPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 flex-1">
                   <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter by Category:</Label>
-                  <Select 
-                    value={scrapFilter} 
+                  <Select
+                    value={scrapFilter}
                     onValueChange={(v) => {
                       setScrapFilter(v);
                       setCurrentPage(1); // Reset to first page when filter changes
                     }}
                   >
-                    <SelectTrigger className={`w-[200px] bg-white border-gray-200 hover:border-gray-300 transition-all ${
-                      scrapFilter !== 'ALL' ? 'border-cyan-500 ring-2 ring-cyan-200' : ''
-                    }`}>
+                    <SelectTrigger className={`w-[200px] bg-white border-gray-200 hover:border-gray-300 transition-all ${scrapFilter !== 'ALL' ? 'border-cyan-500 ring-2 ring-cyan-200' : ''
+                      }`}>
                       <SelectValue placeholder="All Categories">
                         {scrapFilter === 'ALL' ? 'All Categories' : scrapFilter.replace(/_/g, ' ')}
                       </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Categories</SelectItem>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All Categories</SelectItem>
                       {scrapOptions.filter(opt => opt !== 'ALL').map((opt) => (
                         <SelectItem key={opt} value={opt}>
                           {opt.replace(/_/g, ' ')}
                         </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {scrapFilter !== 'ALL' && (
                     <Button
                       variant="ghost"
@@ -678,7 +675,7 @@ export default function CustomersPage() {
                       <X className="h-4 w-4" />
                     </Button>
                   )}
-            </div>
+                </div>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -688,7 +685,7 @@ export default function CustomersPage() {
                 >
                   <X className="h-4 w-4" />
                 </Button>
-          </div>
+              </div>
             </div>
           )}
         </CardHeader>
@@ -709,7 +706,7 @@ export default function CustomersPage() {
                       <TableHead colSpan={8} className="p-0 bg-transparent">
                         <div className="w-full overflow-x-auto">
                           <div className="inline-flex items-center gap-1 px-2 py-2">
-                            {(['All','Active','Inactive','VIP','Blocked'] as const).map((tab) => {
+                            {(['All', 'Active', 'Inactive', 'VIP', 'Blocked'] as const).map((tab) => {
                               const style = getTabStyle(tab);
                               const isActive = activeTab === tab;
                               return (
@@ -731,7 +728,7 @@ export default function CustomersPage() {
                                     </span>
                                   </span>
                                   {isActive && <span className={`absolute left-0 right-0 -bottom-0.5 h-0.5 ${style.underline} rounded`} />}
-                        </button>
+                                </button>
                               );
                             })}
                           </div>
@@ -749,7 +746,7 @@ export default function CustomersPage() {
                       </TableHead>
                       <TableHead>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('name')}>
-                          Customer 
+                          Customer
                         </button>
                       </TableHead>
                       <TableHead>Phone</TableHead>
@@ -757,12 +754,12 @@ export default function CustomersPage() {
                       <TableHead>Scrap Details</TableHead>
                       <TableHead>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('accountStatus')}>
-                          Status 
+                          Status
                         </button>
                       </TableHead>
                       <TableHead>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('createdAt')}>
-                          Created Date 
+                          Created Date
                         </button>
                       </TableHead>
                       <TableHead className="w-12">Action</TableHead>
@@ -777,148 +774,148 @@ export default function CustomersPage() {
                       </TableRow>
                     ) : (
                       customers.map((customer) => {
-                      const isHighlighted = highlightedCustomerId === customer.id;
-                      return (
-                        <TableRow 
-                          key={customer.id}
-                          ref={isHighlighted ? highlightedRowRef : null}
-                          className={cn(
-                            "border-b hover:bg-gray-50 transition-colors bg-white cursor-pointer",
-                            isHighlighted && "bg-cyan-50 border-cyan-200 border-2 animate-pulse"
-                          )}
-                          onClick={() => setDetailsCustomer(customer)}
-                            >
-                        <TableCell>
-                            <Checkbox
-                              checked={selectedCustomers.has(customer.id)}
-                              onCheckedChange={(checked) => handleSelectCustomer(customer.id, checked as boolean)}
-                              onClick={(e) => e.stopPropagation()}
-                              className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <CustomerAvatar 
-                                name={customer.name || 'N/A'} 
-                                size="md"
-                              />
-                              <div className="flex flex-col">
-                                <span className="font-medium text-gray-900">{customer.name || 'N/A'}</span>
-                              </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                            <div>
-                              <div className="text-gray-900">{customer.phone || 'N/A'}</div>
-                          </div>
-                        </TableCell>
-                          <TableCell className="text-gray-700">{customer.email || 'N/A'}</TableCell>
-                        <TableCell>
-                            {(customer.vehicleType || customer.vehicleMake || customer.vehicleModel || customer.vehicleNumber || customer.vehicleCondition) ? (
-                            <Button 
-                              variant="ghost" 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                  setVehicleDetailsCustomer(customer);
-                              }}
-                                className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all"
-                            >
-                                <Car className="h-4 w-4 mr-2" />
-                                <span className="text-sm font-medium">View Scrap Details</span>
-                            </Button>
-                            ) : (
-                              <div className="text-gray-400 text-sm italic">No scrap info</div>
+                        const isHighlighted = highlightedCustomerId === customer.id;
+                        return (
+                          <TableRow
+                            key={customer.id}
+                            ref={isHighlighted ? highlightedRowRef : null}
+                            className={cn(
+                              "border-b hover:bg-gray-50 transition-colors bg-white cursor-pointer",
+                              isHighlighted && "bg-cyan-50 border-cyan-200 border-2 animate-pulse"
                             )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                              <Select value={customer.accountStatus} onValueChange={(v) => onInlineStatusChange(customer, v)}>
-                                <SelectTrigger className="h-auto w-auto p-0 border-0 bg-transparent hover:bg-transparent focus:ring-0 focus:ring-offset-0 shadow-none max-w-none min-w-0 overflow-visible">
-                                  <div className="flex items-center">
-                                    <StatusBadge status={customer.accountStatus} showDropdownIcon={true} />
-                                  </div>
-                                </SelectTrigger>
-                                <SelectContent className="min-w-[160px] rounded-lg shadow-lg border border-gray-200 bg-white p-1">
-                                  {['ACTIVE','INACTIVE','VIP','BLOCKED'].map((s) => {
-                                    const isSelected = customer.accountStatus.toUpperCase() === s;
-                                    return (
-                                      <SelectItem 
-                                        key={s} 
-                                        value={s}
-                                        className={cn(
-                                          "cursor-pointer rounded-md px-3 py-2.5 text-sm transition-colors pl-8",
-                                          isSelected 
-                                            ? "bg-cyan-500 text-white hover:bg-cyan-600 data-[highlighted]:bg-cyan-600 focus:bg-cyan-600" 
-                                            : "text-gray-900 hover:bg-gray-100 data-[highlighted]:bg-gray-100 focus:bg-gray-100"
-                                        )}
-                                      >
-                                        <span className={cn(isSelected ? "text-white font-medium" : "text-gray-900")}>{toDisplayStatus(s)}</span>
-                                      </SelectItem>
-                                    );
-                                  })}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-gray-600">
-                            {formatDateHuman(customer.createdAt)}
-                          </TableCell>
-                          <TableCell onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="h-4 w-4 text-gray-600" />
+                            onClick={() => setDetailsCustomer(customer)}
+                          >
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedCustomers.has(customer.id)}
+                                onCheckedChange={(checked) => handleSelectCustomer(customer.id, checked as boolean)}
+                                onClick={(e) => e.stopPropagation()}
+                                className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <CustomerAvatar
+                                  name={customer.name || 'N/A'}
+                                  size="md"
+                                />
+                                <div className="flex flex-col">
+                                  <span className="font-medium text-gray-900">{customer.name || 'N/A'}</span>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="text-gray-900">{customer.phone || 'N/A'}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-gray-700">{customer.email || 'N/A'}</TableCell>
+                            <TableCell>
+                              {(customer.vehicleType || customer.vehicleMake || customer.vehicleModel || customer.vehicleNumber || customer.vehicleCondition) ? (
+                                <Button
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setVehicleDetailsCustomer(customer);
+                                  }}
+                                  className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all"
+                                >
+                                  <Car className="h-4 w-4 mr-2" />
+                                  <span className="text-sm font-medium">View Scrap Details</span>
                                 </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-40" onClick={(e) => e.stopPropagation()}>
-                                <DropdownMenuItem onClick={() => setDetailsCustomer(customer)}>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => {
-                                const convertedCustomer: Customer = {
-                                    id: customer.id,
-                                  organizationId: customer.organizationId,
-                                  name: customer.name,
-                                    phone: customer.phone,
-                                  email: customer.email,
-                                  address: customer.address,
-                                    latitude: customer.latitude,
-                                    longitude: customer.longitude,
-                                    vehicleType: customer.vehicleType,
-                                    vehicleMake: customer.vehicleMake,
-                                    vehicleModel: customer.vehicleModel,
-                                    vehicleNumber: customer.vehicleNumber,
-                                    vehicleYear: customer.vehicleYear,
-                                    vehicleCondition: customer.vehicleCondition,
-                                    accountStatus: customer.accountStatus,
-                                    joinedDate: new Date(customer.joinedDate || customer.createdAt),
-                                  createdAt: new Date(customer.createdAt),
-                                  updatedAt: new Date(customer.updatedAt),
-                                  };
-                                setEditingCustomer(convertedCustomer);
-                                setIsFormOpen(true);
-                                }}>
-                                  <Edit2 className="h-4 w-4 mr-2" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                    handleDeleteClick(customer);
-                              }}
-                                  className="text-red-600 focus:text-red-600"
-                            >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                      );
-                    })
+                              ) : (
+                                <div className="text-gray-400 text-sm italic">No scrap info</div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                                <Select value={customer.accountStatus} onValueChange={(v) => onInlineStatusChange(customer, v)}>
+                                  <SelectTrigger className="h-auto w-auto p-0 border-0 bg-transparent hover:bg-transparent focus:ring-0 focus:ring-offset-0 shadow-none max-w-none min-w-0 overflow-visible">
+                                    <div className="flex items-center">
+                                      <StatusBadge status={customer.accountStatus} showDropdownIcon={true} />
+                                    </div>
+                                  </SelectTrigger>
+                                  <SelectContent className="min-w-[160px] rounded-lg shadow-lg border border-gray-200 bg-white p-1">
+                                    {['ACTIVE', 'INACTIVE', 'VIP', 'BLOCKED'].map((s) => {
+                                      const isSelected = customer.accountStatus.toUpperCase() === s;
+                                      return (
+                                        <SelectItem
+                                          key={s}
+                                          value={s}
+                                          className={cn(
+                                            "cursor-pointer rounded-md px-3 py-2.5 text-sm transition-colors pl-8",
+                                            isSelected
+                                              ? "bg-cyan-500 text-white hover:bg-cyan-600 data-[highlighted]:bg-cyan-600 focus:bg-cyan-600"
+                                              : "text-gray-900 hover:bg-gray-100 data-[highlighted]:bg-gray-100 focus:bg-gray-100"
+                                          )}
+                                        >
+                                          <span className={cn(isSelected ? "text-white font-medium" : "text-gray-900")}>{toDisplayStatus(s)}</span>
+                                        </SelectItem>
+                                      );
+                                    })}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-gray-600">
+                              {formatDateHuman(customer.createdAt)}
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="h-4 w-4 text-gray-600" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-40" onClick={(e) => e.stopPropagation()}>
+                                  <DropdownMenuItem onClick={() => setDetailsCustomer(customer)}>
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => {
+                                    const convertedCustomer: Customer = {
+                                      id: customer.id,
+                                      organizationId: customer.organizationId,
+                                      name: customer.name,
+                                      phone: customer.phone,
+                                      email: customer.email,
+                                      address: customer.address,
+                                      latitude: customer.latitude,
+                                      longitude: customer.longitude,
+                                      vehicleType: customer.vehicleType,
+                                      vehicleMake: customer.vehicleMake,
+                                      vehicleModel: customer.vehicleModel,
+                                      vehicleNumber: customer.vehicleNumber,
+                                      vehicleYear: customer.vehicleYear,
+                                      vehicleCondition: customer.vehicleCondition,
+                                      accountStatus: customer.accountStatus,
+                                      joinedDate: new Date(customer.joinedDate || customer.createdAt),
+                                      createdAt: new Date(customer.createdAt),
+                                      updatedAt: new Date(customer.updatedAt),
+                                    };
+                                    setEditingCustomer(convertedCustomer);
+                                    setIsFormOpen(true);
+                                  }}>
+                                    <Edit2 className="h-4 w-4 mr-2" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteClick(customer);
+                                    }}
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
                     )}
                   </TableBody>
                 </Table>
@@ -932,124 +929,124 @@ export default function CustomersPage() {
                   </div>
                 ) : (
                   customers.map((customer) => {
-                  const isHighlighted = highlightedCustomerId === customer.id;
-                  return (
-                  <div 
-                    key={customer.id} 
-                    ref={isHighlighted ? highlightedRowRef : null}
-                    className={cn(
-                      "rounded-lg border bg-card p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:bg-gradient-to-br hover:from-cyan-50 hover:to-purple-50 cursor-pointer",
-                      isHighlighted && "bg-cyan-50 border-cyan-200 border-2 animate-pulse"
-                    )} 
-                    onClick={() => setDetailsCustomer(customer)}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <CustomerAvatar 
-                          name={customer.name || 'N/A'} 
-                          size="md"
-                        />
-                      <div>
-                        <div className="font-semibold">{customer.name || 'N/A'}</div>
-                        {customer.email && <div className="text-sm text-muted-foreground">{customer.email}</div>}
-                      </div>
-                      </div>
-                      <StatusBadge status={customer.accountStatus} />
-                    </div>
-                    <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                      <div className="text-muted-foreground">Phone</div>
-                      <div>{customer.phone || 'N/A'}</div>
-                      <div className="text-muted-foreground">Scrap</div>
-                      <div>
-                        {(customer.vehicleType || customer.vehicleMake || customer.vehicleModel || customer.vehicleNumber || customer.vehicleCondition) ? (
+                    const isHighlighted = highlightedCustomerId === customer.id;
+                    return (
+                      <div
+                        key={customer.id}
+                        ref={isHighlighted ? highlightedRowRef : null}
+                        className={cn(
+                          "rounded-lg border bg-card p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:bg-gradient-to-br hover:from-cyan-50 hover:to-purple-50 cursor-pointer",
+                          isHighlighted && "bg-cyan-50 border-cyan-200 border-2 animate-pulse"
+                        )}
+                        onClick={() => setDetailsCustomer(customer)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <CustomerAvatar
+                              name={customer.name || 'N/A'}
+                              size="md"
+                            />
+                            <div>
+                              <div className="font-semibold">{customer.name || 'N/A'}</div>
+                              {customer.email && <div className="text-sm text-muted-foreground">{customer.email}</div>}
+                            </div>
+                          </div>
+                          <StatusBadge status={customer.accountStatus} />
+                        </div>
+                        <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                          <div className="text-muted-foreground">Phone</div>
+                          <div>{customer.phone || 'N/A'}</div>
+                          <div className="text-muted-foreground">Scrap</div>
+                          <div>
+                            {(customer.vehicleType || customer.vehicleMake || customer.vehicleModel || customer.vehicleNumber || customer.vehicleCondition) ? (
+                              <Button
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setVehicleDetailsCustomer(customer);
+                                }}
+                                className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all w-full justify-start"
+                              >
+                                <Car className="h-4 w-4 mr-2" />
+                                <span className="text-sm font-medium">View Scrap Details</span>
+                              </Button>
+                            ) : (
+                              <div className="text-gray-400 text-sm italic">No scrap info</div>
+                            )}
+                          </div>
+                          <div className="text-muted-foreground">Created</div>
+                          <div>{formatDateHuman(customer.createdAt)}</div>
+                        </div>
+                        <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                           <Button
                             variant="ghost"
+                            size="sm"
+                            onClick={() => setDetailsCustomer(customer)}
+                            className="bg-cyan-50/50 hover:bg-cyan-100 text-cyan-600 hover:text-cyan-700 transition-all duration-200 border border-cyan-200/50 hover:border-cyan-300 shadow-sm hover:shadow-md z-10 relative"
+                            title="View Details"
+                          >
+                            <Eye className="h-4 w-4 mr-1" /> View
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const convertedCustomer: Customer = {
+                                id: customer.id,
+                                organizationId: customer.organizationId,
+                                name: customer.name,
+                                phone: customer.phone,
+                                email: customer.email,
+                                address: customer.address,
+                                latitude: customer.latitude,
+                                longitude: customer.longitude,
+                                vehicleType: customer.vehicleType,
+                                vehicleMake: customer.vehicleMake,
+                                vehicleModel: customer.vehicleModel,
+                                vehicleNumber: customer.vehicleNumber,
+                                vehicleYear: customer.vehicleYear,
+                                vehicleCondition: customer.vehicleCondition,
+                                accountStatus: customer.accountStatus,
+                                joinedDate: new Date(customer.joinedDate || customer.createdAt),
+                                createdAt: new Date(customer.createdAt),
+                                updatedAt: new Date(customer.updatedAt),
+                              };
+                              setEditingCustomer(convertedCustomer);
+                              setIsFormOpen(true);
+                            }}
+                            className="bg-cyan-50/50 hover:bg-cyan-100 text-cyan-600 hover:text-cyan-700 transition-all duration-200 border border-cyan-200/50 hover:border-cyan-300 shadow-sm hover:shadow-md z-10 relative"
+                            title="Edit Customer"
+                          >
+                            <Edit2 className="h-4 w-4 mr-1" /> Edit
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setVehicleDetailsCustomer(customer);
+                              handleDeleteClick(customer);
                             }}
-                            className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all w-full justify-start"
+                            className="bg-red-50/50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all duration-200 border border-red-200/50 hover:border-red-300 shadow-sm hover:shadow-md z-10 relative"
+                            title="Delete Customer"
+                            disabled={deleteCustomerMutation.isPending}
                           >
-                            <Car className="h-4 w-4 mr-2" />
-                            <span className="text-sm font-medium">View Scrap Details</span>
+                            {deleteCustomerMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4 mr-1" />
+                            )}
+                            Delete
                           </Button>
-                        ) : (
-                          <div className="text-gray-400 text-sm italic">No scrap info</div>
-                        )}
+                        </div>
                       </div>
-                      <div className="text-muted-foreground">Created</div>
-                      <div>{formatDateHuman(customer.createdAt)}</div>
-                    </div>
-                    <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => setDetailsCustomer(customer)} 
-                        className="bg-cyan-50/50 hover:bg-cyan-100 text-cyan-600 hover:text-cyan-700 transition-all duration-200 border border-cyan-200/50 hover:border-cyan-300 shadow-sm hover:shadow-md z-10 relative"
-                        title="View Details"
-                      >
-                        <Eye className="h-4 w-4 mr-1" /> View
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => {
-                        const convertedCustomer: Customer = {
-                          id: customer.id,
-                          organizationId: customer.organizationId,
-                          name: customer.name,
-                          phone: customer.phone,
-                          email: customer.email,
-                          address: customer.address,
-                          latitude: customer.latitude,
-                          longitude: customer.longitude,
-                          vehicleType: customer.vehicleType,
-                          vehicleMake: customer.vehicleMake,
-                          vehicleModel: customer.vehicleModel,
-                          vehicleNumber: customer.vehicleNumber,
-                          vehicleYear: customer.vehicleYear,
-                          vehicleCondition: customer.vehicleCondition,
-                          accountStatus: customer.accountStatus,
-                          joinedDate: new Date(customer.joinedDate || customer.createdAt),
-                          createdAt: new Date(customer.createdAt),
-                          updatedAt: new Date(customer.updatedAt),
-                        };
-                        setEditingCustomer(convertedCustomer);
-                        setIsFormOpen(true);
-                        }} 
-                        className="bg-cyan-50/50 hover:bg-cyan-100 text-cyan-600 hover:text-cyan-700 transition-all duration-200 border border-cyan-200/50 hover:border-cyan-300 shadow-sm hover:shadow-md z-10 relative"
-                        title="Edit Customer"
-                      >
-                        <Edit2 className="h-4 w-4 mr-1" /> Edit
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteClick(customer);
-                        }} 
-                        className="bg-red-50/50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all duration-200 border border-red-200/50 hover:border-red-300 shadow-sm hover:shadow-md z-10 relative"
-                        title="Delete Customer"
-                        disabled={deleteCustomerMutation.isPending}
-                      >
-                        {deleteCustomerMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4 mr-1" />
-                        )}
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                  );
+                    );
                   })
                 )}
               </div>
             </>
           )}
         </CardContent>
-        
+
         {/* Pagination Controls */}
         {!isLoading && pagination.totalPages > 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t">
@@ -1067,11 +1064,11 @@ export default function CustomersPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={pagination.totalPages}
-              onPageChange={setCurrentPage}
-            />
+              <Pagination
+                currentPage={currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={setCurrentPage}
+              />
             </div>
           </div>
         )}
@@ -1088,16 +1085,16 @@ export default function CustomersPage() {
           <DialogHeader className="flex flex-row items-center justify-between pb-4 border-b border-gray-200">
             <DialogTitle className="text-xl font-bold text-gray-900">Customer Details</DialogTitle>
             <div className="flex items-center gap-2">
-          {detailsCustomer && (
-                <Button 
+              {detailsCustomer && (
+                <Button
                   onClick={() => {
-                  const convertedCustomer: Customer = {
+                    const convertedCustomer: Customer = {
                       id: detailsCustomer.id,
-                    organizationId: detailsCustomer.organizationId,
-                    name: detailsCustomer.name,
+                      organizationId: detailsCustomer.organizationId,
+                      name: detailsCustomer.name,
                       phone: detailsCustomer.phone,
-                    email: detailsCustomer.email,
-                    address: detailsCustomer.address,
+                      email: detailsCustomer.email,
+                      address: detailsCustomer.address,
                       latitude: detailsCustomer.latitude,
                       longitude: detailsCustomer.longitude,
                       vehicleType: detailsCustomer.vehicleType,
@@ -1108,11 +1105,11 @@ export default function CustomersPage() {
                       vehicleCondition: detailsCustomer.vehicleCondition,
                       accountStatus: detailsCustomer.accountStatus,
                       joinedDate: new Date(detailsCustomer.joinedDate || detailsCustomer.createdAt),
-                    createdAt: new Date(detailsCustomer.createdAt),
-                    updatedAt: new Date(detailsCustomer.updatedAt),
+                      createdAt: new Date(detailsCustomer.createdAt),
+                      updatedAt: new Date(detailsCustomer.updatedAt),
                     };
-                  setEditingCustomer(convertedCustomer);
-                  setIsFormOpen(true);
+                    setEditingCustomer(convertedCustomer);
+                    setIsFormOpen(true);
                     setDetailsCustomer(null);
                   }}
                   className="bg-cyan-500 hover:bg-cyan-600 text-white h-10 px-4"
@@ -1120,31 +1117,31 @@ export default function CustomersPage() {
                   <Edit2 className="h-4 w-4 mr-2" /> Edit
                 </Button>
               )}
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setDetailsCustomer(null)}
                 className="h-10 px-4 border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all"
               >
                 Cancel
               </Button>
-              </div>
+            </div>
           </DialogHeader>
           {detailsCustomer && (
             <div className="space-y-4">
               {/* Customer Header with Avatar */}
               <div className="flex items-center gap-4">
-                <CustomerAvatar 
-                  name={detailsCustomer.name || 'N/A'} 
+                <CustomerAvatar
+                  name={detailsCustomer.name || 'N/A'}
                   size="lg"
                 />
                 <div>
-              <div className="text-xl font-bold text-gray-900">{detailsCustomer.name || 'N/A'}</div>
+                  <div className="text-xl font-bold text-gray-900">{detailsCustomer.name || 'N/A'}</div>
                   {detailsCustomer.email && (
                     <div className="text-sm text-gray-600 mt-1">{detailsCustomer.email}</div>
                   )}
                 </div>
               </div>
-              
+
               {/* Basic Information */}
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Contact Information</h3>
@@ -1287,8 +1284,8 @@ export default function CustomersPage() {
             <div className="space-y-6">
               {/* Customer Info Header */}
               <div className="flex items-center gap-4 pb-4 border-b border-gray-200">
-                <CustomerAvatar 
-                  name={vehicleDetailsCustomer.name || 'N/A'} 
+                <CustomerAvatar
+                  name={vehicleDetailsCustomer.name || 'N/A'}
                   size="md"
                 />
                 <div>
@@ -1384,8 +1381,8 @@ export default function CustomersPage() {
             {customerToDelete && (
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center gap-3">
-                  <CustomerAvatar 
-                    name={customerToDelete.name || 'N/A'} 
+                  <CustomerAvatar
+                    name={customerToDelete.name || 'N/A'}
                     size="md"
                   />
                   <div>

@@ -5,6 +5,7 @@ export interface ScrapCategoryDto {
   name: string;
   description?: string;
   organizationId: number;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -74,6 +75,7 @@ export const scrapApi = {
     organizationId: number;
     name: string;
     description?: string;
+    isActive?: boolean;
   }): Promise<{
     version: string;
     validationErrors: any[];
@@ -88,7 +90,7 @@ export const scrapApi = {
 
   updateScrapCategory: async (
     id: string,
-    data: { name?: string; description?: string },
+    data: { name?: string; description?: string; isActive?: boolean },
   ): Promise<{
     version: string;
     validationErrors: any[];

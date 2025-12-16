@@ -49,7 +49,7 @@ const navigationSections: Array<{
         { name: 'Leads', href: '/leads', icon: Users, hasChevron: true },
         { name: 'Customers', href: '/customers', icon: CircleUserRound, hasChevron: true },
         { name: 'Orders', href: '/orders', icon: ShoppingCart, hasChevron: true },
-        { name: 'Scrap Module', href: '/scrap', icon: Truck, hasChevron: true },
+        { name: 'Scrap Management', href: '/scrap', icon: Truck, hasChevron: true },
         { name: 'Vehicles', href: '/vehicles/types', icon: Car, hasChevron: true },
         { name: 'Pickup Requests', href: '/pickup-requests', icon: ClipboardList, hasChevron: true },
         { name: 'Scrap Yards', href: '/scrap-yards', icon: Building2, hasChevron: true },
