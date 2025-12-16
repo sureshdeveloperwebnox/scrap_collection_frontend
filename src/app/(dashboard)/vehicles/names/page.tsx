@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useVehicleTypes } from '@/hooks/use-vehicle-types';
-import { useScrapYards } from '@/hooks/use-scrap-yards';
+
 import { useVehicleNames, useCreateVehicleName, useUpdateVehicleName, useDeleteVehicleName } from '@/hooks/use-vehicle-names';
 import { VehicleName, VehicleType, ScrapYard } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -95,19 +95,21 @@ function getTabStyle(tab: TabKey) {
   }
 }
 
-function StatusBadge({ isActive }: { isActive: boolean }) {
+function StatusBadge({ isActive, showDropdownIcon = false }: { isActive: boolean; showDropdownIcon?: boolean }) {
   if (isActive) {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
         <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
-        Active
+        <span className="whitespace-nowrap">Active</span>
+        {showDropdownIcon && <ChevronDown className="h-3 w-3 ml-0.5 flex-shrink-0" />}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 whitespace-nowrap">
       <Shield className="h-3 w-3 flex-shrink-0" />
-      Inactive
+      <span className="whitespace-nowrap">Inactive</span>
+      {showDropdownIcon && <ChevronDown className="h-3 w-3 ml-0.5 flex-shrink-0" />}
     </span>
   );
 }
@@ -126,46 +128,72 @@ interface ApiResponse {
   };
 }
 
+// ... (previous imports)
+import { useVehicleNameStore } from '@/lib/store/vehicle-name-store';
+
+// ... (other components)
+
 export default function VehicleNamesPage() {
   const { user } = useAuthStore();
 
-  // Local state
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<TabKey>('All');
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  // Store state
+  const {
+    filters,
+    setSearch,
+    setPage,
+    setLimit,
+    setIsActiveFilter,
+    setSortBy,
+    setSortOrder
+  } = useVehicleNameStore();
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingVehicleName, setEditingVehicleName] = useState<VehicleName | undefined>();
   const [selectedNames, setSelectedNames] = useState<Set<string>>(new Set());
 
-  // Debounce search
+  // Debounce search handled in store logic or effect? 
+  // Store updates directly, but we might want to debounce the API call or the store update.
+  // The store currently resets page on search.
+  // We can keep local debounceTerm if we want to avoid too many store updates, 
+  // OR we can just let the hook handle debouncing of the *query param*.
+  // Let's use local debounce for search input -> store search.
+
+  const [localSearch, setLocalSearch] = useState(filters.search);
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-      setPage(1);
+      if (localSearch !== filters.search) {
+        setSearch(localSearch);
+      }
     }, 500);
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [localSearch, filters.search, setSearch]);
 
-  const statusFilter = useMemo(() => {
-    if (activeTab === 'Active') return true;
-    if (activeTab === 'Inactive') return false;
-    return undefined;
-  }, [activeTab]);
+  // Derived active tab from filters.isActive
+  const activeTab = useMemo(() => {
+    if (filters.isActive === true) return 'Active';
+    if (filters.isActive === false) return 'Inactive';
+    return 'All';
+  }, [filters.isActive]) as TabKey;
+
+  const handleTabChange = (tab: TabKey) => {
+    if (tab === 'Active') setIsActiveFilter(true);
+    else if (tab === 'Inactive') setIsActiveFilter(false);
+    else setIsActiveFilter(undefined);
+  };
 
   // Data Fetching
   const { data: vehicleNamesData, isLoading, error, refetch } = useVehicleNames({
-    page,
-    limit,
-    search: debouncedSearchTerm || undefined,
-    isActive: statusFilter,
+    page: filters.page,
+    limit: filters.limit,
+    search: filters.search || undefined,
+    isActive: filters.isActive,
+    sortBy: filters.sortBy,
+    sortOrder: filters.sortOrder,
   });
 
   const { data: vehicleTypesData } = useVehicleTypes({ page: 1, limit: 100 });
-  const { data: scrapYardsData } = useScrapYards({ page: 1, limit: 100 });
 
   const createVehicleNameMutation = useCreateVehicleName();
   const updateVehicleNameMutation = useUpdateVehicleName();
@@ -175,11 +203,6 @@ export default function VehicleNamesPage() {
     const apiResponse = vehicleTypesData as any;
     return apiResponse?.data?.vehicleTypes || [];
   }, [vehicleTypesData]) as VehicleType[];
-
-  const scrapYards = useMemo(() => {
-    const apiResponse = scrapYardsData as any;
-    return apiResponse?.data?.scrapYards || [];
-  }, [scrapYardsData]) as ScrapYard[];
 
   const apiResponse = vehicleNamesData as unknown as ApiResponse;
   const vehicleNames = useMemo(() => apiResponse?.data?.vehicleNames || [], [apiResponse]) as VehicleName[];
@@ -212,7 +235,6 @@ export default function VehicleNamesPage() {
   const handleSubmit = async (formData: {
     name: string;
     vehicleTypeId: number;
-    scrapYardId: string;
     isActive?: boolean;
   }) => {
     try {
@@ -233,13 +255,18 @@ export default function VehicleNamesPage() {
     }
   };
 
-  const handleToggleStatus = async (vehicleName: VehicleName) => {
+  const handleStatusChange = async (vehicleName: VehicleName, newStatus: string) => {
     try {
+      const isActive = newStatus === 'Active';
+      if (vehicleName.isActive === isActive) return;
+
       await updateVehicleNameMutation.mutateAsync({
         id: vehicleName.id,
-        data: { isActive: !vehicleName.isActive }
+        data: { isActive }
       });
-      toast.success(`Vehicle name ${vehicleName.isActive ? 'deactivated' : 'activated'} successfully`);
+      // Optimistic update handles the UI, no need for manual toast here technically if we trust the UI, but feedback is good.
+      // toast is fine.
+      toast.success(`Vehicle name ${isActive ? 'activated' : 'deactivated'} successfully`);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to update vehicle name status');
     }
@@ -293,8 +320,8 @@ export default function VehicleNamesPage() {
                 <div className="relative animate-in slide-in-from-right-10 duration-200">
                   <Input
                     placeholder="Search..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    value={localSearch}
+                    onChange={(e) => setLocalSearch(e.target.value)}
                     className="w-64 pl-10 h-9"
                     autoFocus
                   />
@@ -323,7 +350,7 @@ export default function VehicleNamesPage() {
                 <Table>
                   <TableHeader className="bg-white">
                     <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50">
-                      <TableHead colSpan={7} className="p-0 bg-transparent">
+                      <TableHead colSpan={6} className="p-0 bg-transparent">
                         <div className="flex items-center gap-1 px-2 py-2">
                           {(['All', 'Active', 'Inactive'] as TabKey[]).map((tab) => {
                             const style = getTabStyle(tab);
@@ -331,7 +358,7 @@ export default function VehicleNamesPage() {
                             return (
                               <button
                                 key={tab}
-                                onClick={() => { setActiveTab(tab); setPage(1); }}
+                                onClick={() => handleTabChange(tab)}
                                 className={`relative px-4 py-2 text-sm font-medium transition-all rounded-t-md ${isActive ? `${style.activeText} ${style.activeBg}` : 'text-gray-600 hover:bg-gray-100'}`}
                               >
                                 {tab}
@@ -349,7 +376,7 @@ export default function VehicleNamesPage() {
                       </TableHead>
                       <TableHead>Vehicle Name</TableHead>
                       <TableHead>Vehicle Type</TableHead>
-                      <TableHead>Scrap Yard</TableHead>
+
                       <TableHead>Status</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead className="w-12">Actions</TableHead>
@@ -358,7 +385,7 @@ export default function VehicleNamesPage() {
                   <TableBody>
                     {vehicleNames.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7}><NoDataAnimation /></TableCell>
+                        <TableCell colSpan={6}><NoDataAnimation /></TableCell>
                       </TableRow>
                     ) : (
                       vehicleNames.map((vehicleName) => (
@@ -367,28 +394,45 @@ export default function VehicleNamesPage() {
                             <Checkbox
                               checked={selectedNames.has(vehicleName.id.toString())}
                               onCheckedChange={(c) => handleSelectOne(vehicleName.id.toString(), c as boolean)}
+                              onClick={(e) => e.stopPropagation()}
                             />
                           </TableCell>
-                          <TableCell className="font-medium text-gray-900">
-                            <div className="flex items-center space-x-2">
-                              <Car className="h-4 w-4 text-cyan-600" />
-                              <span>{vehicleName.name}</span>
+                          <TableCell className="font-medium text-gray-900">{vehicleName.name}</TableCell>
+                          <TableCell className="text-gray-600">{vehicleName.vehicleType?.name || 'N/A'}</TableCell>
+
+                          <TableCell>
+                            <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                              <Select
+                                value={vehicleName.isActive ? 'Active' : 'Inactive'}
+                                onValueChange={(v) => handleStatusChange(vehicleName, v)}
+                              >
+                                <SelectTrigger className="h-auto w-auto p-0 border-0 bg-transparent hover:bg-transparent focus:ring-0 focus:ring-offset-0 shadow-none max-w-none min-w-0 overflow-visible">
+                                  <div className="flex items-center">
+                                    <StatusBadge isActive={vehicleName.isActive} showDropdownIcon={true} />
+                                  </div>
+                                </SelectTrigger>
+                                <SelectContent className="min-w-[120px] rounded-lg shadow-lg border border-gray-200 bg-white p-1">
+                                  {['Active', 'Inactive'].map((status) => {
+                                    const isSelected = (vehicleName.isActive ? 'Active' : 'Inactive') === status;
+                                    return (
+                                      <SelectItem
+                                        key={status}
+                                        value={status}
+                                        className={cn(
+                                          "cursor-pointer rounded-md px-3 py-2.5 text-sm transition-colors pl-8",
+                                          isSelected
+                                            ? "bg-cyan-500 text-white hover:bg-cyan-600 focus:bg-cyan-600"
+                                            : "text-gray-900 hover:bg-gray-100 focus:bg-gray-100"
+                                        )}
+                                      >
+                                        <span className={cn(isSelected ? "text-white font-medium" : "text-gray-900")}>{status}</span>
+                                      </SelectItem>
+                                    );
+                                  })}
+                                </SelectContent>
+                              </Select>
                             </div>
                           </TableCell>
-                          <TableCell>
-                            {vehicleName.vehicleType ? (
-                              <Badge variant="outline" className="font-normal">{vehicleName.vehicleType.name}</Badge>
-                            ) : '-'}
-                          </TableCell>
-                          <TableCell>
-                            {vehicleName.scrapYard ? (
-                              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                <Building2 className="h-3 w-3" />
-                                <span>{vehicleName.scrapYard.yardName}</span>
-                              </div>
-                            ) : '-'}
-                          </TableCell>
-                          <TableCell><StatusBadge isActive={vehicleName.isActive} /></TableCell>
                           <TableCell className="text-gray-500">{new Date(vehicleName.createdAt).toLocaleDateString()}</TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -407,6 +451,8 @@ export default function VehicleNamesPage() {
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>
+
+
                         </TableRow>
                       ))
                     )}
@@ -423,7 +469,9 @@ export default function VehicleNamesPage() {
                         <Car className="h-4 w-4 text-cyan-600" />
                         {vehicleName.name}
                       </div>
-                      <StatusBadge isActive={vehicleName.isActive} />
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <StatusBadge isActive={vehicleName.isActive} />
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="grid gap-2 text-sm mb-4">
@@ -431,10 +479,7 @@ export default function VehicleNamesPage() {
                           <span className="text-gray-500">Type:</span>
                           <span>{vehicleName.vehicleType?.name || '-'}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Yard:</span>
-                          <span>{vehicleName.scrapYard?.yardName || '-'}</span>
-                        </div>
+
                       </div>
                       <div className="flex items-center justify-between text-sm text-muted-foreground border-t pt-2">
                         <span>{new Date(vehicleName.createdAt).toLocaleDateString()}</span>
@@ -449,7 +494,7 @@ export default function VehicleNamesPage() {
               </div>
 
               <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <RowsPerPage value={limit} onChange={(v) => { setLimit(v); setPage(1); }} options={[5, 10, 20, 50]} />
+                <RowsPerPage value={filters.limit} onChange={(v) => { setLimit(v); setPage(1); }} options={[5, 10, 20, 50]} />
                 <Pagination
                   currentPage={pagination.page}
                   totalPages={pagination.totalPages}
@@ -469,7 +514,6 @@ export default function VehicleNamesPage() {
           <VehicleNameForm
             vehicleName={editingVehicleName}
             vehicleTypes={vehicleTypes}
-            scrapYards={scrapYards}
             onSubmit={handleSubmit}
             onCancel={() => { setIsFormOpen(false); setEditingVehicleName(undefined); }}
             isLoading={createVehicleNameMutation.isPending || updateVehicleNameMutation.isPending}
@@ -483,33 +527,31 @@ export default function VehicleNamesPage() {
 function VehicleNameForm({
   vehicleName,
   vehicleTypes,
-  scrapYards,
+
   onSubmit,
   onCancel,
   isLoading,
 }: {
   vehicleName?: VehicleName;
   vehicleTypes: VehicleType[];
-  scrapYards: ScrapYard[];
-  onSubmit: (data: { name: string; vehicleTypeId: number; scrapYardId: string; isActive?: boolean }) => void;
+  onSubmit: (data: { name: string; vehicleTypeId: number; isActive?: boolean }) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }) {
   const [name, setName] = useState(vehicleName?.name || '');
   const [vehicleTypeId, setVehicleTypeId] = useState<string>(vehicleName?.vehicleTypeId.toString() || '');
-  const [scrapYardId, setScrapYardId] = useState(vehicleName?.scrapYardId || '');
+
   const [isActive, setIsActive] = useState(vehicleName?.isActive ?? true);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !vehicleTypeId || !scrapYardId) {
+    if (!name || !vehicleTypeId) {
       toast.error('Please fill in all required fields');
       return;
     }
     onSubmit({
       name,
       vehicleTypeId: parseInt(vehicleTypeId),
-      scrapYardId,
       isActive,
     });
   };
@@ -544,21 +586,7 @@ function VehicleNameForm({
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="scrapYard">Scrap Yard *</Label>
-        <Select value={scrapYardId} onValueChange={setScrapYardId} required disabled={isLoading}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select scrap yard" />
-          </SelectTrigger>
-          <SelectContent>
-            {scrapYards.filter(sy => sy.isActive !== false).map((sy) => (
-              <SelectItem key={sy.id} value={sy.id}>
-                {sy.yardName}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+
 
       <div className="flex items-center space-x-2">
         <Checkbox
@@ -581,3 +609,5 @@ function VehicleNameForm({
     </form>
   );
 }
+
+

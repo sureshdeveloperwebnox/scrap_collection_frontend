@@ -233,7 +233,7 @@ export interface VehicleName {
   name: string;
   vehicleTypeId: number;
   vehicleType?: VehicleType;
-  scrapYardId: string;
+  scrapYardId?: string;
   scrapYard?: ScrapYard;
   organizationId: number;
   isActive: boolean;

@@ -96,19 +96,21 @@ function getTabStyle(tab: TabKey) {
   }
 }
 
-function StatusBadge({ isActive }: { isActive: boolean }) {
+function StatusBadge({ isActive, showDropdownIcon = false }: { isActive: boolean; showDropdownIcon?: boolean }) {
   if (isActive) {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
         <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
-        Active
+        <span className="whitespace-nowrap">Active</span>
+        {showDropdownIcon && <ChevronDown className="h-3 w-3 ml-0.5 flex-shrink-0" />}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 whitespace-nowrap">
       <Shield className="h-3 w-3 flex-shrink-0" />
-      Inactive
+      <span className="whitespace-nowrap">Inactive</span>
+      {showDropdownIcon && <ChevronDown className="h-3 w-3 ml-0.5 flex-shrink-0" />}
     </span>
   );
 }
@@ -198,6 +200,21 @@ export default function VehicleTypesPage() {
   const handleEdit = (vehicleType: VehicleType) => {
     setEditingVehicleType(vehicleType);
     setIsFormOpen(true);
+  };
+
+  const handleStatusChange = async (vehicleType: VehicleType, newStatus: string) => {
+    try {
+      const isActive = newStatus === 'Active';
+      if (vehicleType.isActive === isActive) return;
+
+      await updateVehicleTypeMutation.mutateAsync({
+        id: vehicleType.id.toString(),
+        data: { isActive }
+      });
+      toast.success(`Vehicle type ${isActive ? 'activated' : 'deactivated'} successfully`);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to update vehicle type status');
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -383,7 +400,39 @@ export default function VehicleTypesPage() {
                           </TableCell>
                           <TableCell className="font-medium text-gray-900">{vehicleType.name}</TableCell>
 
-                          <TableCell><StatusBadge isActive={vehicleType.isActive} /></TableCell>
+                          <TableCell>
+                            <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                              <Select
+                                value={vehicleType.isActive ? 'Active' : 'Inactive'}
+                                onValueChange={(v) => handleStatusChange(vehicleType, v)}
+                              >
+                                <SelectTrigger className="h-auto w-auto p-0 border-0 bg-transparent hover:bg-transparent focus:ring-0 focus:ring-offset-0 shadow-none max-w-none min-w-0 overflow-visible">
+                                  <div className="flex items-center">
+                                    <StatusBadge isActive={vehicleType.isActive} showDropdownIcon={true} />
+                                  </div>
+                                </SelectTrigger>
+                                <SelectContent className="min-w-[120px] rounded-lg shadow-lg border border-gray-200 bg-white p-1">
+                                  {['Active', 'Inactive'].map((status) => {
+                                    const isSelected = (vehicleType.isActive ? 'Active' : 'Inactive') === status;
+                                    return (
+                                      <SelectItem
+                                        key={status}
+                                        value={status}
+                                        className={cn(
+                                          "cursor-pointer rounded-md px-3 py-2.5 text-sm transition-colors pl-8",
+                                          isSelected
+                                            ? "bg-cyan-500 text-white hover:bg-cyan-600 focus:bg-cyan-600"
+                                            : "text-gray-900 hover:bg-gray-100 focus:bg-gray-100"
+                                        )}
+                                      >
+                                        <span className={cn(isSelected ? "text-white font-medium" : "text-gray-900")}>{status}</span>
+                                      </SelectItem>
+                                    );
+                                  })}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </TableCell>
                           <TableCell className="text-gray-500">{new Date(vehicleType.createdAt).toLocaleDateString()}</TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -415,7 +464,9 @@ export default function VehicleTypesPage() {
                   <Card key={vehicleType.id}>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                       <div className="font-semibold">{vehicleType.name}</div>
-                      <StatusBadge isActive={vehicleType.isActive} />
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <StatusBadge isActive={vehicleType.isActive} />
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between text-sm text-muted-foreground mt-2">

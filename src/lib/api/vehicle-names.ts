@@ -48,7 +48,7 @@ export const vehicleNamesApi = {
     organizationId: number;
     name: string;
     vehicleTypeId: number;
-    scrapYardId: string;
+    scrapYardId?: string;
     isActive?: boolean;
   }): Promise<ApiResponse<VehicleName>> => {
     const response = await apiClient.post('/vehicle-names', vehicleNameData);

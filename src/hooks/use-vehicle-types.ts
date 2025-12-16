@@ -75,14 +75,50 @@ export const useUpdateVehicleType = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: { name?: string; isActive?: boolean } }) =>
       vehicleTypesApi.updateVehicleType(id, data),
-    onSuccess: (updatedVehicleType, variables) => {
-      // Update the vehicle type in cache
-      queryClient.setQueryData(queryKeys.vehicleTypes.detail(variables.id), updatedVehicleType);
+    onMutate: async ({ id, data }) => {
+      // Cancel outgoing queries
+      await queryClient.cancelQueries({ queryKey: queryKeys.vehicleTypes.detail(id) });
+      await queryClient.cancelQueries({ queryKey: queryKeys.vehicleTypes.lists() });
 
-      // Invalidate all vehicle types list queries to ensure consistency
+      // Snapshot previous data
+      const previousVehicleType = queryClient.getQueryData<VehicleType>(queryKeys.vehicleTypes.detail(id));
+
+      // Optimistic update for detail
+      if (previousVehicleType) {
+        queryClient.setQueryData(queryKeys.vehicleTypes.detail(id), {
+          ...previousVehicleType,
+          ...data,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
+      // Optimistic update for lists
+      queryClient.setQueriesData({ queryKey: queryKeys.vehicleTypes.lists() }, (oldData: any) => {
+        if (!oldData?.data?.vehicleTypes) return oldData;
+
+        return {
+          ...oldData,
+          data: {
+            ...oldData.data,
+            vehicleTypes: oldData.data.vehicleTypes.map((item: VehicleType) =>
+              item.id.toString() === id ? { ...item, ...data, updatedAt: new Date().toISOString() } : item
+            ),
+          },
+        };
+      });
+
+      return { previousVehicleType };
+    },
+    onError: (err, newTodo, context) => {
+      // Rollback
+      if (context?.previousVehicleType) {
+        queryClient.setQueryData(queryKeys.vehicleTypes.detail(newTodo.id), context.previousVehicleType);
+      }
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.lists() });
-
-      // Invalidate stats query
+    },
+    onSettled: (data, error, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.stats(organizationId) });
     },
   });
@@ -96,14 +132,40 @@ export const useDeleteVehicleType = () => {
 
   return useMutation({
     mutationFn: (id: string) => vehicleTypesApi.deleteVehicleType(id),
-    onSuccess: (_, deletedId) => {
-      // Remove vehicle type from cache
-      queryClient.removeQueries({ queryKey: queryKeys.vehicleTypes.detail(deletedId) });
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.vehicleTypes.lists() });
 
-      // Invalidate vehicle types list
+      const previousLists = queryClient.getQueriesData({ queryKey: queryKeys.vehicleTypes.lists() });
+
+      // Optimistic delete
+      queryClient.setQueriesData({ queryKey: queryKeys.vehicleTypes.lists() }, (oldData: any) => {
+        if (!oldData?.data?.vehicleTypes) return oldData;
+
+        return {
+          ...oldData,
+          data: {
+            ...oldData.data,
+            vehicleTypes: oldData.data.vehicleTypes.filter((item: VehicleType) => item.id.toString() !== id),
+            pagination: {
+              ...oldData.data.pagination,
+              total: Math.max(0, (oldData.data.pagination?.total || 1) - 1)
+            }
+          },
+        };
+      });
+
+      return { previousLists };
+    },
+    onError: (err, id, context) => {
+      if (context?.previousLists) {
+        context.previousLists.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    },
+    onSettled: (data, error, id) => {
+      queryClient.removeQueries({ queryKey: queryKeys.vehicleTypes.detail(id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.lists() });
-
-      // Invalidate stats query
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.stats(organizationId) });
     },
   });
