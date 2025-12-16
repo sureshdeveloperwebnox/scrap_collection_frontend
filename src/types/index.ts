@@ -47,10 +47,15 @@ export interface Order {
   latitude?: number;
   longitude?: number;
   vehicleDetails: {
+    // Scrap type (e.g. CAR, BIKE, TRUCK)
+    type?: VehicleTypeEnum;
     make?: string;
     model?: string;
     year?: number;
+    // Scrap condition (JUNK, DAMAGED, etc.)
     condition?: string;
+    // Optional free-text description
+    description?: string;
   };
   assignedCollectorId?: string;
   pickupTime?: Date;

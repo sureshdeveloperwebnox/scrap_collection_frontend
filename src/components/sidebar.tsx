@@ -37,28 +37,29 @@ const navigationSections: Array<{
   title: string;
   items: NavigationItem[];
 }> = [
-  {
-    title: 'HOME',
-    items: [
-      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }
-    ]
-  },
-  {
-    title: 'APPS',
-    items: [
-      { name: 'Leads', href: '/leads', icon: Users, hasChevron: true },
-      { name: 'Customers', href: '/customers', icon: CircleUserRound, hasChevron: true },
-      { name: 'Orders', href: '/orders', icon: ShoppingCart, hasChevron: true },
-      { name: 'Vehicles', href: '/vehicles/types', icon: Car, hasChevron: true },
-      { name: 'Pickup Requests', href: '/pickup-requests', icon: ClipboardList, hasChevron: true },
-      { name: 'Scrap Yards', href: '/scrap-yards', icon: Building2, hasChevron: true },
-      { name: 'Payments', href: '/payments', icon: CreditCard, hasChevron: true },
-      { name: 'Employees', href: '/employees', icon: UserCheck, hasChevron: true },
-      { name: 'Reports', href: '/reports', icon: BarChart3, hasChevron: true },
-      { name: 'Settings', href: '/settings', icon: Settings, hasChevron: true },
-    ]
-  }
-];
+    {
+      title: 'HOME',
+      items: [
+        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }
+      ]
+    },
+    {
+      title: 'APPS',
+      items: [
+        { name: 'Leads', href: '/leads', icon: Users, hasChevron: true },
+        { name: 'Customers', href: '/customers', icon: CircleUserRound, hasChevron: true },
+        { name: 'Orders', href: '/orders', icon: ShoppingCart, hasChevron: true },
+        { name: 'Scrap Module', href: '/scrap', icon: Truck, hasChevron: true },
+        { name: 'Vehicles', href: '/vehicles/types', icon: Car, hasChevron: true },
+        { name: 'Pickup Requests', href: '/pickup-requests', icon: ClipboardList, hasChevron: true },
+        { name: 'Scrap Yards', href: '/scrap-yards', icon: Building2, hasChevron: true },
+        { name: 'Payments', href: '/payments', icon: CreditCard, hasChevron: true },
+        { name: 'Employees', href: '/employees', icon: UserCheck, hasChevron: true },
+        { name: 'Reports', href: '/reports', icon: BarChart3, hasChevron: true },
+        { name: 'Settings', href: '/settings', icon: Settings, hasChevron: true },
+      ]
+    }
+  ];
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -75,13 +76,13 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
     <>
       {/* Mobile overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={onToggle}
         />
       )}
-      
-      <div 
+
+      <div
         className={cn(
           "fixed left-0 top-0 flex flex-col bg-white transition-all duration-300 ease-in-out",
           "z-50 shadow-xl border-r border-gray-200",
@@ -115,7 +116,7 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
                 priority
               />
             </div>
-            
+
             {/* Brand Name - Left aligned */}
             <div className={cn(
               "transition-all duration-300 ease-in-out",
@@ -126,7 +127,7 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
               </span>
             </div>
           </div>
-          
+
           {/* Close button for mobile */}
           <button
             onClick={onToggle}
@@ -135,7 +136,7 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
             <X className="w-5 h-5 transition-transform duration-200 hover:rotate-90" />
           </button>
         </div>
-        
+
         {/* Navigation Sections */}
         <div className="overflow-y-auto overflow-x-hidden flex-1 scrollbar-hide">
           <nav className="pl-3 pr-1 py-4 space-y-6">
@@ -148,13 +149,13 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
                 )}>
                   {section.title}
                 </h3>
-                
+
                 {/* Section Items */}
                 <div className="space-y-1">
                   {section.items.map((item, index) => {
                     const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
                     const isHovered = hoveredItem === item.name;
-                    
+
                     return (
                       <Link
                         key={item.name}
@@ -172,8 +173,8 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
                           isActive
                             ? 'bg-cyan-500 text-white rounded-r-full shadow-lg shadow-cyan-500/50 animate-glow pl-3 pr-1'
                             : isHovered && section.title === 'APPS'
-                            ? 'bg-gray-100 text-gray-900 rounded-r-full pl-3 pr-1'
-                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 rounded-lg px-3',
+                              ? 'bg-gray-100 text-gray-900 rounded-r-full pl-3 pr-1'
+                              : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 rounded-lg px-3',
                           !isCollapsed && !isActive && 'animate-in fade-in slide-in-from-left-2',
                           !isCollapsed && !isActive && `delay-[${index * 50}ms]`
                         )}
@@ -187,7 +188,7 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
                             <div className="absolute inset-0 rounded-r-full animate-shine-sweep pointer-events-none" />
                           </>
                         )}
-                        
+
                         {/* Icon */}
                         <div className={cn(
                           "flex flex-shrink-0 justify-center items-center w-5 h-5 relative z-10",
@@ -195,14 +196,14 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
                         )}>
                           <item.icon className={cn(
                             "w-5 h-5 transition-all duration-300 transform",
-                            isActive 
-                              ? "text-white scale-110 drop-shadow-lg" 
-                              : isHovered && section.title === 'APPS' 
-                              ? "text-gray-900 scale-110 rotate-12" 
-                              : "text-gray-600 group-hover:scale-110 group-hover:rotate-3"
+                            isActive
+                              ? "text-white scale-110 drop-shadow-lg"
+                              : isHovered && section.title === 'APPS'
+                                ? "text-gray-900 scale-110 rotate-12"
+                                : "text-gray-600 group-hover:scale-110 group-hover:rotate-3"
                           )} />
                         </div>
-                        
+
                         {/* Text */}
                         <span className={cn(
                           "ml-3 transition-all duration-300 flex-1 relative z-10",
@@ -211,19 +212,19 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
                         )}>
                           {item.name}
                         </span>
-                        
+
                         {/* Chevron - only show if item has submenu */}
                         {item.submenu && item.submenu.length > 0 && !isCollapsed && (
                           <ChevronRight className={cn(
                             "w-4 h-4 transition-all duration-300 transform relative z-10",
-                            isActive 
-                              ? "text-white translate-x-1 drop-shadow-lg" 
-                              : isHovered && section.title === 'APPS' 
-                              ? "text-gray-900 translate-x-1 scale-110" 
-                              : "text-gray-400 group-hover:translate-x-1 group-hover:scale-110"
+                            isActive
+                              ? "text-white translate-x-1 drop-shadow-lg"
+                              : isHovered && section.title === 'APPS'
+                                ? "text-gray-900 translate-x-1 scale-110"
+                                : "text-gray-400 group-hover:translate-x-1 group-hover:scale-110"
                           )} />
                         )}
-                        
+
                         {/* Tooltip for collapsed state */}
                         {isCollapsed && (
                           <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-50 hidden lg:block shadow-md transform translate-x-[-4px] group-hover:translate-x-0">
@@ -251,7 +252,7 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
                 {user?.name?.charAt(0).toUpperCase() || 'U'}
               </span>
             </div>
-            
+
             {/* User Info */}
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold text-gray-900 truncate transition-all duration-300">
@@ -261,9 +262,9 @@ export function Sidebar({ isOpen = true, onToggle, isCollapsed = false }: Sideba
                 {user?.role || 'Admin'}
               </div>
             </div>
-            
+
             {/* Logout Arrow */}
-            <button 
+            <button
               onClick={() => {
                 const { logout } = useAuthStore.getState();
                 logout();

@@ -122,7 +122,7 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.collectors.details(), id] as const,
     stats: () => [...queryKeys.collectors.all, 'stats'] as const,
     performance: (id: string, period?: string) => [...queryKeys.collectors.all, 'performance', id, period] as const,
-    available: (location: { lat: number; lng: number }, radius?: number) => 
+    available: (location: { lat: number; lng: number }, radius?: number) =>
       [...queryKeys.collectors.all, 'available', location, radius] as const,
     reviews: (id: string, page?: number) => [...queryKeys.collectors.all, 'reviews', id, page] as const,
   },
@@ -137,7 +137,7 @@ export const queryKeys = {
     stats: () => [...queryKeys.scrapYards.all, 'stats'] as const,
     capacityStatus: () => [...queryKeys.scrapYards.all, 'capacity-status'] as const,
     byRegion: (region: string) => [...queryKeys.scrapYards.all, 'by-region', region] as const,
-    nearest: (location: { lat: number; lng: number }) => 
+    nearest: (location: { lat: number; lng: number }) =>
       [...queryKeys.scrapYards.all, 'nearest', location] as const,
   },
 

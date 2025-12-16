@@ -754,7 +754,7 @@ export default function CustomersPage() {
                       </TableHead>
                       <TableHead>Phone</TableHead>
                       <TableHead>Email</TableHead>
-                      <TableHead>Vehicle</TableHead>
+                      <TableHead>Scrap Details</TableHead>
                       <TableHead>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('accountStatus')}>
                           Status 
@@ -824,10 +824,10 @@ export default function CustomersPage() {
                                 className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all"
                             >
                                 <Car className="h-4 w-4 mr-2" />
-                                <span className="text-sm font-medium">View Vehicle</span>
+                                <span className="text-sm font-medium">View Scrap Details</span>
                             </Button>
                             ) : (
-                              <div className="text-gray-400 text-sm italic">No vehicle info</div>
+                              <div className="text-gray-400 text-sm italic">No scrap info</div>
                             )}
                           </TableCell>
                           <TableCell>
@@ -959,7 +959,7 @@ export default function CustomersPage() {
                     <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                       <div className="text-muted-foreground">Phone</div>
                       <div>{customer.phone || 'N/A'}</div>
-                      <div className="text-muted-foreground">Vehicle</div>
+                      <div className="text-muted-foreground">Scrap</div>
                       <div>
                         {(customer.vehicleType || customer.vehicleMake || customer.vehicleModel || customer.vehicleNumber || customer.vehicleCondition) ? (
                           <Button
@@ -971,10 +971,10 @@ export default function CustomersPage() {
                             className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all w-full justify-start"
                           >
                             <Car className="h-4 w-4 mr-2" />
-                            <span className="text-sm font-medium">View Vehicle</span>
+                            <span className="text-sm font-medium">View Scrap Details</span>
                           </Button>
                         ) : (
-                          <div className="text-gray-400 text-sm italic">No vehicle info</div>
+                          <div className="text-gray-400 text-sm italic">No scrap info</div>
                         )}
                       </div>
                       <div className="text-muted-foreground">Created</div>
@@ -1205,44 +1205,44 @@ export default function CustomersPage() {
                 </div>
               )}
 
-              {/* Vehicle Information */}
+              {/* Scrap Details */}
               {(detailsCustomer.vehicleType || detailsCustomer.vehicleMake || detailsCustomer.vehicleModel || detailsCustomer.vehicleNumber || detailsCustomer.vehicleYear || detailsCustomer.vehicleCondition) && (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Vehicle Information</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Scrap Details</h3>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     {detailsCustomer.vehicleType && (
                       <>
-                        <div className="text-muted-foreground">Vehicle Type</div>
+                        <div className="text-muted-foreground">Type</div>
                         <div className="font-medium capitalize">{detailsCustomer.vehicleType || 'N/A'}</div>
                       </>
                     )}
                     {detailsCustomer.vehicleCondition && (
                       <>
-                        <div className="text-muted-foreground">Vehicle Condition</div>
+                        <div className="text-muted-foreground">Condition</div>
                         <div className="font-medium capitalize">{String(detailsCustomer.vehicleCondition || '').replace(/_/g, ' ')}</div>
                       </>
                     )}
                     {detailsCustomer.vehicleMake && (
                       <>
-                        <div className="text-muted-foreground">Vehicle Make</div>
+                        <div className="text-muted-foreground">Make</div>
                         <div className="font-medium">{detailsCustomer.vehicleMake}</div>
                       </>
                     )}
                     {detailsCustomer.vehicleModel && (
                       <>
-                        <div className="text-muted-foreground">Vehicle Model</div>
+                        <div className="text-muted-foreground">Model</div>
                         <div className="font-medium">{detailsCustomer.vehicleModel}</div>
                       </>
                     )}
                     {detailsCustomer.vehicleNumber && (
                       <>
-                        <div className="text-muted-foreground">Vehicle Number</div>
+                        <div className="text-muted-foreground">Number</div>
                         <div className="font-medium">{detailsCustomer.vehicleNumber}</div>
                       </>
                     )}
                     {detailsCustomer.vehicleYear && (
                       <>
-                        <div className="text-muted-foreground">Vehicle Year</div>
+                        <div className="text-muted-foreground">Year</div>
                         <div className="font-medium">{detailsCustomer.vehicleYear}</div>
                       </>
                     )}
@@ -1265,13 +1265,13 @@ export default function CustomersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Vehicle Details Dialog */}
+      {/* Scrap Details Dialog */}
       <Dialog open={!!vehicleDetailsCustomer} onOpenChange={(open) => !open && setVehicleDetailsCustomer(null)}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto [&>button]:hidden">
           <DialogHeader className="flex flex-row items-center justify-between pb-4 border-b border-gray-200">
             <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
               <Car className="h-5 w-5 text-cyan-600" />
-              Vehicle Details
+              Scrap Details
             </DialogTitle>
             <div className="flex items-center gap-2">
               <Button
@@ -1299,47 +1299,47 @@ export default function CustomersPage() {
                 </div>
               </div>
 
-              {/* Vehicle Information */}
+              {/* Scrap Details */}
               {(vehicleDetailsCustomer.vehicleType || vehicleDetailsCustomer.vehicleMake || vehicleDetailsCustomer.vehicleModel || vehicleDetailsCustomer.vehicleNumber || vehicleDetailsCustomer.vehicleYear || vehicleDetailsCustomer.vehicleCondition) ? (
                 <div className="space-y-4">
                   <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-4 border border-cyan-200">
                     <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4 flex items-center gap-2">
-                      Vehicle Information
+                      Scrap Details
                     </h3>
                     <div className="grid grid-cols-1 gap-4">
                       {vehicleDetailsCustomer.vehicleType && (
                         <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Type</span>
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Type</span>
                           <span className="px-3 py-1.5 bg-cyan-100 text-cyan-700 rounded-md text-sm font-medium capitalize">{vehicleDetailsCustomer.vehicleType}</span>
                         </div>
                       )}
                       {vehicleDetailsCustomer.vehicleMake && (
                         <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Make</span>
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Make</span>
                           <span className="text-sm font-medium text-gray-900">{vehicleDetailsCustomer.vehicleMake}</span>
                         </div>
                       )}
                       {vehicleDetailsCustomer.vehicleModel && (
                         <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Model</span>
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Model</span>
                           <span className="text-sm font-medium text-gray-900">{vehicleDetailsCustomer.vehicleModel}</span>
                         </div>
                       )}
                       {vehicleDetailsCustomer.vehicleNumber && (
                         <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Number</span>
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Number</span>
                           <span className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md text-sm font-mono font-semibold">{vehicleDetailsCustomer.vehicleNumber}</span>
                         </div>
                       )}
                       {vehicleDetailsCustomer.vehicleYear && (
                         <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Year</span>
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Year</span>
                           <span className="text-sm font-medium text-gray-900">{vehicleDetailsCustomer.vehicleYear}</span>
                         </div>
                       )}
                       {vehicleDetailsCustomer.vehicleCondition && (
                         <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Condition</span>
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Condition</span>
                           <span className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-md text-sm font-medium capitalize">{String(vehicleDetailsCustomer.vehicleCondition).replace(/_/g, ' ')}</span>
                         </div>
                       )}
@@ -1349,7 +1349,7 @@ export default function CustomersPage() {
               ) : (
                 <div className="text-center py-8 text-gray-400">
                   <Car className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm font-medium">No vehicle information available</p>
+                  <p className="text-sm font-medium">No scrap information available</p>
                 </div>
               )}
             </div>

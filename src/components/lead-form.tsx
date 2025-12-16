@@ -26,7 +26,7 @@ interface LeadFormProps {
   onSubmit?: (lead: Partial<Lead>) => void;
 }
 
-// Vehicle type enum values as array (constant, defined outside component)
+// Scrap type enum values as array (constant, defined outside component)
 const VEHICLE_TYPE_VALUES = ['CAR', 'BIKE', 'TRUCK', 'BOAT', 'VAN', 'SUV'] as const;
 
 // Zod validation schema for lead form
@@ -50,7 +50,7 @@ const createLeadSchema = z.object({
     .min(1, 'Email is required')
     .email('Please provide a valid email address'),
   vehicleType: z.enum(['CAR', 'BIKE', 'TRUCK', 'BOAT', 'VAN', 'SUV'], {
-    message: 'Vehicle type is required and must be one of: CAR, BIKE, TRUCK, BOAT, VAN, SUV'
+    message: 'Scrap type is required and must be one of: CAR, BIKE, TRUCK, BOAT, VAN, SUV'
   }),
   vehicleMake: z.string().max(50, 'Make cannot exceed 50 characters').optional().or(z.literal('')),
   vehicleModel: z.string().max(50, 'Model cannot exceed 50 characters').optional().or(z.literal('')),
@@ -61,7 +61,7 @@ const createLeadSchema = z.object({
     .optional()
     .nullable(),
   vehicleCondition: z.enum(['JUNK', 'DAMAGED', 'WRECKED', 'ACCIDENTAL', 'FULLY_SCRAP'], {
-    message: 'Vehicle condition is required and must be one of: JUNK, DAMAGED, WRECKED, ACCIDENTAL, FULLY_SCRAP'
+    message: 'Scrap condition is required and must be one of: JUNK, DAMAGED, WRECKED, ACCIDENTAL, FULLY_SCRAP'
   }),
   locationAddress: z.string()
     .min(1, 'Location address is required')
@@ -818,12 +818,12 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
             </div>
           </div>
 
-              {/* Vehicle Information - Horizontal Layout */}
+              {/* Scrap Details - Horizontal Layout */}
           <div className="space-y-5">
-                <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Vehicle Information</h3>
+                <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Scrap Details</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <Label htmlFor="vehicleType" className="text-sm font-medium text-gray-700">Vehicle Type *</Label>
+                <Label htmlFor="vehicleType" className="text-sm font-medium text-gray-700">Scrap Type *</Label>
                 <Select 
                     value={getCurrentVehicleTypeValue()} 
                   onValueChange={(value) => {
@@ -875,7 +875,7 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="vehicleCondition" className="text-sm font-medium text-gray-700">Condition *</Label>
+                <Label htmlFor="vehicleCondition" className="text-sm font-medium text-gray-700">Scrap Condition *</Label>
                 <Select 
                   value={formData.vehicleCondition}
                   onValueChange={(value) => handleInputChange('vehicleCondition', value as VehicleConditionEnum)}
@@ -1018,7 +1018,6 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
               <div className="space-y-5">
                 <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Location Information</h3>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Location Address *</Label>
                   <GoogleMapPicker
                     latitude={formData.latitude || 0}
                     longitude={formData.longitude || 0}
@@ -1046,7 +1045,7 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
               <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
                 <ImageIcon className="h-5 w-5 text-cyan-600" />
               </div>
-                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2 flex-1">Vehicle Photos</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2 flex-1">Scrap Photos</h3>
             </div>
             <ImageUpload
               value={formData.photos || []}

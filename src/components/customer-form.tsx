@@ -64,11 +64,11 @@ const createCustomerSchema = z.object({
     .optional()
     .nullable(),
   vehicleType: z.enum(['CAR', 'BIKE', 'TRUCK', 'BOAT', 'VAN', 'SUV'], {
-    message: 'Vehicle type is required and must be one of: CAR, BIKE, TRUCK, BOAT, VAN, SUV'
+    message: 'Scrap type is required and must be one of: CAR, BIKE, TRUCK, BOAT, VAN, SUV'
   }).optional(),
   vehicleMake: z.string().max(50, 'Make cannot exceed 50 characters').optional().or(z.literal('')),
   vehicleModel: z.string().max(50, 'Model cannot exceed 50 characters').optional().or(z.literal('')),
-  vehicleNumber: z.string().max(50, 'Vehicle number cannot exceed 50 characters').optional().or(z.literal('')),
+  vehicleNumber: z.string().max(50, 'Scrap number cannot exceed 50 characters').optional().or(z.literal('')),
   vehicleYear: z.number()
     .int('Year must be an integer')
     .min(1900, 'Year must be 1900 or later')
@@ -76,7 +76,7 @@ const createCustomerSchema = z.object({
     .optional()
     .nullable(),
   vehicleCondition: z.enum(['JUNK', 'DAMAGED', 'WRECKED', 'ACCIDENTAL', 'FULLY_SCRAP'], {
-    message: 'Vehicle condition must be one of: JUNK, DAMAGED, WRECKED, ACCIDENTAL, FULLY_SCRAP'
+    message: 'Scrap condition must be one of: JUNK, DAMAGED, WRECKED, ACCIDENTAL, FULLY_SCRAP'
   }).optional(),
   accountStatus: z.enum(['ACTIVE', 'INACTIVE', 'VIP', 'BLOCKED'], {
     message: 'Account status must be ACTIVE, INACTIVE, VIP, or BLOCKED'
@@ -673,12 +673,12 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
 
             {/* Right Column */}
             <div className="space-y-6 lg:sticky lg:top-4">
-              {/* Vehicle Information */}
+              {/* Scrap Details */}
               <div className="space-y-5">
-                <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Vehicle Information</h3>
+                <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Scrap Details</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-2">
-                    <Label htmlFor="vehicleType" className="text-sm font-medium text-gray-700">Vehicle Type</Label>
+                    <Label htmlFor="vehicleType" className="text-sm font-medium text-gray-700">Scrap Type</Label>
                     <Select 
                       value={getCurrentVehicleTypeValue()} 
                       onValueChange={(value) => {
@@ -726,7 +726,7 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="vehicleCondition" className="text-sm font-medium text-gray-700">Vehicle Condition</Label>
+                    <Label htmlFor="vehicleCondition" className="text-sm font-medium text-gray-700">Scrap Condition</Label>
                     <Select 
                       value={formData.vehicleCondition || ''}
                       onValueChange={(value) => handleInputChange('vehicleCondition', value as VehicleConditionEnum)}
@@ -750,7 +750,7 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="vehicleMake" className="text-sm font-medium text-gray-700">Vehicle Make</Label>
+                    <Label htmlFor="vehicleMake" className="text-sm font-medium text-gray-700">Scrap Make</Label>
                     <Input
                       id="vehicleMake"
                       value={formData.vehicleMake}
@@ -782,7 +782,7 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="vehicleNumber" className="text-sm font-medium text-gray-700">Vehicle Number</Label>
+                    <Label htmlFor="vehicleNumber" className="text-sm font-medium text-gray-700">Scrap Number</Label>
                     <Input
                       id="vehicleNumber"
                       value={formData.vehicleNumber}
@@ -798,7 +798,7 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="vehicleYear" className="text-sm font-medium text-gray-700">Vehicle Year</Label>
+                    <Label htmlFor="vehicleYear" className="text-sm font-medium text-gray-700">Scrap Year</Label>
                     <Select 
                       value={formData.vehicleYear?.toString() || ''}
                       onValueChange={(value) => handleInputChange('vehicleYear', parseInt(value) || undefined)}

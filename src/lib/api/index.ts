@@ -5,6 +5,7 @@ export { ordersApi } from './orders';
 export { employeesApi } from './employees';
 export { collectorsApi } from './collectors';
 export { scrapYardsApi } from './scrap-yards';
+export { scrapApi } from './scrap';
 export { paymentsApi } from './payments';
 export { pickupRequestsApi } from './pickup-requests';
 export { reviewsApi } from './reviews';

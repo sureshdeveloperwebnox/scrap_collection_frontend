@@ -352,7 +352,7 @@ export default function LeadsPage() {
     return sortMap[key] || 'createdAt';
   };
 
-  // Get available vehicle conditions - memoized for performance
+  // Get available scrap conditions - memoized for performance
   const scrapOptions = useMemo(() => ['ALL', 'JUNK', 'DAMAGED', 'WRECKED', 'ACCIDENTAL', 'FULLY_SCRAP'], []);
   
   // Memoize condition filter value to prevent unnecessary re-renders
@@ -767,7 +767,7 @@ export default function LeadsPage() {
                         </button>
                       </TableHead>
                       <TableHead>Phone</TableHead>
-                      <TableHead>Vehicle</TableHead>
+                      <TableHead>Scrap Details</TableHead>
                       <TableHead>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('status')}>
                           Status 
@@ -859,10 +859,10 @@ export default function LeadsPage() {
                                 className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all"
                               >
                                 <Car className="h-4 w-4 mr-2" />
-                                <span className="text-sm font-medium">View Vehicle</span>
+                                <span className="text-sm font-medium">View Scrap Details</span>
                               </Button>
                             ) : (
-                              <div className="text-gray-400 text-sm italic">No vehicle info</div>
+                              <div className="text-gray-400 text-sm italic">No scrap info</div>
                             )}
                           </TableCell>
                           <TableCell>
@@ -976,7 +976,7 @@ export default function LeadsPage() {
                     <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                       <div className="text-muted-foreground">Phone</div>
                       <div>{lead.phone || 'N/A'}</div>
-                      <div className="text-muted-foreground">Vehicle</div>
+                      <div className="text-muted-foreground">Scrap</div>
                       <div>
                         {(lead.vehicleType || lead.vehicleMake || lead.vehicleModel || lead.vehicleYear || lead.vehicleCondition) ? (
                           <Button
@@ -988,10 +988,10 @@ export default function LeadsPage() {
                             className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all w-full justify-start"
                           >
                             <Car className="h-4 w-4 mr-2" />
-                            <span className="text-sm font-medium">View Vehicle</span>
+                            <span className="text-sm font-medium">View Scrap Details</span>
                           </Button>
                         ) : (
-                          <div className="text-gray-400 text-sm italic">No vehicle info</div>
+                          <div className="text-gray-400 text-sm italic">No scrap info</div>
                         )}
                       </div>
                       <div className="text-muted-foreground">Created</div>
@@ -1236,11 +1236,11 @@ export default function LeadsPage() {
                 </div>
               )}
 
-              {/* Vehicle Information */}
+              {/* Scrap Details */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Vehicle Information</h3>
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Scrap Details</h3>
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="text-muted-foreground">Vehicle Type</div>
+                  <div className="text-muted-foreground">Type</div>
                   <div className="font-medium capitalize">{detailsLead.vehicleType || 'N/A'}</div>
                   <div className="text-muted-foreground">Condition</div>
                   <div className="font-medium capitalize">{String(detailsLead.vehicleCondition || '').replace(/_/g, ' ')}</div>
@@ -1268,7 +1268,7 @@ export default function LeadsPage() {
               {/* Vehicle Images */}
               {detailsLead.photos && detailsLead.photos.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Vehicle Images</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Scrap Images</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {detailsLead.photos.map((photo, index) => {
                       const imageUrl = getImageUrl(photo);
@@ -1277,7 +1277,7 @@ export default function LeadsPage() {
                           <div className="aspect-square rounded-lg border overflow-hidden bg-muted">
                             <img
                               src={imageUrl}
-                              alt={`Vehicle image ${index + 1}`}
+                              alt={`Scrap image ${index + 1}`}
                               className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
                               onClick={() => window.open(imageUrl, '_blank')}
                               onError={(e) => {
@@ -1327,13 +1327,13 @@ export default function LeadsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Vehicle Details Dialog */}
+      {/* Scrap Details Dialog */}
       <Dialog open={!!vehicleDetailsLead} onOpenChange={(open) => !open && setVehicleDetailsLead(null)}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto [&>button]:hidden">
           <DialogHeader className="flex flex-row items-center justify-between pb-4 border-b border-gray-200">
             <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
               <Car className="h-5 w-5 text-cyan-600" />
-              Vehicle Details
+              Scrap Details
             </DialogTitle>
             <div className="flex items-center gap-2">
                 <Button 
@@ -1362,41 +1362,41 @@ export default function LeadsPage() {
                 </div>
               </div>
 
-              {/* Vehicle Information */}
+              {/* Scrap Details */}
               {(vehicleDetailsLead.vehicleType || vehicleDetailsLead.vehicleMake || vehicleDetailsLead.vehicleModel || vehicleDetailsLead.vehicleYear || vehicleDetailsLead.vehicleCondition) ? (
                 <div className="space-y-4">
                   <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-4 border border-cyan-200">
                     <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4 flex items-center gap-2">
-                      Vehicle Information
+                      Scrap Details
                     </h3>
                     <div className="grid grid-cols-1 gap-4">
                       {vehicleDetailsLead.vehicleType && (
                         <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Type</span>
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Type</span>
                           <span className="px-3 py-1.5 bg-cyan-100 text-cyan-700 rounded-md text-sm font-medium capitalize">{vehicleDetailsLead.vehicleType}</span>
                         </div>
                       )}
                       {vehicleDetailsLead.vehicleMake && (
                         <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Make</span>
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Make</span>
                           <span className="text-sm font-medium text-gray-900">{vehicleDetailsLead.vehicleMake}</span>
                         </div>
                       )}
                       {vehicleDetailsLead.vehicleModel && (
                         <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Model</span>
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Model</span>
                           <span className="text-sm font-medium text-gray-900">{vehicleDetailsLead.vehicleModel}</span>
                         </div>
                       )}
                       {vehicleDetailsLead.vehicleYear && (
                         <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Year</span>
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Year</span>
                           <span className="text-sm font-medium text-gray-900">{vehicleDetailsLead.vehicleYear}</span>
                         </div>
                       )}
                       {vehicleDetailsLead.vehicleCondition && (
                         <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle Condition</span>
+                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Condition</span>
                           <span className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-md text-sm font-medium capitalize">{String(vehicleDetailsLead.vehicleCondition).replace(/_/g, ' ')}</span>
                         </div>
                       )}
@@ -1406,7 +1406,7 @@ export default function LeadsPage() {
               ) : (
                 <div className="text-center py-8 text-gray-400">
                   <Car className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm font-medium">No vehicle information available</p>
+                  <p className="text-sm font-medium">No scrap information available</p>
                 </div>
               )}
             </div>

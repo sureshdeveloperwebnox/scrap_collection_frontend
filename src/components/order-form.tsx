@@ -1,16 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Order, OrderStatus, PaymentStatusEnum } from '@/types';
+import { Order, OrderStatus, PaymentStatusEnum, VehicleTypeEnum } from '@/types';
 import { useCreateOrder, useUpdateOrder } from '@/hooks/use-orders';
 import { useEmployees } from '@/hooks/use-employees';
 import { useScrapYards } from '@/hooks/use-scrap-yards';
 import { useCustomers, useCustomer } from '@/hooks/use-customers';
+import { useVehicleTypes } from '@/hooks/use-vehicle-types';
+import { useScrapCategories, useScrapNames } from '@/hooks/use-scrap';
 import { toast } from 'sonner';
 import { User, Phone, MapPin, Calendar, Package, DollarSign, Clock, FileText, UserCheck, Building2, Users } from 'lucide-react';
 import PhoneInput from 'react-phone-input-2';
@@ -33,6 +35,27 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
   const { user } = useAuthStore();
   const organizationId = user?.organizationId || 1;
   
+  // Fetch scrap categories and names for Scrap Details
+  const { data: scrapCategoriesData, isLoading: scrapCategoriesLoading } = useScrapCategories({
+    page: 1,
+    limit: 100,
+  });
+  const { data: scrapNamesData, isLoading: scrapNamesLoading } = useScrapNames({
+    page: 1,
+    limit: 200,
+    isActive: true,
+  });
+
+  const scrapCategories = useMemo(() => {
+    const data = (scrapCategoriesData as any)?.data?.scrapCategories;
+    return Array.isArray(data) ? data : [];
+  }, [scrapCategoriesData]);
+
+  const scrapNames = useMemo(() => {
+    const data = (scrapNamesData as any)?.data?.scrapNames;
+    return Array.isArray(data) ? data : [];
+  }, [scrapNamesData]);
+  
   const [formData, setFormData] = useState({
     organizationId: organizationId,
     leadId: '',
@@ -42,12 +65,15 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
     latitude: undefined as number | undefined,
     longitude: undefined as number | undefined,
     vehicleDetails: {
+      type: undefined as VehicleTypeEnum | undefined,
       make: '',
       model: '',
       year: new Date().getFullYear(),
       condition: '',
       description: '',
-    },
+      scrapCategoryId: '',
+      scrapNameId: '',
+    } as any,
     assignedCollectorId: '',
     pickupTime: undefined as Date | undefined,
     quotedPrice: undefined as number | undefined,
@@ -92,6 +118,7 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
         latitude: selectedCustomer.latitude !== undefined ? selectedCustomer.latitude : prev.latitude,
         longitude: selectedCustomer.longitude !== undefined ? selectedCustomer.longitude : prev.longitude,
         vehicleDetails: {
+          type: selectedCustomer.vehicleType || prev.vehicleDetails.type,
           make: selectedCustomer.vehicleMake || prev.vehicleDetails.make,
           model: selectedCustomer.vehicleModel || prev.vehicleDetails.model,
           year: selectedCustomer.vehicleYear || prev.vehicleDetails.year,
@@ -120,12 +147,16 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
         latitude: order.latitude,
         longitude: order.longitude,
         vehicleDetails: { 
+          ...(order.vehicleDetails as any),
+          type: (order.vehicleDetails as any)?.type as VehicleTypeEnum | undefined,
           make: order.vehicleDetails?.make || '', 
           model: order.vehicleDetails?.model || '', 
           year: order.vehicleDetails?.year || new Date().getFullYear(), 
           condition: order.vehicleDetails?.condition || '', 
-          description: (order.vehicleDetails as any)?.description || '' 
-        },
+          description: (order.vehicleDetails as any)?.description || '',
+          scrapCategoryId: (order.vehicleDetails as any)?.scrapCategoryId || '',
+          scrapNameId: (order.vehicleDetails as any)?.scrapNameId || '',
+        } as any,
         assignedCollectorId: order.assignedCollectorId || '',
         pickupTime: order.pickupTime,
         quotedPrice: order.quotedPrice,
@@ -148,7 +179,7 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
         address: '',
         latitude: undefined,
         longitude: undefined,
-        vehicleDetails: { make: '', model: '', year: new Date().getFullYear(), condition: '', description: '' },
+        vehicleDetails: { type: undefined, make: '', model: '', year: new Date().getFullYear(), condition: '', description: '', scrapCategoryId: '', scrapNameId: '' } as any,
         assignedCollectorId: '',
         pickupTime: undefined,
         quotedPrice: undefined,
@@ -462,20 +493,95 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
                   </div>
                 </div>
 
-                {/* Vehicle Details */}
+                {/* Scrap Details */}
                 <div className="space-y-5">
-                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Vehicle Details</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Scrap Details</h3>
                   {formData.customerId && selectedCustomer && (selectedCustomer.vehicleMake || selectedCustomer.vehicleModel || selectedCustomer.vehicleYear || selectedCustomer.vehicleCondition) && (
                     <div className="mb-3 p-3 bg-cyan-50 border border-cyan-200 rounded-lg">
                       <p className="text-xs text-cyan-700 font-medium flex items-center gap-1">
                         <Package className="h-3 w-3" />
-                        Vehicle details auto-filled from selected customer
+                        Scrap details auto-filled from selected customer
                       </p>
                     </div>
                   )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div className="space-y-2">
-                      <Label htmlFor="vehicleMake" className="text-sm font-medium text-gray-700">Vehicle Make</Label>
+                      <Label htmlFor="scrapCategory" className="text-sm font-medium text-gray-700">Scrap Category</Label>
+                      <Select
+                        value={(formData.vehicleDetails as any).scrapCategoryId || 'none'}
+                        onValueChange={(value) => {
+                          handleVehicleDetailChange('scrapCategoryId', value === 'none' ? '' : value);
+                          // Reset scrap name when category changes
+                          handleVehicleDetailChange('scrapNameId', '');
+                        }}
+                        disabled={isLoading || scrapCategoriesLoading}
+                      >
+                        <SelectTrigger className="h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all">
+                          <SelectValue
+                            placeholder={
+                              scrapCategoriesLoading
+                                ? 'Loading categories...'
+                                : scrapCategories.length === 0
+                                ? 'No categories available'
+                                : 'Select category'
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          <SelectItem value="none">None</SelectItem>
+                          {scrapCategories.map((cat: any) => (
+                            <SelectItem key={cat.id} value={cat.id}>
+                              {cat.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="scrapName" className="text-sm font-medium text-gray-700">Scrap Name</Label>
+                      <Select
+                        value={(formData.vehicleDetails as any).scrapNameId || 'none'}
+                        onValueChange={(value) => {
+                          handleVehicleDetailChange('scrapNameId', value === 'none' ? '' : value);
+                        }}
+                        disabled={
+                          isLoading ||
+                          scrapNamesLoading ||
+                          scrapNames.filter(
+                            (sn: any) =>
+                              !((formData.vehicleDetails as any).scrapCategoryId) ||
+                              sn.scrapCategoryId === (formData.vehicleDetails as any).scrapCategoryId,
+                          ).length === 0
+                        }
+                      >
+                        <SelectTrigger className="h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all">
+                          <SelectValue
+                            placeholder={
+                              scrapNamesLoading
+                                ? 'Loading scrap names...'
+                                : scrapNames.length === 0
+                                ? 'No scrap names available'
+                                : 'Select scrap name'
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          <SelectItem value="none">None</SelectItem>
+                          {scrapNames
+                            .filter((sn: any) => {
+                              const currentCategoryId = (formData.vehicleDetails as any).scrapCategoryId;
+                              return !currentCategoryId || sn.scrapCategoryId === currentCategoryId;
+                            })
+                            .map((sn: any) => (
+                              <SelectItem key={sn.id} value={sn.id}>
+                                {sn.name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="vehicleMake" className="text-sm font-medium text-gray-700">Scrap Make</Label>
                       <Input
                         id="vehicleMake"
                         value={formData.vehicleDetails.make}
@@ -488,7 +594,7 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="vehicleModel" className="text-sm font-medium text-gray-700">Model</Label>
+                      <Label htmlFor="vehicleModel" className="text-sm font-medium text-gray-700">Scrap Model</Label>
                       <Input
                         id="vehicleModel"
                         value={formData.vehicleDetails.model}
@@ -501,7 +607,7 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="vehicleYear" className="text-sm font-medium text-gray-700">Vehicle Year</Label>
+                      <Label htmlFor="vehicleYear" className="text-sm font-medium text-gray-700">Scrap Year</Label>
                       <Select 
                         value={formData.vehicleDetails.year?.toString() || ''}
                         onValueChange={(value) => handleVehicleDetailChange('year', parseInt(value) || new Date().getFullYear())}
@@ -528,7 +634,7 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="vehicleCondition" className="text-sm font-medium text-gray-700">Vehicle Condition</Label>
+                      <Label htmlFor="vehicleCondition" className="text-sm font-medium text-gray-700">Scrap Condition</Label>
                       <Select 
                         value={formData.vehicleDetails.condition || 'none'}
                         onValueChange={(value) => handleVehicleDetailChange('condition', value === 'none' ? '' : value)}
