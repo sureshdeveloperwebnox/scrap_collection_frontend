@@ -372,7 +372,7 @@ export default function ScrapModulePage() {
       <Card className="shadow-sm">
         <CardHeader className="border-b bg-white">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-semibold text-gray-900">Scrap Module</CardTitle>
+            <CardTitle className="text-xl font-semibold text-gray-900">Scrap Management</CardTitle>
             <div className="flex items-center gap-2">
               {/* Search Toggle Button */}
               <Button

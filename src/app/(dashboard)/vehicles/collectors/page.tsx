@@ -16,13 +16,81 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Plus, Search, Edit, Trash2, MoreVertical, UserPlus, Car, MapPin, Truck } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Plus, Search, Edit, Trash2, MoreVertical, UserPlus, Car, MapPin, Truck, CheckCircle2, Shield, Edit2 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
+import dynamic from 'next/dynamic';
+import { Loader2 } from 'lucide-react';
+
+const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
+
+function NoDataAnimation({ text = "No data found" }) {
+  const [animationData, setAnimationData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/animation/nodatafoundanimation.json')
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to load animation');
+        return response.json();
+      })
+      .then((data) => {
+        setAnimationData(data);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error('Failed to load animation:', error);
+        setIsLoading(false);
+      });
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (!animationData) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8">
+        <div className="text-gray-400 text-sm">{text}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center py-8">
+      <div className="w-64 h-64 md:w-80 md:h-80 flex items-center justify-center">
+        <Lottie
+          animationData={animationData}
+          loop={true}
+          autoplay={true}
+          style={{ width: '100%', height: '100%' }}
+        />
+      </div>
+      <p className="mt-4 text-gray-600 text-sm font-medium">{text}</p>
+    </div>
+  );
+}
+
+function StatusBadge({ isActive }: { isActive: boolean }) {
+  if (isActive) {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+        <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
+        Active
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+      <Shield className="h-3 w-3 flex-shrink-0" />
+      Inactive
+    </span>
+  );
+}
 
 interface CollectorAssignment {
   id: string;
@@ -58,16 +126,15 @@ export default function CollectorAssignmentPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isAssignmentFormOpen, setIsAssignmentFormOpen] = useState(false);
   const [selectedCollector, setSelectedCollector] = useState<Employee | undefined>();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { user } = useAuthStore();
 
-  // Fetch collectors (employees with collector role)
-  const { data: employeesData, isLoading: isLoadingCollectors } = useEmployees({ 
-    page: 1, 
+  const { data: employeesData, isLoading: isLoadingCollectors } = useEmployees({
+    page: 1,
     limit: 100,
     role: 'COLLECTOR'
   });
 
-  // Fetch collector assignments
   const { data: assignmentsData, isLoading: isLoadingAssignments, refetch: refetchAssignments } = useCollectorAssignments({
     page: 1,
     limit: 100,
@@ -100,7 +167,6 @@ export default function CollectorAssignmentPage() {
     return apiResponse?.data?.assignments || [];
   }, [assignmentsData]) as CollectorAssignment[];
 
-  // Debounce search term
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -165,7 +231,7 @@ export default function CollectorAssignmentPage() {
       } else {
         await createEmployeeMutation.mutateAsync({
           ...formData,
-          roleId: 1, // TODO: Get actual collector role ID
+          roleId: 1,
           organizationId: user?.organizationId!,
         });
         toast.success('Collector created successfully');
@@ -178,80 +244,85 @@ export default function CollectorAssignmentPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur z-10 py-2">
-        <div>
-          <h1 className="text-3xl font-bold">Collector Assignment</h1>
-          <p className="text-gray-600 mt-1">
-            Manage collectors and assign them to vehicles and zones
-          </p>
-        </div>
-        <Button onClick={handleCreateCollector} className="flex items-center gap-2">
-          <UserPlus className="h-4 w-4" />
-          Add Collector
-        </Button>
-      </div>
+    <div className="space-y-6">
+      <Card className="bg-white shadow-sm border border-gray-200 rounded-lg">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <CardTitle className="text-xl font-bold text-gray-900">Collector Assignment</CardTitle>
 
-      <div className="space-y-4">
-        {/* Tab Navigation */}
-        <div className="border-b">
-          <nav className="flex space-x-8">
-            <button
-              onClick={() => setActiveTab('collectors')}
-              className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'collectors'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Collectors
-            </button>
-            <button
-              onClick={() => setActiveTab('assignments')}
-              className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'assignments'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Assignments
-            </button>
-          </nav>
-        </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                className="border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 h-9 w-9 p-0"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
 
-        {activeTab === 'collectors' && (
-          <div className="space-y-4">
-            {/* Search */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Filters</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              {isSearchOpen && (
+                <div className="relative animate-in slide-in-from-right-10 duration-200">
                   <Input
-                    placeholder="Search collectors..."
+                    placeholder="Search..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="w-64 pl-10 h-9"
+                    autoFocus
                   />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
                 </div>
-              </CardContent>
-            </Card>
+              )}
 
-            {/* Collectors Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>All Collectors</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoadingCollectors ? (
-                  <div className="text-center py-8">Loading...</div>
-                ) : filteredCollectors.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">No collectors found</div>
-                ) : (
+              <Button
+                onClick={handleCreateCollector}
+                className="bg-cyan-500 hover:bg-cyan-600 text-white h-9 w-9 p-0"
+              >
+                <UserPlus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-6">
+          <div className="mb-6 border-b border-gray-100">
+            <nav className="flex space-x-6">
+              <button
+                onClick={() => setActiveTab('collectors')}
+                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-all ${activeTab === 'collectors'
+                    ? 'border-cyan-500 text-cyan-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Truck className="h-4 w-4" />
+                  Collectors
+                </span>
+              </button>
+              <button
+                onClick={() => setActiveTab('assignments')}
+                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-all ${activeTab === 'assignments'
+                    ? 'border-cyan-500 text-cyan-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+              >
+                <span className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Assignments
+                </span>
+              </button>
+            </nav>
+          </div>
+
+          {activeTab === 'collectors' && (
+            <>
+              {isLoadingCollectors ? (
+                <div className="text-center py-12"><Loader2 className="h-8 w-8 animate-spin inline text-gray-300" /></div>
+              ) : filteredCollectors.length === 0 ? (
+                <NoDataAnimation text="No collectors found" />
+              ) : (
+                <div className="overflow-x-auto">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-gray-50">
                       <TableRow>
                         <TableHead>Collector</TableHead>
                         <TableHead>Contact</TableHead>
@@ -262,33 +333,33 @@ export default function CollectorAssignmentPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredCollectors.map((collector) => (
-                        <TableRow key={collector.id}>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center space-x-2">
-                              <Truck className="h-4 w-4 text-blue-500" />
-                              <span>{collector.fullName}</span>
+                        <TableRow key={collector.id} className="hover:bg-gray-50">
+                          <TableCell className="font-medium text-gray-900">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600 text-sm font-bold">
+                                {collector.fullName.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <div>{collector.fullName}</div>
+                                <div className="text-xs text-gray-500">{collector.email}</div>
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="space-y-1">
-                              <div className="text-sm">{collector.email}</div>
-                              <div className="text-sm text-gray-500">{collector.phone}</div>
-                            </div>
+                            <div className="text-sm text-gray-600">{collector.phone}</div>
                           </TableCell>
                           <TableCell>
                             {(collector as any).city ? (
-                              <div className="flex items-center space-x-2">
-                                <MapPin className="h-3 w-3 text-gray-400" />
-                                <span className="text-sm">{(collector as any).city.name}</span>
+                              <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                                <MapPin className="h-3.5 w-3.5 text-cyan-500" />
+                                {(collector as any).city.name}
                               </div>
                             ) : (
-                              <span className="text-gray-400 text-sm">Not assigned</span>
+                              <span className="text-gray-400 text-sm italic">Unassigned</span>
                             )}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={collector.isActive ? 'default' : 'secondary'}>
-                              {collector.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
+                            <StatusBadge isActive={collector.isActive} />
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center justify-end gap-2">
@@ -296,13 +367,14 @@ export default function CollectorAssignmentPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleAssignCollector(collector)}
+                                className="text-xs h-7 border-cyan-200 text-cyan-700 hover:bg-cyan-50"
                               >
                                 Assign
                               </Button>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon">
-                                    <MoreVertical className="h-4 w-4" />
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreVertical className="h-4 w-4 text-gray-400" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -310,8 +382,7 @@ export default function CollectorAssignmentPage() {
                                     setSelectedCollector(collector);
                                     setIsFormOpen(true);
                                   }}>
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    Edit
+                                    <Edit className="mr-2 h-4 w-4" /> Edit Details
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -321,47 +392,39 @@ export default function CollectorAssignmentPage() {
                       ))}
                     </TableBody>
                   </Table>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                </div>
+              )}
+            </>
+          )}
 
-        {activeTab === 'assignments' && (
-          <div className="space-y-4">
-            {/* Assignments Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Collector Assignments</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoadingAssignments ? (
-                  <div className="text-center py-8">Loading...</div>
-                ) : assignments.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    No assignments found. Assign collectors to vehicles or zones.
-                  </div>
-                ) : (
+          {activeTab === 'assignments' && (
+            <>
+              {isLoadingAssignments ? (
+                <div className="text-center py-12"><Loader2 className="h-8 w-8 animate-spin inline text-gray-300" /></div>
+              ) : assignments.length === 0 ? (
+                <NoDataAnimation text="No assignments found" />
+              ) : (
+                <div className="overflow-x-auto">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-gray-50">
                       <TableRow>
                         <TableHead>Collector</TableHead>
-                        <TableHead>Vehicle</TableHead>
-                        <TableHead>Zone</TableHead>
+                        <TableHead>Assigned Vehicle</TableHead>
+                        <TableHead>Assigned Zone</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {assignments.map((assignment) => (
-                        <TableRow key={assignment.id}>
+                        <TableRow key={assignment.id} className="hover:bg-gray-50">
                           <TableCell className="font-medium">
                             {assignment.collector?.fullName || 'Unknown'}
                           </TableCell>
                           <TableCell>
                             {assignment.vehicleName ? (
-                              <div className="flex items-center space-x-2">
-                                <Car className="h-3 w-3 text-gray-400" />
+                              <div className="flex items-center gap-2">
+                                <div className="p-1 bg-blue-50 rounded text-blue-600"><Car className="h-3 w-3" /></div>
                                 <span className="text-sm">{assignment.vehicleName.name}</span>
                               </div>
                             ) : (
@@ -370,8 +433,8 @@ export default function CollectorAssignmentPage() {
                           </TableCell>
                           <TableCell>
                             {assignment.city ? (
-                              <div className="flex items-center space-x-2">
-                                <MapPin className="h-3 w-3 text-gray-400" />
+                              <div className="flex items-center gap-2">
+                                <div className="p-1 bg-green-50 rounded text-green-600"><MapPin className="h-3 w-3" /></div>
                                 <span className="text-sm">{assignment.city.name}</span>
                               </div>
                             ) : (
@@ -379,54 +442,47 @@ export default function CollectorAssignmentPage() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={assignment.isActive ? 'default' : 'secondary'}>
-                              {assignment.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
+                            <StatusBadge isActive={assignment.isActive} />
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveAssignment(assignment.id)}
-                              className="text-red-600"
-                              disabled={deleteAssignmentMutation.isPending}
-                            >
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Remove
-                            </Button>
+                            <div className="flex justify-end">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveAssignment(assignment.id)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                disabled={deleteAssignmentMutation.isPending}
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Remove
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </div>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Collector Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              {selectedCollector ? 'Edit Collector' : 'Add New Collector'}
-            </DialogTitle>
+            <DialogTitle>{selectedCollector ? 'Edit Collector' : 'Add New Collector'}</DialogTitle>
           </DialogHeader>
           <CollectorForm
             collector={selectedCollector}
             onSubmit={handleCollectorSubmit}
-            onCancel={() => {
-              setIsFormOpen(false);
-              setSelectedCollector(undefined);
-            }}
+            onCancel={() => { setIsFormOpen(false); setSelectedCollector(undefined); }}
             isLoading={createEmployeeMutation.isPending || updateEmployeeMutation.isPending}
           />
         </DialogContent>
       </Dialog>
 
-      {/* Assignment Form Dialog */}
       <Dialog open={isAssignmentFormOpen} onOpenChange={setIsAssignmentFormOpen}>
         <DialogContent>
           <DialogHeader>
@@ -437,10 +493,7 @@ export default function CollectorAssignmentPage() {
             vehicleNames={vehicleNames}
             cities={cities}
             onSubmit={handleAssignmentSubmit}
-            onCancel={() => {
-              setIsAssignmentFormOpen(false);
-              setSelectedCollector(undefined);
-            }}
+            onCancel={() => { setIsAssignmentFormOpen(false); setSelectedCollector(undefined); }}
             isLoading={createAssignmentMutation.isPending}
           />
         </DialogContent>
@@ -449,7 +502,6 @@ export default function CollectorAssignmentPage() {
   );
 }
 
-// Collector Form Component
 function CollectorForm({
   collector,
   onSubmit,
@@ -535,7 +587,7 @@ function CollectorForm({
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading} className="bg-cyan-600 hover:bg-cyan-700">
           {collector ? 'Update' : 'Create'}
         </Button>
       </DialogFooter>
@@ -543,7 +595,6 @@ function CollectorForm({
   );
 }
 
-// Assignment Form Component
 function AssignmentForm({
   collector,
   vehicleNames,
@@ -577,13 +628,16 @@ function AssignmentForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {collector && (
-        <div className="p-3 bg-gray-50 rounded-lg">
-          <p className="text-sm font-medium">Assigning to: {collector.fullName}</p>
+        <div className="p-3 bg-cyan-50 border border-cyan-100 rounded-lg text-cyan-800">
+          <p className="text-sm font-medium flex items-center gap-2">
+            <UserPlus className="h-4 w-4" />
+            Assigning to: {collector.fullName}
+          </p>
         </div>
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="vehicleName">Vehicle (Optional)</Label>
+        <Label htmlFor="vehicleName">Vehicle</Label>
         <Select value={vehicleNameId} onValueChange={setVehicleNameId} disabled={isLoading}>
           <SelectTrigger>
             <SelectValue placeholder="Select vehicle" />
@@ -600,7 +654,7 @@ function AssignmentForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="city">Zone (Optional)</Label>
+        <Label htmlFor="city">Zone</Label>
         <Select value={cityId} onValueChange={setCityId} disabled={isLoading}>
           <SelectTrigger>
             <SelectValue placeholder="Select zone" />
@@ -620,7 +674,7 @@ function AssignmentForm({
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading} className="bg-cyan-600 hover:bg-cyan-700">
           Assign
         </Button>
       </DialogFooter>

@@ -266,7 +266,7 @@ export default function ScrapModulePage() {
     return (
       <div className="p-6">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-red-600">Error loading scrap module</h2>
+          <h2 className="text-xl font-semibold text-red-600">Error loading scrap management</h2>
           <p className="text-gray-600 mt-2">Please try again later.</p>
           <Button
             onClick={() => {
@@ -289,7 +289,7 @@ export default function ScrapModulePage() {
           {/* Header with Title and Actions */}
           <CardHeader className="border-b bg-white">
             <div className="flex items-center justify-between gap-4">
-              <CardTitle className="text-xl font-semibold text-gray-900">Scrap Module</CardTitle>
+              <CardTitle className="text-xl font-semibold text-gray-900">Scrap Management</CardTitle>
               <div className="flex items-center gap-2 flex-1 justify-end max-w-2xl">
                 {/* Always visible search input */}
                 <div className="relative flex-1 max-w-sm">

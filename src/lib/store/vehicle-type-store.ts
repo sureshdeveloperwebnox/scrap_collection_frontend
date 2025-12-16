@@ -5,7 +5,7 @@ export interface VehicleType {
   id: number;
   organizationId?: number;
   name: string;
-  icon?: string;
+
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

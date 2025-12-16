@@ -16,12 +16,20 @@ export const useVehicleTypes = (params?: {
   const { user } = useAuthStore();
   const organizationId = user?.organizationId;
 
+  // Construct API params explicitly to map status -> isActive
+  const { status, ...restParams } = params || {};
+  const apiParams = {
+    ...restParams,
+    isActive: status !== null && status !== undefined ? status : undefined,
+    organizationId,
+  };
+
   return useQuery({
     queryKey: queryKeys.vehicleTypes.list({ ...params, organizationId }),
-    queryFn: () => vehicleTypesApi.getVehicleTypes({ ...params, organizationId }),
+    queryFn: () => vehicleTypesApi.getVehicleTypes(apiParams),
     placeholderData: (previousData) => previousData, // Keep previous data while fetching new data
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    gcTime: 10 * 60 * 1000,
     enabled: !!organizationId,
   });
 };
@@ -43,15 +51,15 @@ export const useCreateVehicleType = () => {
   const { resetFilters } = useVehicleTypeStore();
 
   return useMutation({
-    mutationFn: (vehicleTypeData: { name: string; icon?: string; isActive?: boolean }) => 
+    mutationFn: (vehicleTypeData: { name: string; isActive?: boolean }) =>
       vehicleTypesApi.createVehicleType({ ...vehicleTypeData, organizationId: organizationId! }),
     onSuccess: () => {
       // Invalidate all vehicle types list queries
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.lists() });
-      
+
       // Invalidate stats query
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.stats(organizationId) });
-      
+
       // Reset filters to show the new item
       resetFilters();
     },
@@ -65,15 +73,15 @@ export const useUpdateVehicleType = () => {
   const organizationId = user?.organizationId;
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { name?: string; icon?: string; isActive?: boolean } }) => 
+    mutationFn: ({ id, data }: { id: string; data: { name?: string; isActive?: boolean } }) =>
       vehicleTypesApi.updateVehicleType(id, data),
     onSuccess: (updatedVehicleType, variables) => {
       // Update the vehicle type in cache
       queryClient.setQueryData(queryKeys.vehicleTypes.detail(variables.id), updatedVehicleType);
-      
+
       // Invalidate all vehicle types list queries to ensure consistency
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.lists() });
-      
+
       // Invalidate stats query
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.stats(organizationId) });
     },
@@ -91,10 +99,10 @@ export const useDeleteVehicleType = () => {
     onSuccess: (_, deletedId) => {
       // Remove vehicle type from cache
       queryClient.removeQueries({ queryKey: queryKeys.vehicleTypes.detail(deletedId) });
-      
+
       // Invalidate vehicle types list
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.lists() });
-      
+
       // Invalidate stats query
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.stats(organizationId) });
     },

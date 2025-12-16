@@ -4,7 +4,7 @@ export interface VehicleType {
   id: number;
   organizationId?: number;
   name: string;
-  icon?: string;
+
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -57,7 +57,7 @@ export const vehicleTypesApi = {
   createVehicleType: async (vehicleTypeData: {
     organizationId: number;
     name: string;
-    icon?: string;
+
     isActive?: boolean;
   }): Promise<ApiResponse<VehicleType>> => {
     const response = await apiClient.post('/vehicle-types', vehicleTypeData);
@@ -67,7 +67,7 @@ export const vehicleTypesApi = {
   // Update existing vehicle type
   updateVehicleType: async (id: string, vehicleTypeData: {
     name?: string;
-    icon?: string;
+
     isActive?: boolean;
   }): Promise<ApiResponse<VehicleType>> => {
     const response = await apiClient.put(`/vehicle-types/${id}`, vehicleTypeData);

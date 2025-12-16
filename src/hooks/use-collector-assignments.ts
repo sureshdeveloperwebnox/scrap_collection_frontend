@@ -23,6 +23,8 @@ export const useCollectorAssignments = (params?: {
     queryKey: queryKeys.collectorAssignments.list({ ...params, organizationId }),
     queryFn: () => collectorAssignmentsApi.getCollectorAssignments({ ...params, organizationId }),
     placeholderData: (previousData) => previousData,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     enabled: !!organizationId,
   });
 };

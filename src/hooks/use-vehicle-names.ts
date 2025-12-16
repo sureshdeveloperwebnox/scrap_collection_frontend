@@ -23,6 +23,8 @@ export const useVehicleNames = (params?: {
     queryKey: queryKeys.vehicleNames.list({ ...params, organizationId }),
     queryFn: () => vehicleNamesApi.getVehicleNames({ ...params, organizationId }),
     placeholderData: (previousData) => previousData,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     enabled: !!organizationId,
   });
 };
