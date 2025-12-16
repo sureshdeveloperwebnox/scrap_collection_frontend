@@ -16,7 +16,7 @@ export default function PickupRequestsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const { data: pickupRequestsData, isLoading } = usePickupRequests();
-  const { data: employeesData } = useEmployees({ role: 'COLLECTOR', isActive: true });
+  const { data: employeesData } = useEmployees({ role: 'COLLECTOR' });
   const deleteMutation = useDeletePickupRequest();
   const assignMutation = useAssignPickupRequest();
 
@@ -24,7 +24,7 @@ export default function PickupRequestsPage() {
   const employees = employeesData?.data?.employees || [];
 
   const filteredRequests = pickupRequests.filter(req => {
-    const matchesSearch = !searchTerm || 
+    const matchesSearch = !searchTerm ||
       req.pickupAddress.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'ALL' || req.status === statusFilter;
     return matchesSearch && matchesStatus;

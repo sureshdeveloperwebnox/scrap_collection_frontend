@@ -18,12 +18,11 @@ export interface CollectorAssignment {
       name: string;
     };
   };
-  cityId?: number;
-  city?: {
-    id: number;
-    name: string;
-    latitude: number;
-    longitude: number;
+  scrapYardId?: string;
+  scrapYard?: {
+    id: string;
+    yardName: string;
+    address?: string;
   };
   organizationId: number;
   isActive: boolean;
@@ -79,7 +78,7 @@ export const collectorAssignmentsApi = {
     organizationId: number;
     collectorId: string;
     vehicleNameId?: string;
-    cityId?: number;
+    scrapYardId?: string;
     isActive?: boolean;
   }): Promise<ApiResponse<CollectorAssignment>> => {
     const response = await apiClient.post('/collector-assignments', assignmentData);
@@ -89,7 +88,7 @@ export const collectorAssignmentsApi = {
   // Update existing collector assignment
   updateCollectorAssignment: async (id: string, assignmentData: {
     vehicleNameId?: string | null;
-    cityId?: number | null;
+    scrapYardId?: string | null;
     isActive?: boolean;
   }): Promise<ApiResponse<CollectorAssignment>> => {
     const response = await apiClient.put(`/collector-assignments/${id}`, assignmentData);

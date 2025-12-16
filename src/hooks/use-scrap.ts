@@ -7,6 +7,7 @@ export const useScrapCategories = (params?: {
   page?: number;
   limit?: number;
   search?: string;
+  isActive?: boolean;
 }) => {
   const { user } = useAuthStore();
   const organizationId = user?.organizationId;

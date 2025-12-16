@@ -1,6 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plus, Search, Edit2, Trash2, Loader2, X, Filter, Tag, Tags } from 'lucide-react';
 import {
   useScrapCategories,
   useCreateScrapCategory,
@@ -12,35 +17,106 @@ import {
   useDeleteScrapName,
 } from '@/hooks/use-scrap';
 import { ScrapCategoryDto, ScrapNameDto } from '@/lib/api/scrap';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Plus, Search, Edit, Trash2, Tags, X, Filter, Loader2, MoreHorizontal, FileText, Layers } from 'lucide-react';
-import { z } from 'zod';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Pagination } from '@/components/ui/pagination';
 import { RowsPerPage } from '@/components/ui/rows-per-page';
 import { Checkbox } from '@/components/ui/checkbox';
-import NoDataAnimation from '@/components/ui/no-data-animation';
-import { cn } from '@/lib/utils';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import dynamic from 'next/dynamic';
+
+// Dynamically import Lottie for better performance
+const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
+
+// No Data Animation Component
+function NoDataAnimation({ message = 'No data found', description }: { message?: string; description?: string }) {
+  const [animationData, setAnimationData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/animation/nodatafoundanimation.json')
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to load animation');
+        return response.json();
+      })
+      .then((data) => {
+        setAnimationData(data);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error('Failed to load animation:', error);
+        setIsLoading(false);
+      });
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <div className="mt-2 text-gray-400 text-sm">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!animationData) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8">
+        <div className="text-gray-400 text-sm">{message}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center py-8">
+      <div className="w-64 h-64 md:w-80 md:h-80 flex items-center justify-center">
+        <Lottie
+          animationData={animationData}
+          loop={true}
+          autoplay={true}
+          style={{ width: '100%', height: '100%' }}
+        />
+      </div>
+      <p className="mt-4 text-gray-600 text-sm font-medium">{message}</p>
+      {description && <p className="mt-1 text-gray-400 text-xs">{description}</p>}
+    </div>
+  );
+}
+
+// Category Icon Component
+function CategoryIcon({ className = '' }: { className?: string }) {
+  return (
+    <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-300 ${className}`}>
+      <Tag className="h-5 w-5 text-white" />
+    </div>
+  );
+}
+
+// Scrap Name Icon Component
+function ScrapNameIcon({ className = '' }: { className?: string }) {
+  return (
+    <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-300 ${className}`}>
+      <Tags className="h-5 w-5 text-white" />
+    </div>
+  );
+}
+
+type TabKey = 'categories' | 'names';
+
+function getTabStyle(tab: TabKey) {
+  switch (tab) {
+    case 'categories':
+      return { activeText: 'text-purple-700', activeBg: 'bg-purple-50', underline: 'bg-purple-500', count: 'bg-purple-100 text-purple-700' };
+    case 'names':
+      return { activeText: 'text-cyan-700', activeBg: 'bg-cyan-50', underline: 'bg-cyan-500', count: 'bg-cyan-100 text-cyan-700' };
+    default:
+      return { activeText: 'text-primary', activeBg: 'bg-muted', underline: 'bg-primary', count: 'bg-muted text-foreground' };
+  }
+}
 
 interface CategoryApiResponse {
   data: {
@@ -50,8 +126,6 @@ interface CategoryApiResponse {
       limit: number;
       total: number;
       totalPages: number;
-      hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
     };
   };
 }
@@ -64,24 +138,22 @@ interface NameApiResponse {
       limit: number;
       total: number;
       totalPages: number;
-      hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
     };
   };
 }
 
-export default function ScrapModulePage() {
-  // Active tab state - 'categories' or 'names'
-  const [activeTab, setActiveTab] = useState<'categories' | 'names'>('categories');
+export default function ScrapManagementPage() {
+  // Tab state
+  const [activeTab, setActiveTab] = useState<TabKey>('categories');
 
   // Categories state
   const [categorySearch, setCategorySearch] = useState('');
   const [debouncedCategorySearch, setDebouncedCategorySearch] = useState('');
   const [categoryPage, setCategoryPage] = useState(1);
   const [categoryLimit, setCategoryLimit] = useState(10);
-  const [categoryStatusFilter, setCategoryStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [isCategoryFormOpen, setIsCategoryFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ScrapCategoryDto | undefined>();
+  const [categoryStatusFilter, setCategoryStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
   // Names state
   const [nameSearch, setNameSearch] = useState('');
@@ -89,17 +161,15 @@ export default function ScrapModulePage() {
   const [namePage, setNamePage] = useState(1);
   const [nameLimit, setNameLimit] = useState(10);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | 'all'>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [isNameFormOpen, setIsNameFormOpen] = useState(false);
   const [editingName, setEditingName] = useState<ScrapNameDto | undefined>();
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
   // UI state
-  const [mounted, setMounted] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [mounted, setMounted] = useState(false);
 
-  // Set mounted state
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -109,7 +179,7 @@ export default function ScrapModulePage() {
     const timer = setTimeout(() => {
       setDebouncedCategorySearch(categorySearch);
       setCategoryPage(1);
-    }, 400);
+    }, 500);
     return () => clearTimeout(timer);
   }, [categorySearch]);
 
@@ -117,7 +187,8 @@ export default function ScrapModulePage() {
     const timer = setTimeout(() => {
       setDebouncedNameSearch(nameSearch);
       setNamePage(1);
-    }, 400);
+    }, 500);
+    return () => clearTimeout(timer);
   }, [nameSearch]);
 
   // Queries
@@ -128,7 +199,8 @@ export default function ScrapModulePage() {
   } = useScrapCategories({
     page: categoryPage,
     limit: categoryLimit,
-    search: debouncedCategorySearch,
+    search: debouncedCategorySearch || undefined,
+    isActive: categoryStatusFilter === 'all' ? undefined : categoryStatusFilter === 'active',
   });
 
   const {
@@ -138,27 +210,39 @@ export default function ScrapModulePage() {
   } = useScrapNames({
     page: namePage,
     limit: nameLimit,
-    search: debouncedNameSearch,
-    categoryId: selectedCategoryId === 'all' ? undefined : selectedCategoryId,
+    search: debouncedNameSearch || undefined,
+    scrapCategoryId: selectedCategoryId === 'all' ? undefined : selectedCategoryId,
+    isActive: statusFilter === 'all' ? undefined : statusFilter === 'active',
+  });
+
+  // Fetch all scrap names for accurate counts (without pagination)
+  const { data: allNamesData } = useScrapNames({
+    page: 1,
+    limit: 10000, // Large number to get all items
+    scrapCategoryId: selectedCategoryId === 'all' ? undefined : selectedCategoryId,
+  });
+
+  // Fetch all categories for accurate counts
+  const { data: allCategoriesData } = useScrapCategories({
+    page: 1,
+    limit: 10000,
   });
 
   // Mutations
   const createCategoryMutation = useCreateScrapCategory();
   const updateCategoryMutation = useUpdateScrapCategory();
   const deleteCategoryMutation = useDeleteScrapCategory();
+
   const createNameMutation = useCreateScrapName();
   const updateNameMutation = useUpdateScrapName();
   const deleteNameMutation = useDeleteScrapName();
 
-  // Parse API responses
+  // Handle API response structure
   const categoryResponse = categoriesData as unknown as CategoryApiResponse;
-  const nameResponse = namesData as unknown as NameApiResponse;
-
   const categories = useMemo(
     () => categoryResponse?.data?.scrapCategories || [],
     [categoryResponse],
   );
-
   const categoryPagination = useMemo(
     () =>
       categoryResponse?.data?.pagination || {
@@ -170,8 +254,8 @@ export default function ScrapModulePage() {
     [categoryResponse],
   );
 
+  const nameResponse = namesData as unknown as NameApiResponse;
   const names = useMemo(() => nameResponse?.data?.scrapNames || [], [nameResponse]);
-
   const namePagination = useMemo(
     () =>
       nameResponse?.data?.pagination || {
@@ -183,107 +267,43 @@ export default function ScrapModulePage() {
     [nameResponse],
   );
 
-  // Filter names by status
-  const filteredNames = useMemo(() => {
-    if (statusFilter === 'all') return names;
-    if (statusFilter === 'active') return names.filter(n => n.isActive);
-    if (statusFilter === 'inactive') return names.filter(n => !n.isActive);
-    return names;
-  }, [names, statusFilter]);
+  // Get all categories for accurate counts
+  const allCategoryResponse = allCategoriesData as unknown as CategoryApiResponse;
+  const allCategories = useMemo(() => allCategoryResponse?.data?.scrapCategories || [], [allCategoryResponse]);
 
-  // Status counts for scrap names
-  const statusCounts = useMemo(() => ({
-    all: names?.length || 0,
-    active: names?.filter(n => n.isActive).length || 0,
-    inactive: names?.filter(n => !n.isActive).length || 0,
-  }), [names]);
+  // Calculate category status counts
+  const categoryStatusCounts = useMemo(() => {
+    const total = allCategories.length;
+    const active = allCategories.filter(c => c.isActive).length;
+    const inactive = allCategories.filter(c => !c.isActive).length;
+    return { total, active, inactive };
+  }, [allCategories]);
 
-  // Filter categories by status
-  const filteredCategories = useMemo(() => {
-    if (categoryStatusFilter === 'all') return categories;
-    if (categoryStatusFilter === 'active') return categories.filter(c => c.isActive);
-    if (categoryStatusFilter === 'inactive') return categories.filter(c => !c.isActive);
-    return categories;
-  }, [categories, categoryStatusFilter]);
+  // Get all names for accurate counts
+  const allNameResponse = allNamesData as unknown as NameApiResponse;
+  const allNames = useMemo(() => allNameResponse?.data?.scrapNames || [], [allNameResponse]);
 
-  // Status counts for categories
-  const categoryStatusCounts = useMemo(() => ({
-    all: categories?.length || 0,
-    active: categories?.filter(c => c.isActive).length || 0,
-    inactive: categories?.filter(c => !c.isActive).length || 0,
-  }), [categories]);
+  // Calculate status counts from all names
+  const statusCounts = useMemo(() => {
+    const total = allNames.length;
+    const active = allNames.filter(n => n.isActive).length;
+    const inactive = allNames.filter(n => !n.isActive).length;
+    return { total, active, inactive };
+  }, [allNames]);
 
-  // Handlers
-  const handleCreateCategory = useCallback(() => {
-    setEditingCategory(undefined);
-    setIsCategoryFormOpen(true);
-  }, []);
-
-  const handleEditCategory = useCallback((category: ScrapCategoryDto) => {
-    setEditingCategory(category);
-    setIsCategoryFormOpen(true);
-  }, []);
-
-  const handleDeleteCategory = useCallback(async (id: string) => {
-    if (
-      !confirm(
-        'Are you sure you want to delete this scrap category? Any linked scrap names must be removed first.',
-      )
-    ) {
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this category? All associated scrap names will also be affected.')) {
       return;
     }
     try {
       await deleteCategoryMutation.mutateAsync(id);
-      toast.success('Scrap category deleted successfully');
+      toast.success('Category deleted successfully');
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to delete scrap category');
+      toast.error(error?.response?.data?.message || 'Failed to delete category');
     }
-  }, [deleteCategoryMutation]);
+  };
 
-  const handleSubmitCategory = useCallback(async (data: { name: string; description?: string }) => {
-    try {
-      if (editingCategory) {
-        await updateCategoryMutation.mutateAsync({ id: editingCategory.id, data });
-        toast.success('Scrap category updated successfully');
-      } else {
-        await createCategoryMutation.mutateAsync(data);
-        toast.success('Scrap category created successfully');
-      }
-      setIsCategoryFormOpen(false);
-      setEditingCategory(undefined);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to save scrap category');
-    }
-  }, [editingCategory, updateCategoryMutation, createCategoryMutation]);
-
-  // Handle inline category status change
-  const handleCategoryStatusChange = useCallback(async (category: ScrapCategoryDto, newStatus: boolean) => {
-    try {
-      await updateCategoryMutation.mutateAsync({
-        id: category.id,
-        data: {
-          name: category.name,
-          description: category.description,
-          isActive: newStatus,
-        },
-      });
-      toast.success(`Category ${newStatus ? 'activated' : 'deactivated'} successfully`);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to update category status');
-    }
-  }, [updateCategoryMutation]);
-
-  const handleCreateName = useCallback(() => {
-    setEditingName(undefined);
-    setIsNameFormOpen(true);
-  }, []);
-
-  const handleEditName = useCallback((name: ScrapNameDto) => {
-    setEditingName(name);
-    setIsNameFormOpen(true);
-  }, []);
-
-  const handleDeleteName = useCallback(async (id: string) => {
+  const handleDeleteName = async (id: string) => {
     if (!confirm('Are you sure you want to delete this scrap name?')) {
       return;
     }
@@ -293,225 +313,233 @@ export default function ScrapModulePage() {
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to delete scrap name');
     }
-  }, [deleteNameMutation]);
+  };
 
-  const handleSubmitName = useCallback(async (data: {
-    name: string;
-    scrapCategoryId: string;
-    isActive?: boolean;
-  }) => {
-    try {
-      if (editingName) {
-        await updateNameMutation.mutateAsync({
-          id: editingName.id,
-          data,
-        });
-        toast.success('Scrap name updated successfully');
-      } else {
-        await createNameMutation.mutateAsync(data);
-        toast.success('Scrap name created successfully');
-      }
-      setIsNameFormOpen(false);
-      setEditingName(undefined);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to save scrap name');
-    }
-  }, [editingName, updateNameMutation, createNameMutation]);
-
-  // Handle inline status change
-  const handleStatusChange = useCallback(async (scrapName: ScrapNameDto, newStatus: boolean) => {
+  const handleToggleNameStatus = async (name: ScrapNameDto) => {
     try {
       await updateNameMutation.mutateAsync({
-        id: scrapName.id,
-        data: {
-          name: scrapName.name,
-          scrapCategoryId: scrapName.scrapCategoryId,
-          isActive: newStatus,
-        },
+        id: name.id,
+        data: { isActive: !name.isActive },
       });
-      toast.success(`Scrap name ${newStatus ? 'activated' : 'deactivated'} successfully`);
+      toast.success(`Scrap name ${!name.isActive ? 'activated' : 'deactivated'} successfully`);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to update status');
     }
-  }, [updateNameMutation]);
+  };
 
-  // Prevent hydration errors
-  if (!mounted) {
-    return (
-      <div className="p-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-              <span className="ml-2 text-gray-600">Loading...</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (categoriesError || namesError) {
-    return (
-      <div className="p-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center text-red-600">
-              Error loading data. Please try again later.
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const handleToggleCategoryStatus = async (category: ScrapCategoryDto) => {
+    try {
+      await updateCategoryMutation.mutateAsync({
+        id: category.id,
+        data: { isActive: !category.isActive },
+      });
+      toast.success(`Category ${!category.isActive ? 'activated' : 'deactivated'} successfully`);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to update status');
+    }
+  };
 
   const currentSearch = activeTab === 'categories' ? categorySearch : nameSearch;
   const setCurrentSearch = activeTab === 'categories' ? setCategorySearch : setNameSearch;
 
+  if (categoriesError || namesError) {
+    return (
+      <div className="p-6">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-red-600">Error loading scrap management</h2>
+          <p className="text-gray-600 mt-2">Please try again later.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 space-y-6">
-      <Card className="shadow-sm">
-        <CardHeader className="border-b bg-white">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-semibold text-gray-900">Scrap Management</CardTitle>
-            <div className="flex items-center gap-4">
-              {/* Main Tabs Switcher */}
-              <div className="bg-gray-100 p-1 rounded-lg inline-flex items-center">
-                {(['categories', 'names'] as const).map((tab) => {
-                  const isActive = activeTab === tab;
-                  return (
-                    <button
-                      key={tab}
-                      type="button"
-                      onClick={() => {
-                        setActiveTab(tab);
-                        setIsSearchOpen(false);
-                        setIsFilterOpen(false);
-                        if (tab === 'names') {
-                          setStatusFilter('all');
-                        }
-                      }}
-                      className={`px-4 py-1.5 text-sm font-medium transition-all rounded-md flex items-center gap-2 ${isActive
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-900'
-                        }`}
-                    >
-                      {tab === 'categories' ? 'Category' : 'Scrap'}
-                    </button>
-                  );
-                })}
+    <div className="space-y-6">
+      <Card className="bg-white shadow-sm border border-gray-200 rounded-lg">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <CardTitle className="text-xl font-bold text-gray-900">Scrap Management</CardTitle>
+
+            <div className="flex items-center gap-3">
+              {/* Tab Switcher Buttons */}
+              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => {
+                    setActiveTab('categories');
+                    setIsSearchOpen(false);
+                    setIsFilterOpen(false);
+                  }}
+                  className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'categories'
+                    ? 'bg-white text-purple-700 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                >
+                  Categories
+                  <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${activeTab === 'categories'
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'bg-gray-200 text-gray-600'
+                    }`}>
+                    {categoryPagination.total}
+                  </span>
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('names');
+                    setIsSearchOpen(false);
+                    setIsFilterOpen(false);
+                  }}
+                  className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'names'
+                    ? 'bg-white text-cyan-700 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                >
+                  Scrap Names
+                  <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${activeTab === 'names'
+                    ? 'bg-cyan-100 text-cyan-700'
+                    : 'bg-gray-200 text-gray-600'
+                    }`}>
+                    {namePagination.total}
+                  </span>
+                </button>
               </div>
 
-              <div className="h-6 w-px bg-gray-200" />
+              {/* Search Toggle Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                className="border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 h-9 w-9 p-0"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
 
-              <div className="flex items-center gap-2">
-                {/* Search Toggle Button */}
+              {/* Search Input */}
+              {isSearchOpen && (
+                <div className="relative">
+                  <Input
+                    type="text"
+                    placeholder="Search..."
+                    value={currentSearch}
+                    onChange={(e) => setCurrentSearch(e.target.value)}
+                    onBlur={() => {
+                      if (!currentSearch) {
+                        setIsSearchOpen(false);
+                      }
+                    }}
+                    autoFocus
+                    className="w-64 pl-10 pr-10 rounded-lg border-gray-200 focus:border-cyan-500 focus:ring-cyan-500"
+                  />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  {currentSearch && (
+                    <button
+                      onClick={() => {
+                        setCurrentSearch('');
+                        setIsSearchOpen(false);
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Filter Button - Only for Names tab */}
+              {activeTab === 'names' && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsSearchOpen(!isSearchOpen)}
-                  className="border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 h-9 w-9 p-0"
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className={`border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 h-9 w-9 p-0 ${(selectedCategoryId !== 'all' || statusFilter !== 'all') ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : ''
+                    } ${isFilterOpen ? 'border-cyan-500 bg-cyan-50' : ''}`}
+                  title={isFilterOpen ? 'Hide filters' : 'Show filters'}
                 >
-                  <Search className="h-4 w-4" />
+                  <Filter className={`h-4 w-4 ${(selectedCategoryId !== 'all' || statusFilter !== 'all') ? 'text-cyan-700' : ''}`} />
                 </Button>
+              )}
 
-                {/* Search Input - shown when isSearchOpen is true */}
-                {isSearchOpen && (
-                  <div className="relative">
-                    <Input
-                      type="text"
-                      placeholder="Search..."
-                      value={currentSearch}
-                      onChange={(e) => setCurrentSearch(e.target.value)}
-                      onBlur={() => {
-                        if (!currentSearch) {
-                          setIsSearchOpen(false);
-                        }
-                      }}
-                      autoFocus
-                      className="w-64 pl-10 pr-10 rounded-lg border-gray-200 focus:border-cyan-500 focus:ring-cyan-500"
-                    />
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    {currentSearch && (
-                      <button
-                        onClick={() => {
-                          setCurrentSearch('');
-                          setIsSearchOpen(false);
-                        }}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* Filter Icon Button - Only for Scrap Names */}
-                {activeTab === 'names' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsFilterOpen(!isFilterOpen)}
-                    className={`border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 h-9 w-9 p-0 ${selectedCategoryId !== 'all' ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : ''
-                      } ${isFilterOpen ? 'border-cyan-500 bg-cyan-50' : ''
-                      }`}
-                    title={isFilterOpen ? "Hide filters" : "Show filters"}
-                  >
-                    <Filter className={`h-4 w-4 ${selectedCategoryId !== 'all' ? 'text-cyan-700' : ''}`} />
-                  </Button>
-                )}
-
-                <Button
-                  onClick={activeTab === 'categories' ? handleCreateCategory : handleCreateName}
-                  className="bg-cyan-500 hover:bg-cyan-600 text-white h-9 w-9 p-0"
-                  title={activeTab === 'categories' ? "Add Category" : "Add Scrap"}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
+              <Button
+                onClick={() => {
+                  if (activeTab === 'categories') {
+                    setEditingCategory(undefined);
+                    setIsCategoryFormOpen(true);
+                  } else {
+                    setEditingName(undefined);
+                    setIsNameFormOpen(true);
+                  }
+                }}
+                className="bg-cyan-500 hover:bg-cyan-600 text-white h-9 w-9 p-0"
+                title={activeTab === 'categories' ? 'Add Category' : 'Add Scrap Name'}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 
-          {/* Category Filter - Only shown when filter icon is clicked and on names tab */}
+          {/* Filter Panel - Only for Names tab */}
           {isFilterOpen && activeTab === 'names' && (
             <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200 animate-in slide-in-from-top-2 duration-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 flex-1">
-                  <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter by Category:</Label>
-                  <Select
-                    value={selectedCategoryId}
-                    onValueChange={(value) => {
-                      setSelectedCategoryId(value as string | 'all');
-                      setNamePage(1);
-                    }}
-                  >
-                    <SelectTrigger className={`w-[200px] bg-white border-gray-200 hover:border-gray-300 transition-all ${selectedCategoryId !== 'all' ? 'border-cyan-500 ring-2 ring-cyan-200' : ''
-                      }`}>
-                      <SelectValue placeholder="All Categories">
-                        {selectedCategoryId === 'all' ? 'All Categories' : categories.find(c => c.id === selectedCategoryId)?.name}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedCategoryId !== 'all' && (
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-1 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">Category:</Label>
+                    <Select
+                      value={selectedCategoryId}
+                      onValueChange={(v) => {
+                        setSelectedCategoryId(v as string | 'all');
+                        setNamePage(1);
+                      }}
+                    >
+                      <SelectTrigger className={`w-[180px] bg-white border-gray-200 hover:border-gray-300 transition-all ${selectedCategoryId !== 'all' ? 'border-cyan-500 ring-2 ring-cyan-200' : ''
+                        }`}>
+                        <SelectValue placeholder="All Categories" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Categories</SelectItem>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">Status:</Label>
+                    <Select
+                      value={statusFilter}
+                      onValueChange={(v) => {
+                        setStatusFilter(v as 'all' | 'active' | 'inactive');
+                        setNamePage(1);
+                      }}
+                    >
+                      <SelectTrigger className={`w-[140px] bg-white border-gray-200 hover:border-gray-300 transition-all ${statusFilter !== 'all' ? 'border-cyan-500 ring-2 ring-cyan-200' : ''
+                        }`}>
+                        <SelectValue placeholder="All Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {(selectedCategoryId !== 'all' || statusFilter !== 'all') && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => {
                         setSelectedCategoryId('all');
+                        setStatusFilter('all');
                         setNamePage(1);
                       }}
                       className="h-8 px-2 text-gray-500 hover:text-gray-700"
-                      title="Clear filter"
+                      title="Clear filters"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4 mr-1" />
+                      Clear
                     </Button>
                   )}
                 </div>
@@ -530,7 +558,7 @@ export default function ScrapModulePage() {
         </CardHeader>
 
         <CardContent className="p-6">
-          {(categoriesLoading && activeTab === 'categories') || (namesLoading && activeTab === 'names') ? (
+          {!mounted ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
               <span className="ml-2 text-gray-600">Loading...</span>
@@ -539,161 +567,261 @@ export default function ScrapModulePage() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader className="bg-white">
-                  {/* Status Tabs Row */}
-                  <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50">
-                    <TableHead colSpan={7} className="p-0 bg-transparent">
-                      <div className="w-full overflow-x-auto">
-                        <div className="inline-flex items-center gap-1 px-4 py-2">
+                  {/* Status Tabs Row - For both Categories and Names */}
+                  {activeTab === 'categories' ? (
+                    <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50">
+                      <TableHead colSpan={6} className="p-0 bg-transparent">
+                        <div className="w-full overflow-x-auto">
+                          <div className="inline-flex items-center gap-1 px-2 py-2">
+                            {(['all', 'active', 'inactive'] as const).map((status) => {
+                              const isActive = categoryStatusFilter === status;
+                              let count = 0;
+                              let label = '';
+                              let colorClasses = {
+                                activeText: '',
+                                activeBg: '',
+                                underline: '',
+                                count: ''
+                              };
 
-                          {/* Status Tabs - Show for both Categories and Scrap Names */}
-                          {mounted && (
-                            <>
-                              {activeTab === 'categories' ? (
-                                // Category Status Tabs
-                                (['all', 'active', 'inactive'] as const).map((status) => {
-                                  const isActive = categoryStatusFilter === status;
-                                  const count = categoryStatusCounts[status] || 0;
-                                  const getStatusStyle = () => {
-                                    if (status === 'all') return { bg: 'bg-gray-100', text: 'text-gray-700', activeBg: 'bg-gray-200' };
-                                    if (status === 'active') return { bg: 'bg-green-50', text: 'text-green-700', activeBg: 'bg-green-100' };
-                                    return { bg: 'bg-red-50', text: 'text-red-700', activeBg: 'bg-red-100' };
-                                  };
-                                  const style = getStatusStyle();
-                                  return (
-                                    <button
-                                      key={status}
-                                      type="button"
-                                      onClick={() => {
-                                        console.log('Category status filter clicked:', status);
-                                        setCategoryStatusFilter(status);
-                                      }}
-                                      className={`relative px-3 py-1.5 text-xs font-medium transition-all rounded-md ${isActive
-                                        ? `${style.text} ${style.activeBg} shadow-sm`
-                                        : 'text-gray-600 hover:bg-gray-100'
-                                        }`}
-                                    >
-                                      <span className="inline-flex items-center gap-1.5">
-                                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                                        <span className={`text-xs rounded-full px-1.5 py-0.5 font-medium ${isActive ? 'bg-white/50' : 'bg-gray-200'
-                                          }`}>
-                                          {count}
-                                        </span>
-                                      </span>
-                                    </button>
-                                  );
-                                })
-                              ) : (
-                                // Scrap Names Status Tabs
-                                (['all', 'active', 'inactive'] as const).map((status) => {
-                                  const isActive = statusFilter === status;
-                                  const count = statusCounts[status] || 0;
-                                  const getStatusStyle = () => {
-                                    if (status === 'all') return { bg: 'bg-gray-100', text: 'text-gray-700', activeBg: 'bg-gray-200' };
-                                    if (status === 'active') return { bg: 'bg-green-50', text: 'text-green-700', activeBg: 'bg-green-100' };
-                                    return { bg: 'bg-red-50', text: 'text-red-700', activeBg: 'bg-red-100' };
-                                  };
-                                  const style = getStatusStyle();
-                                  return (
-                                    <button
-                                      key={status}
-                                      type="button"
-                                      onClick={() => {
-                                        console.log('Scrap status filter clicked:', status);
-                                        setStatusFilter(status);
-                                      }}
-                                      className={`relative px-3 py-1.5 text-xs font-medium transition-all rounded-md ${isActive
-                                        ? `${style.text} ${style.activeBg} shadow-sm`
-                                        : 'text-gray-600 hover:bg-gray-100'
-                                        }`}
-                                    >
-                                      <span className="inline-flex items-center gap-1.5">
-                                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                                        <span className={`text-xs rounded-full px-1.5 py-0.5 font-medium ${isActive ? 'bg-white/50' : 'bg-gray-200'
-                                          }`}>
-                                          {count}
-                                        </span>
-                                      </span>
-                                    </button>
-                                  );
-                                })
-                              )}
-                            </>
-                          )}
+                              if (status === 'all') {
+                                count = categoryStatusCounts.total;
+                                label = 'All';
+                                colorClasses = {
+                                  activeText: 'text-purple-700',
+                                  activeBg: 'bg-purple-50',
+                                  underline: 'bg-purple-500',
+                                  count: 'bg-purple-100 text-purple-700'
+                                };
+                              } else if (status === 'active') {
+                                count = categoryStatusCounts.active;
+                                label = 'Active';
+                                colorClasses = {
+                                  activeText: 'text-green-700',
+                                  activeBg: 'bg-green-50',
+                                  underline: 'bg-green-600',
+                                  count: 'bg-green-100 text-green-700'
+                                };
+                              } else {
+                                count = categoryStatusCounts.inactive;
+                                label = 'Inactive';
+                                colorClasses = {
+                                  activeText: 'text-gray-700',
+                                  activeBg: 'bg-gray-50',
+                                  underline: 'bg-gray-600',
+                                  count: 'bg-gray-100 text-gray-700'
+                                };
+                              }
+
+                              return (
+                                <button
+                                  key={status}
+                                  type="button"
+                                  onClick={() => {
+                                    setCategoryStatusFilter(status);
+                                    setCategoryPage(1);
+                                  }}
+                                  className={`relative px-4 py-2 text-sm font-medium transition-all rounded-t-md ${isActive
+                                    ? `${colorClasses.activeText} ${colorClasses.activeBg} shadow-sm`
+                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                    }`}
+                                >
+                                  <span className="inline-flex items-center gap-2">
+                                    {label}
+                                    <span className={`text-xs rounded-full px-2 py-0.5 font-medium ${colorClasses.count}`}>
+                                      {count}
+                                    </span>
+                                  </span>
+                                  {isActive && (
+                                    <span className={`absolute left-0 right-0 -bottom-0.5 h-0.5 ${colorClasses.underline} rounded`} />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    </TableHead>
-                  </TableRow>
+                      </TableHead>
+                    </TableRow>
+                  ) : (
+                    <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50">
+                      <TableHead colSpan={6} className="p-0 bg-transparent">
+                        <div className="w-full overflow-x-auto">
+                          <div className="inline-flex items-center gap-1 px-2 py-2">
+                            {(['all', 'active', 'inactive'] as const).map((status) => {
+                              const isActive = statusFilter === status;
+                              let count = 0;
+                              let label = '';
+                              let colorClasses = {
+                                activeText: '',
+                                activeBg: '',
+                                underline: '',
+                                count: ''
+                              };
+
+                              if (status === 'all') {
+                                count = statusCounts.total;
+                                label = 'All';
+                                colorClasses = {
+                                  activeText: 'text-cyan-700',
+                                  activeBg: 'bg-cyan-50',
+                                  underline: 'bg-cyan-500',
+                                  count: 'bg-cyan-100 text-cyan-700'
+                                };
+                              } else if (status === 'active') {
+                                count = statusCounts.active;
+                                label = 'Active';
+                                colorClasses = {
+                                  activeText: 'text-green-700',
+                                  activeBg: 'bg-green-50',
+                                  underline: 'bg-green-600',
+                                  count: 'bg-green-100 text-green-700'
+                                };
+                              } else {
+                                count = statusCounts.inactive;
+                                label = 'Inactive';
+                                colorClasses = {
+                                  activeText: 'text-gray-700',
+                                  activeBg: 'bg-gray-50',
+                                  underline: 'bg-gray-600',
+                                  count: 'bg-gray-100 text-gray-700'
+                                };
+                              }
+
+                              return (
+                                <button
+                                  key={status}
+                                  type="button"
+                                  onClick={() => {
+                                    setStatusFilter(status);
+                                    setNamePage(1);
+                                  }}
+                                  className={`relative px-4 py-2 text-sm font-medium transition-all rounded-t-md ${isActive
+                                    ? `${colorClasses.activeText} ${colorClasses.activeBg} shadow-sm`
+                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                    }`}
+                                >
+                                  <span className="inline-flex items-center gap-2">
+                                    {label}
+                                    <span className={`text-xs rounded-full px-2 py-0.5 font-medium ${colorClasses.count}`}>
+                                      {count}
+                                    </span>
+                                  </span>
+                                  {isActive && (
+                                    <span className={`absolute left-0 right-0 -bottom-0.5 h-0.5 ${colorClasses.underline} rounded`} />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </TableHead>
+                    </TableRow>
+                  )}
 
                   {/* Column Headers */}
-                  <TableRow className="hover:bg-transparent border-b bg-white">
+                  <TableRow className="hover:bg-transparent border-b bg-gray-50">
                     <TableHead className="w-12">
                       <Checkbox className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500" />
                     </TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>{activeTab === 'categories' ? 'Description' : 'Category'}</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created Date</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
+                    <TableHead>{activeTab === 'categories' ? 'Category' : 'Scrap Name'}</TableHead>
+                    {activeTab === 'categories' ? (
+                      <>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Created Date</TableHead>
+                      </>
+                    ) : (
+                      <>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Created Date</TableHead>
+                      </>
+                    )}
+                    <TableHead className="w-12">Action</TableHead>
                   </TableRow>
                 </TableHeader>
 
                 <TableBody>
                   {activeTab === 'categories' ? (
-                    filteredCategories.length === 0 ? (
+                    categoriesLoading ? (
                       <TableRow>
-                        <TableCell colSpan={7}>
+                        <TableCell colSpan={5} className="text-center py-12">
+                          <Loader2 className="h-8 w-8 animate-spin text-gray-400 mx-auto" />
+                          <span className="ml-2 text-gray-600">Loading categories...</span>
+                        </TableCell>
+                      </TableRow>
+                    ) : categories.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-12">
                           <NoDataAnimation
-                            message="No scrap categories found"
-                            description={categoryStatusFilter !== 'all' ? `No ${categoryStatusFilter} categories found` : "Create your first category to get started"}
+                            message="No categories found"
+                            description="Create your first category to get started"
                           />
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredCategories.map((category) => (
-                        <TableRow key={category.id} className="hover:bg-gray-50">
+                      categories.map((category) => (
+                        <TableRow key={category.id} className="border-b hover:bg-gray-50 transition-colors bg-white">
                           <TableCell>
                             <Checkbox className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500" />
                           </TableCell>
-                          <TableCell className="font-medium">{category.name}</TableCell>
-                          <TableCell className="text-gray-600">{category.description || '-'}</TableCell>
                           <TableCell>
-                            {/* Inline Status Switcher for Categories */}
-                            {/* Inline Status Switcher for Categories */}
-                            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                              <label className="custom-toggle-switch scale-75">
-                                <input
-                                  type="checkbox"
-                                  className="chk"
-                                  checked={category.isActive}
-                                  onChange={(e) => handleCategoryStatusChange(category, e.target.checked)}
-                                />
-                                <span className="slider"></span>
-                              </label>
-                              <span className={`text-sm font-medium ${category.isActive ? 'text-green-700' : 'text-gray-500'}`}>
+                            <div className="flex items-center gap-3">
+                              <CategoryIcon />
+                              <span className="font-medium text-gray-900">{category.name}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-gray-600 line-clamp-2 max-w-md">
+                              {category.description || '-'}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={category.isActive}
+                                onCheckedChange={() => handleToggleCategoryStatus(category)}
+                                className="data-[state=checked]:bg-green-500"
+                              />
+                              <span className={`text-sm font-medium ${category.isActive ? 'text-green-600' : 'text-gray-500'}`}>
                                 {category.isActive ? 'Active' : 'Inactive'}
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-sm text-gray-500">
-                            {new Date(category.createdAt).toLocaleDateString()}
+                          <TableCell>
+                            <span className="text-sm text-gray-600">
+                              {new Date(category.createdAt).toLocaleDateString('en-US', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </span>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="h-4 w-4" />
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                  </svg>
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleEditCategory(category)}>
-                                  <Edit className="h-4 w-4 mr-2" />
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setEditingCategory(category);
+                                    setIsCategoryFormOpen(true);
+                                  }}
+                                >
+                                  <Edit2 className="mr-2 h-4 w-4" />
                                   Edit
                                 </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   onClick={() => handleDeleteCategory(category.id)}
                                   className="text-red-600"
                                 >
-                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  <Trash2 className="mr-2 h-4 w-4" />
                                   Delete
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -703,67 +831,87 @@ export default function ScrapModulePage() {
                       ))
                     )
                   ) : (
-                    filteredNames.length === 0 ? (
+                    namesLoading ? (
                       <TableRow>
-                        <TableCell colSpan={7}>
+                        <TableCell colSpan={6} className="text-center py-12">
+                          <Loader2 className="h-8 w-8 animate-spin text-gray-400 mx-auto" />
+                          <span className="ml-2 text-gray-600">Loading scrap names...</span>
+                        </TableCell>
+                      </TableRow>
+                    ) : names.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-12">
                           <NoDataAnimation
                             message="No scrap names found"
-                            description={statusFilter !== 'all' ? `No ${statusFilter} scrap names found` : "Create your first scrap name to get started"}
+                            description="Create your first scrap name to get started"
                           />
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredNames.map((scrap) => (
-                        <TableRow key={scrap.id} className="hover:bg-gray-50">
+                      names.map((name) => (
+                        <TableRow key={name.id} className="border-b hover:bg-gray-50 transition-colors bg-white">
                           <TableCell>
                             <Checkbox className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500" />
                           </TableCell>
-                          <TableCell className="font-medium">{scrap.name}</TableCell>
                           <TableCell>
-                            {scrap.scrapCategory && (
-                              <Badge variant="outline" className="bg-cyan-50 text-cyan-700 border-cyan-200">
-                                {scrap.scrapCategory.name}
+                            <div className="flex items-center gap-3">
+                              <ScrapNameIcon />
+                              <span className="font-medium text-gray-900">{name.name}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {name.scrapCategory && (
+                              <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                                {name.scrapCategory.name}
                               </Badge>
                             )}
                           </TableCell>
                           <TableCell>
-                            {/* Inline Status Switcher */}
-                            {/* Inline Status Switcher for Names */}
-                            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                              <label className="custom-toggle-switch scale-75">
-                                <input
-                                  type="checkbox"
-                                  className="chk"
-                                  checked={scrap.isActive}
-                                  onChange={(e) => handleStatusChange(scrap, e.target.checked)}
-                                />
-                                <span className="slider"></span>
-                              </label>
-                              <span className={`text-sm font-medium ${scrap.isActive ? 'text-green-700' : 'text-gray-500'}`}>
-                                {scrap.isActive ? 'Active' : 'Inactive'}
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={name.isActive}
+                                onCheckedChange={() => handleToggleNameStatus(name)}
+                                className="data-[state=checked]:bg-green-500"
+                              />
+                              <span className={`text-sm font-medium ${name.isActive ? 'text-green-600' : 'text-gray-500'}`}>
+                                {name.isActive ? 'Active' : 'Inactive'}
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-sm text-gray-500">
-                            {new Date(scrap.createdAt).toLocaleDateString()}
+                          <TableCell>
+                            <span className="text-sm text-gray-600">
+                              {new Date(name.createdAt).toLocaleDateString('en-US', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </span>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="h-4 w-4" />
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                  </svg>
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleEditName(scrap)}>
-                                  <Edit className="h-4 w-4 mr-2" />
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setEditingName(name);
+                                    setIsNameFormOpen(true);
+                                  }}
+                                >
+                                  <Edit2 className="mr-2 h-4 w-4" />
                                   Edit
                                 </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem
-                                  onClick={() => handleDeleteName(scrap.id)}
+                                  onClick={() => handleDeleteName(name.id)}
                                   className="text-red-600"
                                 >
-                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  <Trash2 className="mr-2 h-4 w-4" />
                                   Delete
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -779,36 +927,46 @@ export default function ScrapModulePage() {
           )}
 
           {/* Pagination */}
-          {activeTab === 'categories' && categories.length > 0 && (
-            <div className="mt-4 flex items-center justify-between">
+          {mounted && (
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
               <RowsPerPage
-                value={categoryLimit}
+                value={activeTab === 'categories' ? categoryLimit : nameLimit}
                 onChange={(value) => {
-                  setCategoryLimit(value);
-                  setCategoryPage(1);
+                  if (activeTab === 'categories') {
+                    setCategoryLimit(value);
+                    setCategoryPage(1);
+                  } else {
+                    setNameLimit(value);
+                    setNamePage(1);
+                  }
                 }}
+                options={[5, 10, 20, 50]}
               />
+              <div className="text-sm text-gray-600">
+                {activeTab === 'categories' ? (
+                  <>
+                    Showing {((categoryPagination.page - 1) * categoryPagination.limit) + 1} to{' '}
+                    {Math.min(categoryPagination.page * categoryPagination.limit, categoryPagination.total)} of{' '}
+                    {categoryPagination.total} categories
+                  </>
+                ) : (
+                  <>
+                    Showing {((namePagination.page - 1) * namePagination.limit) + 1} to{' '}
+                    {Math.min(namePagination.page * namePagination.limit, namePagination.total)} of{' '}
+                    {namePagination.total} scrap names
+                  </>
+                )}
+              </div>
               <Pagination
-                currentPage={categoryPage}
-                totalPages={categoryPagination.totalPages}
-                onPageChange={setCategoryPage}
-              />
-            </div>
-          )}
-
-          {activeTab === 'names' && names.length > 0 && (
-            <div className="mt-4 flex items-center justify-between">
-              <RowsPerPage
-                value={nameLimit}
-                onChange={(value) => {
-                  setNameLimit(value);
-                  setNamePage(1);
+                currentPage={activeTab === 'categories' ? categoryPagination.page : namePagination.page}
+                totalPages={activeTab === 'categories' ? categoryPagination.totalPages : namePagination.totalPages}
+                onPageChange={(page) => {
+                  if (activeTab === 'categories') {
+                    setCategoryPage(page);
+                  } else {
+                    setNamePage(page);
+                  }
                 }}
-              />
-              <Pagination
-                currentPage={namePage}
-                totalPages={namePagination.totalPages}
-                onPageChange={setNamePage}
               />
             </div>
           )}
@@ -817,15 +975,29 @@ export default function ScrapModulePage() {
 
       {/* Category Form Dialog */}
       <Dialog open={isCategoryFormOpen} onOpenChange={setIsCategoryFormOpen}>
-        <DialogContent onInteractOutside={(e) => e.preventDefault()}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingCategory ? 'Edit Scrap Category' : 'Add Scrap Category'}
+              {editingCategory ? 'Edit Category' : 'Add Category'}
             </DialogTitle>
           </DialogHeader>
           <ScrapCategoryForm
             category={editingCategory}
-            onSubmit={handleSubmitCategory}
+            onSubmit={async (data) => {
+              try {
+                if (editingCategory) {
+                  await updateCategoryMutation.mutateAsync({ id: editingCategory.id, data });
+                  toast.success('Category updated successfully');
+                } else {
+                  await createCategoryMutation.mutateAsync(data);
+                  toast.success('Category created successfully');
+                }
+                setIsCategoryFormOpen(false);
+                setEditingCategory(undefined);
+              } catch (error: any) {
+                toast.error(error?.response?.data?.message || 'Failed to save category');
+              }
+            }}
             onCancel={() => {
               setIsCategoryFormOpen(false);
               setEditingCategory(undefined);
@@ -837,14 +1009,31 @@ export default function ScrapModulePage() {
 
       {/* Scrap Name Form Dialog */}
       <Dialog open={isNameFormOpen} onOpenChange={setIsNameFormOpen}>
-        <DialogContent onInteractOutside={(e) => e.preventDefault()}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>{editingName ? 'Edit Scrap Name' : 'Add Scrap Name'}</DialogTitle>
           </DialogHeader>
           <ScrapNameForm
             scrapName={editingName}
             categories={categories}
-            onSubmit={handleSubmitName}
+            onSubmit={async (data) => {
+              try {
+                if (editingName) {
+                  await updateNameMutation.mutateAsync({
+                    id: editingName.id,
+                    data,
+                  });
+                  toast.success('Scrap name updated successfully');
+                } else {
+                  await createNameMutation.mutateAsync(data);
+                  toast.success('Scrap name created successfully');
+                }
+                setIsNameFormOpen(false);
+                setEditingName(undefined);
+              } catch (error: any) {
+                toast.error(error?.response?.data?.message || 'Failed to save scrap name');
+              }
+            }}
             onCancel={() => {
               setIsNameFormOpen(false);
               setEditingName(undefined);
@@ -857,20 +1046,7 @@ export default function ScrapModulePage() {
   );
 }
 
-// Zod Schemas
-const createCategorySchema = z.object({
-  name: z.string().min(2, 'Category name must be at least 2 characters').max(50, 'Category name cannot exceed 50 characters').trim(),
-  description: z.string().max(250, 'Description cannot exceed 250 characters').optional().or(z.literal('')),
-  isActive: z.boolean().optional(),
-});
-
-const createScrapNameSchema = z.object({
-  name: z.string().min(2, 'Scrap name must be at least 2 characters').max(50, 'Scrap name cannot exceed 50 characters').trim(),
-  scrapCategoryId: z.string().min(1, 'Please select a category'),
-  isActive: z.boolean().optional(),
-});
-
-// Form Components
+// Category Form Component
 function ScrapCategoryForm({
   category,
   onSubmit,
@@ -878,127 +1054,62 @@ function ScrapCategoryForm({
   isLoading,
 }: {
   category?: ScrapCategoryDto;
-  onSubmit: (data: { name: string; description?: string; isActive?: boolean }) => void;
+  onSubmit: (data: { name: string; description?: string }) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }) {
   const [name, setName] = useState(category?.name || '');
   const [description, setDescription] = useState(category?.description || '');
-  const [isActive, setIsActive] = useState(category?.isActive ?? true);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setValidationErrors({});
-
-    const result = createCategorySchema.safeParse({ name, description, isActive });
-
-    if (!result.success) {
-      const errors: Record<string, string> = {};
-      result.error.issues.forEach((issue) => {
-        if (issue.path[0]) {
-          errors[issue.path[0] as string] = issue.message;
-        }
-      });
-      setValidationErrors(errors);
-
-      const firstError = result.error.issues[0];
-      if (firstError) toast.error(firstError.message);
-      return;
-    }
-
-    onSubmit(result.data);
+    onSubmit({ name, description });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="name" className="text-sm font-medium text-gray-700">Category Name *</Label>
-        <div className="relative">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-            <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
-              <Tags className="h-5 w-5 text-cyan-600" />
-            </div>
-          </div>
-          <Input
-            id="name"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              if (validationErrors.name) setValidationErrors({ ...validationErrors, name: '' });
-            }}
-            placeholder="e.g., Cars, Metals, Electronics"
-            disabled={isLoading}
-            className={`pl-14 h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${validationErrors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''}`}
-          />
-        </div>
-        {validationErrors.name && <p className="text-sm text-red-600 mt-1">{validationErrors.name}</p>}
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="description" className="text-sm font-medium text-gray-700">Description</Label>
-        <div className="relative">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-            <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
-              <FileText className="h-5 w-5 text-cyan-600" />
-            </div>
-          </div>
-          <Input
-            id="description"
-            value={description}
-            onChange={(e) => {
-              setDescription(e.target.value);
-              if (validationErrors.description) setValidationErrors({ ...validationErrors, description: '' });
-            }}
-            placeholder="Optional description for this scrap category"
-            disabled={isLoading}
-            className={`pl-14 h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${validationErrors.description ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''}`}
-          />
-        </div>
-        {validationErrors.description && <p className="text-sm text-red-600 mt-1">{validationErrors.description}</p>}
-      </div>
-      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
-        <Label htmlFor="active" className="text-sm font-medium text-gray-700">Active Status</Label>
-        <Switch
-          id="active"
-          checked={isActive}
-          onCheckedChange={setIsActive}
-          disabled={isLoading}
-          className="data-[state=checked]:bg-cyan-500"
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="name">Category Name *</Label>
+        <Input
+          id="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Enter category name"
+          required
+          className="mt-1"
         />
       </div>
-      <div className="flex justify-end gap-3 pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isLoading}
-          className="h-12 px-6 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all hover:shadow-md disabled:opacity-50"
-        >
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Enter description (optional)"
+          className="mt-1"
+          rows={3}
+        />
+      </div>
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          variant="outline"
-          className="relative overflow-hidden group h-12 px-8 rounded-xl border-2 border-cyan-500 text-cyan-600 hover:bg-white hover:text-cyan-700 hover:border-cyan-400 font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 active:scale-95 bg-white backdrop-blur-sm"
-        >
-          <span className="absolute inset-0 w-full h-full -translate-x-full group-hover:animate-shimmer bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent z-0 skew-x-12" />
-          <span className="relative z-10 flex items-center gap-2">
-            {isLoading ? (
-              <>
-                <div className="mr-2 h-5 w-5 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin" />
-                {category ? 'Updating...' : 'Creating...'}
-              </>
-            ) : (
-              category ? 'Update' : 'Create'
-            )}
-          </span>
+        <Button type="submit" disabled={isLoading} className="bg-cyan-500 hover:bg-cyan-600">
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            'Save'
+          )}
         </Button>
       </div>
     </form>
   );
 }
 
+// Scrap Name Form Component
 function ScrapNameForm({
   scrapName,
   categories,
@@ -1013,71 +1124,32 @@ function ScrapNameForm({
   isLoading?: boolean;
 }) {
   const [name, setName] = useState(scrapName?.name || '');
-  const [scrapCategoryId, setScrapCategoryId] = useState<string>(
-    scrapName?.scrapCategoryId || '',
-  );
+  const [scrapCategoryId, setScrapCategoryId] = useState(scrapName?.scrapCategoryId || '');
   const [isActive, setIsActive] = useState(scrapName?.isActive ?? true);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setValidationErrors({});
-
-    const result = createScrapNameSchema.safeParse({ name, scrapCategoryId, isActive });
-
-    if (!result.success) {
-      const errors: Record<string, string> = {};
-      result.error.issues.forEach((issue) => {
-        if (issue.path[0]) {
-          errors[issue.path[0] as string] = issue.message;
-        }
-      });
-      setValidationErrors(errors);
-
-      const firstError = result.error.issues[0];
-      if (firstError) toast.error(firstError.message);
-      return;
-    }
-
-    onSubmit(result.data);
+    onSubmit({ name, scrapCategoryId, isActive });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="name" className="text-sm font-medium text-gray-700">Scrap Name *</Label>
-        <div className="relative">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-            <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
-              <Layers className="h-5 w-5 text-cyan-600" />
-            </div>
-          </div>
-          <Input
-            id="name"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              if (validationErrors.name) setValidationErrors({ ...validationErrors, name: '' });
-            }}
-            placeholder="e.g., Aluminum Cans, Copper Wire"
-            disabled={isLoading}
-            className={`pl-14 h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${validationErrors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''}`}
-          />
-        </div>
-        {validationErrors.name && <p className="text-sm text-red-600 mt-1">{validationErrors.name}</p>}
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="name">Scrap Name *</Label>
+        <Input
+          id="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Enter scrap name"
+          required
+          className="mt-1"
+        />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="category" className="text-sm font-medium text-gray-700">Category *</Label>
-        <Select
-          value={scrapCategoryId}
-          onValueChange={(val) => {
-            setScrapCategoryId(val);
-            if (validationErrors.scrapCategoryId) setValidationErrors({ ...validationErrors, scrapCategoryId: '' });
-          }}
-          disabled={isLoading}
-        >
-          <SelectTrigger className={`h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${validationErrors.scrapCategoryId ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''}`}>
-            <SelectValue placeholder="Select a category" />
+      <div>
+        <Label htmlFor="category">Category *</Label>
+        <Select value={scrapCategoryId} onValueChange={setScrapCategoryId} required>
+          <SelectTrigger className="mt-1">
+            <SelectValue placeholder="Select category" />
           </SelectTrigger>
           <SelectContent>
             {categories.map((category) => (
@@ -1087,45 +1159,31 @@ function ScrapNameForm({
             ))}
           </SelectContent>
         </Select>
-        {validationErrors.scrapCategoryId && <p className="text-sm text-red-600 mt-1">{validationErrors.scrapCategoryId}</p>}
       </div>
-      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
-        <Label htmlFor="active" className="text-sm font-medium text-gray-700">Active Status</Label>
+      <div className="flex items-center gap-2">
         <Switch
-          id="active"
+          id="isActive"
           checked={isActive}
           onCheckedChange={setIsActive}
-          disabled={isLoading}
-          className="data-[state=checked]:bg-cyan-500"
+          className="data-[state=checked]:bg-green-500"
         />
+        <Label htmlFor="isActive" className="cursor-pointer">
+          Active
+        </Label>
       </div>
-      <div className="flex justify-end gap-3 pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isLoading}
-          className="h-12 px-6 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all hover:shadow-md disabled:opacity-50"
-        >
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          variant="outline"
-          className="relative overflow-hidden group h-12 px-8 rounded-xl border-2 border-cyan-500 text-cyan-600 hover:bg-white hover:text-cyan-700 hover:border-cyan-400 font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 active:scale-95 bg-white backdrop-blur-sm"
-        >
-          <span className="absolute inset-0 w-full h-full -translate-x-full group-hover:animate-shimmer bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent z-0 skew-x-12" />
-          <span className="relative z-10 flex items-center gap-2">
-            {isLoading ? (
-              <>
-                <div className="mr-2 h-5 w-5 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin" />
-                {scrapName ? 'Updating...' : 'Creating...'}
-              </>
-            ) : (
-              scrapName ? 'Update' : 'Create'
-            )}
-          </span>
+        <Button type="submit" disabled={isLoading} className="bg-cyan-500 hover:bg-cyan-600">
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            'Save'
+          )}
         </Button>
       </div>
     </form>

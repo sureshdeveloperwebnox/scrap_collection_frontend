@@ -14,6 +14,8 @@ import { queryKeys } from '@/lib/query-client';
 import { toast } from 'sonner';
 import { GoogleMapPicker } from '@/components/google-map-picker';
 import { Users } from 'lucide-react';
+import { useAuthStore } from '@/lib/store/auth-store';
+import { z } from 'zod';
 
 interface ScrapYardFormProps {
   scrapYard?: ScrapYard;
@@ -23,6 +25,28 @@ interface ScrapYardFormProps {
 }
 
 export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYardFormProps) {
+  const { user } = useAuthStore();
+  const organizationId = user?.organizationId || 1;
+
+  const schema = z.object({
+    organizationId: z.number().int().positive(),
+    yardName: z.string().min(2, 'Yard name must be at least 2 characters').max(100, 'Yard name is too long'),
+    address: z.string().min(5, 'Address must be at least 5 characters').max(500, 'Address is too long'),
+    latitude: z
+      .number()
+      .min(-90, 'Latitude must be between -90 and 90')
+      .max(90, 'Latitude must be between -90 and 90')
+      .optional()
+      .or(z.literal(0)),
+    longitude: z
+      .number()
+      .min(-180, 'Longitude must be between -180 and 180')
+      .max(180, 'Longitude must be between -180 and 180')
+      .optional()
+      .or(z.literal(0)),
+    managerId: z.string().optional().or(z.literal('')),
+  });
+
   const [formData, setFormData] = useState<{
     organizationId: number;
     yardName: string;
@@ -31,13 +55,14 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
     longitude: number;
     managerId: string;
   }>({
-    organizationId: 1, // Default organization ID, should come from auth context
+    organizationId,
     yardName: '',
     address: '',
     latitude: 0,
     longitude: 0,
     managerId: '',
   });
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   // Fetch active employees for manager selection
   const { data: employeesData } = useQuery({
@@ -70,7 +95,7 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
       }
 
       setFormData({
-        organizationId: scrapYard.organizationId,
+        organizationId: scrapYard.organizationId || organizationId,
         yardName: scrapYard.yardName || '',
         address: scrapYard.address || '',
         latitude: scrapYard.latitude || 0,
@@ -80,7 +105,7 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
     } else {
       // Reset form for new scrap yard
       setFormData({
-        organizationId: 1,
+        organizationId,
         yardName: '',
         address: '',
         latitude: 0,
@@ -96,29 +121,23 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate required fields
-    if (!formData.yardName.trim()) {
-      toast.error('Yard name is required');
+
+    // Zod validation
+    setValidationErrors({});
+    const result = schema.safeParse(formData);
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0] as string;
+        if (field) {
+          errors[field] = issue.message;
+        }
+      });
+      setValidationErrors(errors);
+      toast.error(result.error.issues[0]?.message || 'Please fix the highlighted errors');
       return;
     }
-    
-    if (!formData.address.trim()) {
-      toast.error('Address is required');
-      return;
-    }
-    
-    // Validate coordinates if provided
-    if (formData.latitude && (formData.latitude < -90 || formData.latitude > 90)) {
-      toast.error('Latitude must be between -90 and 90');
-      return;
-    }
-    
-    if (formData.longitude && (formData.longitude < -180 || formData.longitude > 180)) {
-      toast.error('Longitude must be between -180 and 180');
-      return;
-    }
-    
+
     try {
       // Prepare assignedEmployeeIds - include manager if selected
       const assignedEmployeeIds = formData.managerId ? [formData.managerId] : [];
@@ -163,17 +182,25 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
 
   const handleInputChange = (field: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
   const isLoading = createScrapYardMutation.isPending || updateScrapYardMutation.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{scrapYard ? 'Edit Scrap Yard' : 'Add New Scrap Yard'}</DialogTitle>
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] bg-white border-0 shadow-2xl rounded-2xl p-0 overflow-hidden">
+        <DialogHeader className="px-8 pt-6 pb-4 border-b border-gray-100">
+          <DialogTitle className="text-2xl font-bold text-gray-900">
+            {scrapYard ? 'Edit Scrap Yard' : 'Add New Scrap Yard'}
+          </DialogTitle>
+          <p className="mt-1 text-sm text-gray-500">
+            Manage yard details, manager assignment and map location.
+          </p>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6 p-8">
           {/* Horizontal form fields row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -186,6 +213,9 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
                 disabled={isLoading}
                 placeholder="e.g., Sydney Scrap Yard"
               />
+              {validationErrors.yardName && (
+                <p className="text-xs text-red-500 mt-1">{validationErrors.yardName}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -231,8 +261,11 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
               setFormData(prev => ({ ...prev, address }));
             }}
           />
+          {validationErrors.address && (
+            <p className="text-xs text-red-500 mt-1">{validationErrors.address}</p>
+          )}
 
-          <DialogFooter>
+          <DialogFooter className="pt-2 border-t border-gray-100">
             <Button 
               type="button" 
               variant="outline" 

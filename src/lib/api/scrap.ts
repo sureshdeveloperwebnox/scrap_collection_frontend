@@ -47,6 +47,7 @@ export const scrapApi = {
     limit?: number;
     search?: string;
     organizationId?: number;
+    isActive?: boolean;
   }): Promise<
     PaginatedResponse<ScrapCategoryDto> & {
       data: {

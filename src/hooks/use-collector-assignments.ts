@@ -12,7 +12,7 @@ export const useCollectorAssignments = (params?: {
   organizationId?: number;
   collectorId?: string;
   vehicleNameId?: string;
-  cityId?: number;
+  scrapYardId?: string;
   sortBy?: 'createdAt' | 'updatedAt';
   sortOrder?: 'asc' | 'desc';
 }) => {
@@ -48,7 +48,7 @@ export const useCreateCollectorAssignment = () => {
     mutationFn: (assignmentData: {
       collectorId: string;
       vehicleNameId?: string;
-      cityId?: number;
+      scrapYardId?: string;
       isActive?: boolean;
     }) => collectorAssignmentsApi.createCollectorAssignment({
       ...assignmentData,

@@ -3,10 +3,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useEmployees, useCreateEmployee, useUpdateEmployee } from '@/hooks/use-employees';
 import { useVehicleNames } from '@/hooks/use-vehicle-names';
-import { useCities } from '@/hooks/use-cities';
+import { useScrapYards } from '@/hooks/use-scrap-yards';
 import { useCollectorAssignments, useCreateCollectorAssignment, useDeleteCollectorAssignment } from '@/hooks/use-collector-assignments';
 import { useAuthStore } from '@/lib/store/auth-store';
-import { Employee, VehicleName } from '@/types';
+import { Employee, VehicleName, ScrapYard } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -101,8 +101,8 @@ interface CollectorAssignment {
   collector?: Employee;
   vehicleNameId?: string;
   vehicleName?: VehicleName;
-  cityId?: number;
-  city?: { id: number; name: string };
+  scrapYardId?: string;
+  scrapYard?: ScrapYard;
   isActive: boolean;
   createdAt: Date | string;
   updatedAt: Date | string;
@@ -144,7 +144,7 @@ export default function CollectorAssignmentPage() {
   });
 
   const { data: vehicleNamesData } = useVehicleNames({ page: 1, limit: 100 });
-  const { data: citiesData } = useCities({ page: 1, limit: 100, status: true });
+  const { data: scrapYardsData } = useScrapYards({ page: 1, limit: 100, status: 'active' });
 
   const createEmployeeMutation = useCreateEmployee();
   const updateEmployeeMutation = useUpdateEmployee();
@@ -160,10 +160,11 @@ export default function CollectorAssignmentPage() {
     return apiResponse?.data?.vehicleNames || [];
   }, [vehicleNamesData]) as VehicleName[];
 
-  const cities = useMemo(() => {
-    const apiResponse = citiesData as any;
-    return apiResponse?.data?.cities || apiResponse?.data || [];
-  }, [citiesData]);
+  const scrapYards = useMemo(() => {
+    const apiResponse = scrapYardsData as any;
+    const yards = apiResponse?.data || apiResponse?.data?.scrapYards || [];
+    return yards;
+  }, [scrapYardsData]) as ScrapYard[];
 
   const assignments = useMemo(() => {
     const apiResponse = assignmentsData as unknown as ApiResponse;
@@ -193,14 +194,15 @@ export default function CollectorAssignmentPage() {
     setIsAssignmentFormOpen(true);
   };
 
-  const handleAssignmentSubmit = async (formData: { vehicleNameId?: string; cityId?: number }) => {
-    if (!selectedCollector || !user?.organizationId) return;
+  const handleAssignmentSubmit = async (formData: { collectorId?: string; vehicleNameId?: string; scrapYardId?: string }) => {
+    const collectorId = formData.collectorId || selectedCollector?.id;
+    if (!collectorId || !user?.organizationId) return;
 
     try {
       await createAssignmentMutation.mutateAsync({
-        collectorId: selectedCollector.id,
+        collectorId,
         vehicleNameId: formData.vehicleNameId || undefined,
-        cityId: formData.cityId || undefined,
+        scrapYardId: formData.scrapYardId || undefined,
       });
       toast.success('Collector assigned successfully');
       setIsAssignmentFormOpen(false);
@@ -276,12 +278,24 @@ export default function CollectorAssignmentPage() {
                 </div>
               )}
 
-              <Button
-                onClick={handleCreateCollector}
-                className="bg-cyan-500 hover:bg-cyan-600 text-white h-9 w-9 p-0"
-              >
-                <UserPlus className="h-4 w-4" />
-              </Button>
+              {activeTab === 'collectors' ? (
+                <Button
+                  onClick={handleCreateCollector}
+                  className="bg-cyan-500 hover:bg-cyan-600 text-white h-9 w-9 p-0"
+                >
+                  <UserPlus className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => {
+                    setSelectedCollector(undefined);
+                    setIsAssignmentFormOpen(true);
+                  }}
+                  className="bg-cyan-500 hover:bg-cyan-600 text-white h-9 px-3 text-xs font-medium"
+                >
+                  Assign Collector
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -329,7 +343,6 @@ export default function CollectorAssignmentPage() {
                       <TableRow>
                         <TableHead>Collector</TableHead>
                         <TableHead>Contact</TableHead>
-                        <TableHead>Work Zone</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
@@ -352,28 +365,10 @@ export default function CollectorAssignmentPage() {
                             <div className="text-sm text-gray-600">{collector.phone}</div>
                           </TableCell>
                           <TableCell>
-                            {(collector as any).city ? (
-                              <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                                <MapPin className="h-3.5 w-3.5 text-cyan-500" />
-                                {(collector as any).city.name}
-                              </div>
-                            ) : (
-                              <span className="text-gray-400 text-sm italic">Unassigned</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
                             <StatusBadge isActive={collector.isActive} />
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center justify-end gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleAssignCollector(collector)}
-                                className="text-xs h-7 border-cyan-200 text-cyan-700 hover:bg-cyan-50"
-                              >
-                                Assign
-                              </Button>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -413,7 +408,7 @@ export default function CollectorAssignmentPage() {
                       <TableRow>
                         <TableHead>Collector</TableHead>
                         <TableHead>Assigned Vehicle</TableHead>
-                        <TableHead>Assigned Zone</TableHead>
+                        <TableHead>Scrap Yard</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
@@ -435,10 +430,10 @@ export default function CollectorAssignmentPage() {
                             )}
                           </TableCell>
                           <TableCell>
-                            {assignment.city ? (
+                            {assignment.scrapYard ? (
                               <div className="flex items-center gap-2">
                                 <div className="p-1 bg-green-50 rounded text-green-600"><MapPin className="h-3 w-3" /></div>
-                                <span className="text-sm">{assignment.city.name}</span>
+                                <span className="text-sm">{assignment.scrapYard.yardName}</span>
                               </div>
                             ) : (
                               <span className="text-gray-400 text-sm">—</span>
@@ -493,8 +488,9 @@ export default function CollectorAssignmentPage() {
           </DialogHeader>
           <AssignmentForm
             collector={selectedCollector}
+            collectors={collectors}
             vehicleNames={vehicleNames}
-            cities={cities}
+            scrapYards={scrapYards}
             onSubmit={handleAssignmentSubmit}
             onCancel={() => { setIsAssignmentFormOpen(false); setSelectedCollector(undefined); }}
             isLoading={createAssignmentMutation.isPending}
@@ -847,44 +843,68 @@ function CollectorForm({
 
 function AssignmentForm({
   collector,
+  collectors,
   vehicleNames,
-  cities,
+  scrapYards,
   onSubmit,
   onCancel,
   isLoading,
 }: {
   collector?: Employee;
+  collectors: Employee[];
   vehicleNames: VehicleName[];
-  cities: any[];
-  onSubmit: (data: { vehicleNameId?: string; cityId?: number }) => void;
+  scrapYards: ScrapYard[];
+  onSubmit: (data: { collectorId?: string; vehicleNameId?: string; scrapYardId?: string }) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }) {
+  const [collectorId, setCollectorId] = useState<string>(collector?.id || 'none');
   const [vehicleNameId, setVehicleNameId] = useState<string>('none');
-  const [cityId, setCityId] = useState<string>('none');
+  const [scrapYardId, setScrapYardId] = useState<string>('none');
+  const availableScrapYards = Array.isArray(scrapYards) ? scrapYards : [];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (vehicleNameId === 'none' && cityId === 'none') {
-      toast.error('Please select at least one assignment (vehicle or zone)');
+    const resolvedCollectorId = collector?.id || (collectorId !== 'none' ? collectorId : undefined);
+
+    if (!resolvedCollectorId) {
+      toast.error('Please select a collector');
+      return;
+    }
+
+    if (vehicleNameId === 'none' && scrapYardId === 'none') {
+      toast.error('Please select at least one assignment (vehicle or yard)');
       return;
     }
     onSubmit({
+      collectorId: resolvedCollectorId,
       vehicleNameId: vehicleNameId !== 'none' ? vehicleNameId : undefined,
-      cityId: cityId !== 'none' ? parseInt(cityId) : undefined,
+      scrapYardId: scrapYardId !== 'none' ? scrapYardId : undefined,
     });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {collector && (
-        <div className="p-3 bg-cyan-50 border border-cyan-100 rounded-lg text-cyan-800">
-          <p className="text-sm font-medium flex items-center gap-2">
-            <UserPlus className="h-4 w-4" />
-            Assigning to: {collector.fullName}
-          </p>
-        </div>
-      )}
+      <div className="space-y-2">
+        <Label htmlFor="collector">Collector</Label>
+        <Select
+          value={collector?.id || collectorId}
+          onValueChange={setCollectorId}
+          disabled={isLoading || !!collector}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select collector" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Select collector</SelectItem>
+            {collectors.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.fullName} - {c.phone}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="space-y-2">
         <Label htmlFor="vehicleName">Vehicle</Label>
@@ -904,18 +924,20 @@ function AssignmentForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="city">Zone</Label>
-        <Select value={cityId} onValueChange={setCityId} disabled={isLoading}>
+        <Label htmlFor="scrapYard">Scrap Yard</Label>
+        <Select value={scrapYardId} onValueChange={setScrapYardId} disabled={isLoading}>
           <SelectTrigger>
-            <SelectValue placeholder="Select zone" />
+            <SelectValue placeholder="Select scrap yard" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">None</SelectItem>
-            {cities.filter((c: any) => c.isActive).map((city: any) => (
-              <SelectItem key={city.id} value={city.id.toString()}>
-                {city.name}
-              </SelectItem>
-            ))}
+            {availableScrapYards
+              .filter((yard) => yard.isActive !== false)
+              .map((yard) => (
+                <SelectItem key={yard.id} value={yard.id}>
+                  {yard.yardName}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
       </div>

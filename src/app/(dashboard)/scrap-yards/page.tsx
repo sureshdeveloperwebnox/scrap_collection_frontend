@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useScrapYards, useDeleteScrapYard, useUpdateScrapYard } from '@/hooks/use-scrap-yards';
+import { useScrapYardsStore } from '@/lib/store/scrap-yards-store';
 import { ScrapYard } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Search, MapPin, Building2, Users, Plus, Edit, Trash2, MoreVertical } from 'lucide-react';
+import { Search, MapPin, Building2, Users, Plus, Edit, Trash2, MoreVertical, Filter, X } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
   DropdownMenu,
@@ -37,10 +38,19 @@ interface ApiResponse {
 }
 
 export default function ScrapYardsPage() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  // Use Zustand store for state management
+  const {
+    activeTab,
+    setActiveTab,
+    searchTerm,
+    setSearchTerm,
+    page,
+    setPage,
+    limit,
+    setLimit,
+  } = useScrapYardsStore();
+
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [selectedLocation, setSelectedLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -49,6 +59,8 @@ export default function ScrapYardsPage() {
   } | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingScrapYard, setEditingScrapYard] = useState<ScrapYard | undefined>();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Debounce search term
   useEffect(() => {
@@ -57,13 +69,22 @@ export default function ScrapYardsPage() {
       setPage(1);
     }, 500);
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [searchTerm, setPage]);
 
-  // Fetch scrap yards
+  // FIX: Correct status mapping - use boolean string for API
+  const getStatusFilter = (tab: 'All' | 'Active' | 'Inactive'): string | undefined => {
+    if (tab === 'All') return undefined;
+    if (tab === 'Active') return 'true';  // Send as string 'true'
+    if (tab === 'Inactive') return 'false'; // Send as string 'false'
+    return undefined;
+  };
+
+  // Fetch scrap yards - OPTIMIZED with correct status filter
   const { data: scrapYardsData, isLoading, error, refetch } = useScrapYards({
     page,
     limit,
     search: debouncedSearchTerm || undefined,
+    status: getStatusFilter(activeTab),
   });
 
   const deleteScrapYardMutation = useDeleteScrapYard();
@@ -94,8 +115,8 @@ export default function ScrapYardsPage() {
 
   const handleLocationClick = (yard: ScrapYard) => {
     // Fix: Check if coordinates are valid (not 0 or undefined)
-    if (yard.latitude && yard.longitude && 
-        yard.latitude !== 0 && yard.longitude !== 0) {
+    if (yard.latitude && yard.longitude &&
+      yard.latitude !== 0 && yard.longitude !== 0) {
       setSelectedLocation({
         latitude: yard.latitude,
         longitude: yard.longitude,
@@ -111,8 +132,8 @@ export default function ScrapYardsPage() {
     if (yard.employees && yard.employees.length > 0) {
       // Find manager/supervisor or return first employee
       const manager = yard.employees.find(
-        (emp) => emp.role?.name?.toUpperCase().includes('MANAGER') || 
-                 emp.role?.name?.toUpperCase().includes('SUPERVISOR')
+        (emp) => emp.role?.name?.toUpperCase().includes('MANAGER') ||
+          emp.role?.name?.toUpperCase().includes('SUPERVISOR')
       );
       return manager || yard.employees[0];
     }
@@ -162,80 +183,160 @@ export default function ScrapYardsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Scrap Yards</h2>
-          <p className="text-gray-600 mt-1">
-            {isLoading ? 'Loading...' : `${totalYards} Total Scrap Yards`}
-          </p>
-        </div>
-        <Button onClick={handleCreate} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Add Scrap Yard
-        </Button>
-      </div>
+      <Card className="bg-white shadow-sm border border-gray-200 rounded-lg">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <CardTitle className="text-xl font-bold text-gray-900">Scrap Yards</CardTitle>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search scrap yards..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                className="border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 h-9 w-9 p-0"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+
+              {isSearchOpen && (
+                <div className="relative">
+                  <Input
+                    type="text"
+                    placeholder="Search scrap yards..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onBlur={() => {
+                      if (!searchTerm) setIsSearchOpen(false);
+                    }}
+                    autoFocus
+                    className="w-64 pl-10 pr-10 rounded-lg border-gray-200 focus:border-cyan-500 focus:ring-cyan-500"
+                  />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  {searchTerm && (
+                    <button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setIsSearchOpen(false);
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className={`border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 h-9 w-9 p-0 ${activeTab !== 'All' ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : ''}`}
+                title={isFilterOpen ? 'Hide filters' : 'Show filters'}
+              >
+                <Filter className={`h-4 w-4 ${activeTab !== 'All' ? 'text-cyan-700' : ''}`} />
+              </Button>
+
+              <Button
+                onClick={handleCreate}
+                className="bg-cyan-500 hover:bg-cyan-600 text-white h-9 w-9 p-0"
+                title="Add Scrap Yard"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-        </CardContent>
+
+          {isFilterOpen && (
+            <div className="mt-4 border-t border-gray-100 pt-3">
+              <div className="flex gap-3">
+                {(['All', 'Active', 'Inactive'] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${activeTab === tab
+                      ? 'bg-cyan-50 text-cyan-700 border-cyan-300'
+                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-gray-500">
+                {isLoading ? 'Loading...' : `${totalYards} total scrap yards`}
+              </p>
+            </div>
+          )}
+        </CardHeader>
       </Card>
 
       {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Scrap Yards</CardTitle>
+      <Card className="bg-white shadow-sm border border-gray-200 rounded-lg">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold text-gray-900">All Scrap Yards</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
-            <div className="text-center py-8">Loading...</div>
+            <div className="flex items-center justify-center py-10 text-gray-500 text-sm">
+              Loading scrap yards...
+            </div>
           ) : scrapYards.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">No scrap yards found</div>
+            <div className="flex items-center justify-center py-12 text-gray-500 text-sm">
+              No scrap yards found
+            </div>
           ) : (
             <>
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Scrap Yard Name</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Manager</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
+                  <TableHeader className="bg-gray-50">
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Scrap Yard
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Location
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Manager
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Status
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wide text-right">
+                        Action
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {scrapYards.map((yard) => {
                       const manager = getManager(yard);
                       const status = getStatus(yard);
-                      
+
                       return (
-                        <TableRow key={yard.id}>
+                        <TableRow
+                          key={yard.id}
+                          className="border-b last:border-b-0 hover:bg-gray-50 transition-colors bg-white"
+                        >
                           <TableCell className="font-medium">
-                            <div className="flex items-center space-x-2">
-                              <Building2 className="h-4 w-4 text-blue-500" />
-                              <span>{yard.yardName}</span>
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-50">
+                                <Building2 className="h-4 w-4 text-cyan-600" />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="font-semibold text-gray-900">
+                                  {yard.yardName}
+                                </span>
+                                {yard.address && (
+                                  <span className="text-xs text-gray-500 line-clamp-1">
+                                    {yard.address}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            {yard.latitude && yard.longitude && 
-                             yard.latitude !== 0 && yard.longitude !== 0 ? (
+                            {yard.latitude && yard.longitude &&
+                              yard.latitude !== 0 && yard.longitude !== 0 ? (
                               <button
                                 onClick={() => handleLocationClick(yard)}
                                 className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
@@ -269,14 +370,14 @@ export default function ScrapYardsPage() {
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
+                              <DropdownMenuContent align="end" className="w-40">
                                 <DropdownMenuItem onClick={() => handleEdit(yard)}>
                                   <Edit className="mr-2 h-4 w-4" />
                                   Edit
