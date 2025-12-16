@@ -113,23 +113,50 @@ export const useUpdateVehicleType = () => {
       // Update detail with server response
       queryClient.setQueryData(queryKeys.vehicleTypes.detail(variables.id), data.data);
 
-      // Update lists with server response
+      // Update lists with server response - filter out items that don't match current filter
       queryClient.setQueriesData({ queryKey: queryKeys.vehicleTypes.lists() }, (oldData: any) => {
         if (!oldData?.data?.vehicleTypes) return oldData;
+
+        const updatedItem = data.data;
+
+        // Get the filter from the query key to determine if item should be shown
+        // The query key structure is: ['vehicle-types', 'list', { filters }]
+        const queryKey = queryClient.getQueryCache().findAll({ queryKey: queryKeys.vehicleTypes.lists() })[0]?.queryKey;
+        const filters = queryKey?.[2] as any;
+        const statusFilter = filters?.status;
+
+        // Check if the updated item matches the current filter
+        const shouldShowItem =
+          statusFilter === null ||
+          statusFilter === undefined ||
+          updatedItem.isActive === statusFilter;
 
         return {
           ...oldData,
           data: {
             ...oldData.data,
-            vehicleTypes: oldData.data.vehicleTypes.map((item: VehicleType) =>
-              item.id.toString() === variables.id.toString() ? data.data : item
-            ),
+            vehicleTypes: shouldShowItem
+              ? oldData.data.vehicleTypes.map((item: VehicleType) =>
+                item.id.toString() === variables.id.toString() ? updatedItem : item
+              )
+              : oldData.data.vehicleTypes.filter((item: VehicleType) =>
+                item.id.toString() !== variables.id.toString()
+              ),
+            pagination: {
+              ...oldData.data.pagination,
+              total: shouldShowItem
+                ? oldData.data.pagination.total
+                : Math.max(0, oldData.data.pagination.total - 1)
+            }
           },
         };
       });
 
       // Invalidate stats to keep counts accurate
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.stats(organizationId) });
+
+      // Invalidate all lists to refetch and show correct filtered data
+      queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.lists() });
     },
     onError: (err, newTodo, context) => {
       // Rollback
