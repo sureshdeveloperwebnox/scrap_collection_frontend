@@ -109,17 +109,34 @@ export const useUpdateVehicleType = () => {
 
       return { previousVehicleType };
     },
+    onSuccess: (data, variables) => {
+      // Update detail with server response
+      queryClient.setQueryData(queryKeys.vehicleTypes.detail(variables.id), data.data);
+
+      // Update lists with server response
+      queryClient.setQueriesData({ queryKey: queryKeys.vehicleTypes.lists() }, (oldData: any) => {
+        if (!oldData?.data?.vehicleTypes) return oldData;
+
+        return {
+          ...oldData,
+          data: {
+            ...oldData.data,
+            vehicleTypes: oldData.data.vehicleTypes.map((item: VehicleType) =>
+              item.id.toString() === variables.id.toString() ? data.data : item
+            ),
+          },
+        };
+      });
+
+      // Invalidate stats to keep counts accurate
+      queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.stats(organizationId) });
+    },
     onError: (err, newTodo, context) => {
       // Rollback
       if (context?.previousVehicleType) {
         queryClient.setQueryData(queryKeys.vehicleTypes.detail(newTodo.id), context.previousVehicleType);
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.lists() });
-    },
-    onSettled: (data, error, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.detail(variables.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.lists() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.vehicleTypes.stats(organizationId) });
     },
   });
 };

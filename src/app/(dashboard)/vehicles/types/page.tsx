@@ -81,6 +81,36 @@ function NoDataAnimation() {
   );
 }
 
+// Sortable Header Component
+function SortableHeader({
+  label,
+  sortKey,
+  currentSortKey,
+  currentSortDir,
+  onSort,
+}: {
+  label: string;
+  sortKey: SortKey;
+  currentSortKey: SortKey;
+  currentSortDir: 'asc' | 'desc';
+  onSort: (key: SortKey) => void;
+}) {
+  const isActive = currentSortKey === sortKey;
+
+  return (
+    <button
+      onClick={() => onSort(sortKey)}
+      className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors"
+    >
+      {label}
+      <ArrowUpDown className={cn(
+        "h-4 w-4 transition-all",
+        isActive ? "text-cyan-600" : "text-gray-400"
+      )} />
+    </button>
+  );
+}
+
 // Tab color styles
 type TabKey = 'All' | 'Active' | 'Inactive';
 function getTabStyle(tab: TabKey) {
@@ -115,7 +145,7 @@ function StatusBadge({ isActive, showDropdownIcon = false }: { isActive: boolean
   );
 }
 
-type SortKey = 'name' | 'isActive' | 'createdAt';
+type SortKey = 'name' | 'isActive' | 'createdAt' | 'updatedAt';
 
 interface ApiResponse {
   data: {
@@ -136,46 +166,65 @@ export default function VehicleTypesPage() {
   const { user } = useAuthStore();
   const organizationId = user?.organizationId;
 
-  // Local state for UI controls (matching Customers Page pattern)
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<TabKey>('All');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortKey, setSortKey] = useState<SortKey>('createdAt');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  // Prevent hydration errors
+  const [mounted, setMounted] = useState(false);
+
+  // Use Zustand Store
+  const {
+    filters,
+    setSearch,
+    setPage,
+    setLimit,
+    setIsActiveFilter,
+    setSortBy,
+    setSortOrder,
+    resetFilters
+  } = useVehicleTypeStore();
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingVehicleType, setEditingVehicleType] = useState<VehicleType | undefined>();
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
 
-  // Debounce search
+  // Debounce search - initialize with empty string to prevent hydration mismatch
+  const [localSearch, setLocalSearch] = useState('');
+
+  // Set mounted state after hydration
   useEffect(() => {
+    setMounted(true);
+    // Sync localSearch with store after mount
+    setLocalSearch(filters.search);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return; // Don't run until mounted
     const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-      setCurrentPage(1);
+      if (localSearch !== filters.search) {
+        setSearch(localSearch);
+      }
     }, 500);
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [localSearch, filters.search, setSearch, mounted]);
 
-  // Derived filters
-  const statusFilter = useMemo(() => {
-    if (activeTab === 'Active') return true;
-    if (activeTab === 'Inactive') return false;
-    return null;
-  }, [activeTab]);
-
-  const queryParams = useMemo(() => ({
-    page: currentPage,
-    limit: rowsPerPage,
-    search: debouncedSearchTerm || undefined,
-    status: statusFilter,
-    sortBy: sortKey,
-    sortOrder: sortDir,
-  }), [currentPage, rowsPerPage, debouncedSearchTerm, statusFilter, sortKey, sortDir]);
+  // Derived active tab from filters.isActive
+  const activeTab = useMemo(() => {
+    if (!mounted) return 'All'; // Default during SSR
+    if (filters.isActive === true) return 'Active';
+    if (filters.isActive === false) return 'Inactive';
+    return 'All';
+  }, [filters.isActive, mounted]) as TabKey;
 
   // Data fetching
+  // Map store 'isActive' to hook 'status'
+  const queryParams = useMemo(() => ({
+    page: filters.page,
+    limit: filters.limit,
+    search: filters.search || undefined,
+    status: filters.isActive,
+    sortBy: filters.sortBy,
+    sortOrder: filters.sortOrder,
+  }), [filters]);
+
   const { data: vehicleTypesData, isLoading, error } = useVehicleTypes(queryParams);
   const { data: statsData } = useVehicleTypeStats();
 
@@ -183,7 +232,7 @@ export default function VehicleTypesPage() {
   const updateVehicleTypeMutation = useUpdateVehicleType();
 
   // Extract data
-  const apiResponse = vehicleTypesData as unknown as ApiResponse;
+  const apiResponse = vehicleTypesData as unknown as ApiResponse<any>; // Cast to match API
   const vehicleTypes = useMemo(() => apiResponse?.data?.vehicleTypes || [], [apiResponse]);
   const pagination = useMemo(() => apiResponse?.data?.pagination || {
     page: 1, limit: 10, total: 0, totalPages: 0, hasNextPage: false, hasPreviousPage: false
@@ -192,6 +241,12 @@ export default function VehicleTypesPage() {
   const stats = statsData || { total: 0, active: 0, inactive: 0 };
 
   // Handlers
+  const handleTabChange = (tab: TabKey) => {
+    if (tab === 'Active') setIsActiveFilter(true);
+    else if (tab === 'Inactive') setIsActiveFilter(false);
+    else setIsActiveFilter(null);
+  };
+
   const handleCreate = () => {
     setEditingVehicleType(undefined);
     setIsFormOpen(true);
@@ -202,16 +257,16 @@ export default function VehicleTypesPage() {
     setIsFormOpen(true);
   };
 
-  const handleStatusChange = async (vehicleType: VehicleType, newStatus: string) => {
+  const handleStatusChange = async (vehicleType: VehicleType, newStatus: boolean) => {
     try {
-      const isActive = newStatus === 'Active';
-      if (vehicleType.isActive === isActive) return;
+      if (vehicleType.isActive === newStatus) return;
 
       await updateVehicleTypeMutation.mutateAsync({
         id: vehicleType.id.toString(),
-        data: { isActive }
+        data: { isActive: newStatus }
       });
-      toast.success(`Vehicle type ${isActive ? 'activated' : 'deactivated'} successfully`);
+      // Optimistic update handles UI, no loading spinner
+      toast.success(`Vehicle type ${newStatus ? 'activated' : 'deactivated'} successfully`);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to update vehicle type status');
     }
@@ -229,11 +284,11 @@ export default function VehicleTypesPage() {
   };
 
   const toggleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    if (filters.sortBy === key) {
+      setSortOrder(filters.sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortKey(key);
-      setSortDir('asc');
+      setSortBy(key);
+      setSortOrder('asc');
     }
   };
 
@@ -266,21 +321,30 @@ export default function VehicleTypesPage() {
 
   // Prefetching
   useEffect(() => {
-    if (currentPage < pagination.totalPages && organizationId) {
-      const nextPageParams = { ...queryParams, page: currentPage + 1, organizationId };
+    if (filters.page < pagination.totalPages && organizationId) {
+      const nextPageParams = { ...queryParams, page: filters.page + 1, organizationId };
       queryClient.prefetchQuery({
         queryKey: queryKeys.vehicleTypes.list(nextPageParams),
-        queryFn: () => vehicleTypesApi.getVehicleTypes(nextPageParams),
+        queryFn: () => vehicleTypesApi.getVehicleTypes({ ...nextPageParams, isActive: nextPageParams.status !== null ? nextPageParams.status : undefined }),
         staleTime: 3 * 60 * 1000,
       });
     }
-  }, [currentPage, pagination.totalPages, queryClient, organizationId, queryParams]);
+  }, [filters.page, pagination.totalPages, queryClient, organizationId, queryParams]);
 
   if (error) {
     return (
       <div className="p-6 text-center">
         <h2 className="text-xl font-semibold text-red-600">Error loading vehicle types</h2>
         <Button onClick={() => window.location.reload()} className="mt-4">Retry</Button>
+      </div>
+    );
+  }
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
       </div>
     );
   }
@@ -293,27 +357,17 @@ export default function VehicleTypesPage() {
             <CardTitle className="text-xl font-bold text-gray-900">Vehicle Types</CardTitle>
 
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 h-9 w-9 p-0"
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-
-              {isSearchOpen && (
-                <div className="relative animate-in slide-in-from-right-10 duration-200">
-                  <Input
-                    placeholder="Search..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-64 pl-10 h-9"
-                    autoFocus
-                  />
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                </div>
-              )}
+              <div className="relative w-full md:w-[300px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search vehicle types..."
+                  value={localSearch}
+                  onChange={(e) => setLocalSearch(e.target.value)}
+                  onFocus={() => setIsSearchOpen(true)}
+                  className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all duration-200"
+                />
+              </div>
 
               <Button
                 onClick={handleCreate}
@@ -344,7 +398,7 @@ export default function VehicleTypesPage() {
                             return (
                               <button
                                 key={tab}
-                                onClick={() => { setActiveTab(tab); setCurrentPage(1); }}
+                                onClick={() => handleTabChange(tab)}
                                 className={`relative px-4 py-2 text-sm font-medium transition-all rounded-t-md ${isActive ? `${style.activeText} ${style.activeBg}` : 'text-gray-600 hover:bg-gray-100'}`}
                               >
                                 <span className="inline-flex items-center gap-2">
@@ -365,21 +419,32 @@ export default function VehicleTypesPage() {
                       <TableHead className="w-12">
                         <Checkbox checked={isAllSelected} onCheckedChange={handleSelectAll} />
                       </TableHead>
-                      <TableHead>
-                        <button className="inline-flex items-center gap-1 hover:text-cyan-600" onClick={() => toggleSort('name')}>
-                          Name <ArrowUpDown className="h-4 w-4" />
-                        </button>
+                      <TableHead className="w-[400px]">
+                        <SortableHeader
+                          label="Name"
+                          sortKey="name"
+                          currentSortKey={filters.sortBy}
+                          currentSortDir={filters.sortOrder}
+                          onSort={toggleSort}
+                        />
                       </TableHead>
-
-                      <TableHead>
-                        <button className="inline-flex items-center gap-1 hover:text-cyan-600" onClick={() => toggleSort('isActive')}>
-                          Status
-                        </button>
+                      <TableHead className="w-[150px]">
+                        <SortableHeader
+                          label="Status"
+                          sortKey="isActive"
+                          currentSortKey={filters.sortBy}
+                          currentSortDir={filters.sortOrder}
+                          onSort={toggleSort}
+                        />
                       </TableHead>
-                      <TableHead>
-                        <button className="inline-flex items-center gap-1 hover:text-cyan-600" onClick={() => toggleSort('createdAt')}>
-                          Created Date
-                        </button>
+                      <TableHead className="w-[200px]">
+                        <SortableHeader
+                          label="Created Date"
+                          sortKey="createdAt"
+                          currentSortKey={filters.sortBy}
+                          currentSortDir={filters.sortOrder}
+                          onSort={toggleSort}
+                        />
                       </TableHead>
                       <TableHead className="w-12">Actions</TableHead>
                     </TableRow>
@@ -401,36 +466,19 @@ export default function VehicleTypesPage() {
                           <TableCell className="font-medium text-gray-900">{vehicleType.name}</TableCell>
 
                           <TableCell>
-                            <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                              <Select
-                                value={vehicleType.isActive ? 'Active' : 'Inactive'}
-                                onValueChange={(v) => handleStatusChange(vehicleType, v)}
-                              >
-                                <SelectTrigger className="h-auto w-auto p-0 border-0 bg-transparent hover:bg-transparent focus:ring-0 focus:ring-offset-0 shadow-none max-w-none min-w-0 overflow-visible">
-                                  <div className="flex items-center">
-                                    <StatusBadge isActive={vehicleType.isActive} showDropdownIcon={true} />
-                                  </div>
-                                </SelectTrigger>
-                                <SelectContent className="min-w-[120px] rounded-lg shadow-lg border border-gray-200 bg-white p-1">
-                                  {['Active', 'Inactive'].map((status) => {
-                                    const isSelected = (vehicleType.isActive ? 'Active' : 'Inactive') === status;
-                                    return (
-                                      <SelectItem
-                                        key={status}
-                                        value={status}
-                                        className={cn(
-                                          "cursor-pointer rounded-md px-3 py-2.5 text-sm transition-colors pl-8",
-                                          isSelected
-                                            ? "bg-cyan-500 text-white hover:bg-cyan-600 focus:bg-cyan-600"
-                                            : "text-gray-900 hover:bg-gray-100 focus:bg-gray-100"
-                                        )}
-                                      >
-                                        <span className={cn(isSelected ? "text-white font-medium" : "text-gray-900")}>{status}</span>
-                                      </SelectItem>
-                                    );
-                                  })}
-                                </SelectContent>
-                              </Select>
+                            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                              <label className="custom-toggle-switch scale-75">
+                                <input
+                                  type="checkbox"
+                                  className="chk"
+                                  checked={vehicleType.isActive}
+                                  onChange={(e) => handleStatusChange(vehicleType, e.target.checked)}
+                                />
+                                <span className="slider"></span>
+                              </label>
+                              <span className={`text-sm font-medium ${vehicleType.isActive ? 'text-green-700' : 'text-gray-500'}`}>
+                                {vehicleType.isActive ? 'Active' : 'Inactive'}
+                              </span>
                             </div>
                           </TableCell>
                           <TableCell className="text-gray-500">{new Date(vehicleType.createdAt).toLocaleDateString()}</TableCell>
@@ -482,11 +530,11 @@ export default function VehicleTypesPage() {
               </div>
 
               <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <RowsPerPage value={rowsPerPage} onChange={setRowsPerPage} options={[5, 10, 20, 50]} />
+                <RowsPerPage value={filters.limit} onChange={setLimit} options={[5, 10, 20, 50]} />
                 <Pagination
                   currentPage={pagination.page}
                   totalPages={pagination.totalPages}
-                  onPageChange={setCurrentPage}
+                  onPageChange={setPage}
                 />
               </div>
             </>
@@ -499,6 +547,6 @@ export default function VehicleTypesPage() {
         isOpen={isFormOpen}
         onClose={() => { setIsFormOpen(false); setEditingVehicleType(undefined); }}
       />
-    </div>
+    </div >
   );
 }

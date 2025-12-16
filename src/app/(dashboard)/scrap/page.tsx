@@ -374,70 +374,101 @@ export default function ScrapModulePage() {
         <CardHeader className="border-b bg-white">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl font-semibold text-gray-900">Scrap Management</CardTitle>
-            <div className="flex items-center gap-2">
-              {/* Search Toggle Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 h-9 w-9 p-0"
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-
-              {/* Search Input - shown when isSearchOpen is true */}
-              {isSearchOpen && (
-                <div className="relative">
-                  <Input
-                    type="text"
-                    placeholder="Search..."
-                    value={currentSearch}
-                    onChange={(e) => setCurrentSearch(e.target.value)}
-                    onBlur={() => {
-                      if (!currentSearch) {
-                        setIsSearchOpen(false);
-                      }
-                    }}
-                    autoFocus
-                    className="w-64 pl-10 pr-10 rounded-lg border-gray-200 focus:border-cyan-500 focus:ring-cyan-500"
-                  />
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  {currentSearch && (
+            <div className="flex items-center gap-4">
+              {/* Main Tabs Switcher */}
+              <div className="bg-gray-100 p-1 rounded-lg inline-flex items-center">
+                {(['categories', 'names'] as const).map((tab) => {
+                  const isActive = activeTab === tab;
+                  return (
                     <button
+                      key={tab}
+                      type="button"
                       onClick={() => {
-                        setCurrentSearch('');
+                        setActiveTab(tab);
                         setIsSearchOpen(false);
+                        setIsFilterOpen(false);
+                        if (tab === 'names') {
+                          setStatusFilter('all');
+                        }
                       }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className={`px-4 py-1.5 text-sm font-medium transition-all rounded-md flex items-center gap-2 ${isActive
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-900'
+                        }`}
                     >
-                      <X className="h-4 w-4" />
+                      {tab === 'categories' ? 'Category' : 'Scrap'}
                     </button>
-                  )}
-                </div>
-              )}
+                  );
+                })}
+              </div>
 
-              {/* Filter Icon Button - Only for Scrap Names */}
-              {activeTab === 'names' && (
+              <div className="h-6 w-px bg-gray-200" />
+
+              <div className="flex items-center gap-2">
+                {/* Search Toggle Button */}
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsFilterOpen(!isFilterOpen)}
-                  className={`border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 h-9 w-9 p-0 ${selectedCategoryId !== 'all' ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : ''
-                    } ${isFilterOpen ? 'border-cyan-500 bg-cyan-50' : ''
-                    }`}
-                  title={isFilterOpen ? "Hide filters" : "Show filters"}
+                  onClick={() => setIsSearchOpen(!isSearchOpen)}
+                  className="border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 h-9 w-9 p-0"
                 >
-                  <Filter className={`h-4 w-4 ${selectedCategoryId !== 'all' ? 'text-cyan-700' : ''}`} />
+                  <Search className="h-4 w-4" />
                 </Button>
-              )}
 
-              <Button
-                onClick={activeTab === 'categories' ? handleCreateCategory : handleCreateName}
-                className="bg-cyan-500 hover:bg-cyan-600 text-white h-9 w-9 p-0"
-                title={activeTab === 'categories' ? "Add Category" : "Add Scrap"}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
+                {/* Search Input - shown when isSearchOpen is true */}
+                {isSearchOpen && (
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      placeholder="Search..."
+                      value={currentSearch}
+                      onChange={(e) => setCurrentSearch(e.target.value)}
+                      onBlur={() => {
+                        if (!currentSearch) {
+                          setIsSearchOpen(false);
+                        }
+                      }}
+                      autoFocus
+                      className="w-64 pl-10 pr-10 rounded-lg border-gray-200 focus:border-cyan-500 focus:ring-cyan-500"
+                    />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    {currentSearch && (
+                      <button
+                        onClick={() => {
+                          setCurrentSearch('');
+                          setIsSearchOpen(false);
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Filter Icon Button - Only for Scrap Names */}
+                {activeTab === 'names' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsFilterOpen(!isFilterOpen)}
+                    className={`border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 h-9 w-9 p-0 ${selectedCategoryId !== 'all' ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : ''
+                      } ${isFilterOpen ? 'border-cyan-500 bg-cyan-50' : ''
+                      }`}
+                    title={isFilterOpen ? "Hide filters" : "Show filters"}
+                  >
+                    <Filter className={`h-4 w-4 ${selectedCategoryId !== 'all' ? 'text-cyan-700' : ''}`} />
+                  </Button>
+                )}
+
+                <Button
+                  onClick={activeTab === 'categories' ? handleCreateCategory : handleCreateName}
+                  className="bg-cyan-500 hover:bg-cyan-600 text-white h-9 w-9 p-0"
+                  title={activeTab === 'categories' ? "Add Category" : "Add Scrap"}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -508,48 +539,15 @@ export default function ScrapModulePage() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader className="bg-white">
-                  {/* Tab Row */}
+                  {/* Status Tabs Row */}
                   <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50">
                     <TableHead colSpan={7} className="p-0 bg-transparent">
                       <div className="w-full overflow-x-auto">
-                        <div className="inline-flex items-center gap-1 px-2 py-2">
-                          {/* Main Tabs: Category / Scrap */}
-                          {(['categories', 'names'] as const).map((tab) => {
-                            const isActive = activeTab === tab;
-                            const count = tab === 'categories' ? categoryPagination.total : namePagination.total;
-                            return (
-                              <button
-                                key={tab}
-                                type="button"
-                                onClick={() => {
-                                  setActiveTab(tab);
-                                  setIsSearchOpen(false);
-                                  setIsFilterOpen(false);
-                                  if (tab === 'names') {
-                                    setStatusFilter('all');
-                                  }
-                                }}
-                                className={`relative px-4 py-2 text-sm font-medium transition-all rounded-t-md ${isActive
-                                  ? 'text-cyan-700 bg-cyan-50 shadow-sm'
-                                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                                  }`}
-                              >
-                                <span className="inline-flex items-center gap-2">
-                                  {tab === 'categories' ? 'Category' : 'Scrap'}
-                                  <span className={`text-xs rounded-full px-2 py-0.5 font-medium ${isActive ? 'bg-cyan-100 text-cyan-700' : 'bg-gray-200 text-gray-600'
-                                    }`}>
-                                    {count}
-                                  </span>
-                                </span>
-                                {isActive && <span className="absolute left-0 right-0 -bottom-0.5 h-0.5 bg-cyan-500 rounded" />}
-                              </button>
-                            );
-                          })}
+                        <div className="inline-flex items-center gap-1 px-4 py-2">
 
                           {/* Status Tabs - Show for both Categories and Scrap Names */}
                           {mounted && (
                             <>
-                              <div className="h-6 w-px bg-gray-300 mx-2" />
                               {activeTab === 'categories' ? (
                                 // Category Status Tabs
                                 (['all', 'active', 'inactive'] as const).map((status) => {
@@ -660,43 +658,20 @@ export default function ScrapModulePage() {
                           <TableCell className="text-gray-600">{category.description || '-'}</TableCell>
                           <TableCell>
                             {/* Inline Status Switcher for Categories */}
-                            <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                              <Select
-                                value={category.isActive ? 'active' : 'inactive'}
-                                onValueChange={(v) => handleCategoryStatusChange(category, v === 'active')}
-                              >
-                                <SelectTrigger className="h-auto w-auto p-0 border-0 bg-transparent hover:bg-transparent focus:ring-0 focus:ring-offset-0 shadow-none">
-                                  <div className="flex items-center gap-2">
-                                    <div className={`h-2 w-2 rounded-full ${category.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
-                                    <span className={`text-sm font-medium ${category.isActive ? 'text-green-700' : 'text-red-700'}`}>
-                                      {category.isActive ? 'Active' : 'Inactive'}
-                                    </span>
-                                    <svg className="h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                  </div>
-                                </SelectTrigger>
-                                <SelectContent className="min-w-[140px] rounded-lg shadow-lg border border-gray-200 bg-white p-1">
-                                  <SelectItem
-                                    value="active"
-                                    className="cursor-pointer rounded-md px-3 py-2 text-sm transition-colors hover:bg-green-50 focus:bg-green-50"
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      <div className="h-2 w-2 rounded-full bg-green-500" />
-                                      <span className="font-medium text-green-700">Active</span>
-                                    </div>
-                                  </SelectItem>
-                                  <SelectItem
-                                    value="inactive"
-                                    className="cursor-pointer rounded-md px-3 py-2 text-sm transition-colors hover:bg-red-50 focus:bg-red-50"
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      <div className="h-2 w-2 rounded-full bg-red-500" />
-                                      <span className="font-medium text-red-700">Inactive</span>
-                                    </div>
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
+                            {/* Inline Status Switcher for Categories */}
+                            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                              <label className="custom-toggle-switch scale-75">
+                                <input
+                                  type="checkbox"
+                                  className="chk"
+                                  checked={category.isActive}
+                                  onChange={(e) => handleCategoryStatusChange(category, e.target.checked)}
+                                />
+                                <span className="slider"></span>
+                              </label>
+                              <span className={`text-sm font-medium ${category.isActive ? 'text-green-700' : 'text-gray-500'}`}>
+                                {category.isActive ? 'Active' : 'Inactive'}
+                              </span>
                             </div>
                           </TableCell>
                           <TableCell className="text-sm text-gray-500">
@@ -753,43 +728,20 @@ export default function ScrapModulePage() {
                           </TableCell>
                           <TableCell>
                             {/* Inline Status Switcher */}
-                            <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                              <Select
-                                value={scrap.isActive ? 'active' : 'inactive'}
-                                onValueChange={(v) => handleStatusChange(scrap, v === 'active')}
-                              >
-                                <SelectTrigger className="h-auto w-auto p-0 border-0 bg-transparent hover:bg-transparent focus:ring-0 focus:ring-offset-0 shadow-none">
-                                  <div className="flex items-center gap-2">
-                                    <div className={`h-2 w-2 rounded-full ${scrap.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
-                                    <span className={`text-sm font-medium ${scrap.isActive ? 'text-green-700' : 'text-red-700'}`}>
-                                      {scrap.isActive ? 'Active' : 'Inactive'}
-                                    </span>
-                                    <svg className="h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                  </div>
-                                </SelectTrigger>
-                                <SelectContent className="min-w-[140px] rounded-lg shadow-lg border border-gray-200 bg-white p-1">
-                                  <SelectItem
-                                    value="active"
-                                    className="cursor-pointer rounded-md px-3 py-2 text-sm transition-colors hover:bg-green-50 focus:bg-green-50"
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      <div className="h-2 w-2 rounded-full bg-green-500" />
-                                      <span className="font-medium text-green-700">Active</span>
-                                    </div>
-                                  </SelectItem>
-                                  <SelectItem
-                                    value="inactive"
-                                    className="cursor-pointer rounded-md px-3 py-2 text-sm transition-colors hover:bg-red-50 focus:bg-red-50"
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      <div className="h-2 w-2 rounded-full bg-red-500" />
-                                      <span className="font-medium text-red-700">Inactive</span>
-                                    </div>
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
+                            {/* Inline Status Switcher for Names */}
+                            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                              <label className="custom-toggle-switch scale-75">
+                                <input
+                                  type="checkbox"
+                                  className="chk"
+                                  checked={scrap.isActive}
+                                  onChange={(e) => handleStatusChange(scrap, e.target.checked)}
+                                />
+                                <span className="slider"></span>
+                              </label>
+                              <span className={`text-sm font-medium ${scrap.isActive ? 'text-green-700' : 'text-gray-500'}`}>
+                                {scrap.isActive ? 'Active' : 'Inactive'}
+                              </span>
                             </div>
                           </TableCell>
                           <TableCell className="text-sm text-gray-500">

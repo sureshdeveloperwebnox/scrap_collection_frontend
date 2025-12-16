@@ -258,18 +258,17 @@ export default function VehicleNamesPage() {
     }
   };
 
-  const handleStatusChange = async (vehicleName: VehicleName, newStatus: string) => {
+  const handleStatusChange = async (vehicleName: VehicleName, newStatus: boolean) => {
     try {
-      const isActive = newStatus === 'Active';
-      if (vehicleName.isActive === isActive) return;
+      if (vehicleName.isActive === newStatus) return;
 
       await updateVehicleNameMutation.mutateAsync({
         id: vehicleName.id,
-        data: { isActive }
+        data: { isActive: newStatus }
       });
       // Optimistic update handles the UI, no need for manual toast here technically if we trust the UI, but feedback is good.
       // toast is fine.
-      toast.success(`Vehicle name ${isActive ? 'activated' : 'deactivated'} successfully`);
+      toast.success(`Vehicle name ${newStatus ? 'activated' : 'deactivated'} successfully`);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to update vehicle name status');
     }
@@ -409,36 +408,19 @@ export default function VehicleNamesPage() {
                           <TableCell className="text-gray-600">{vehicleName.vehicleType?.name || 'N/A'}</TableCell>
 
                           <TableCell>
-                            <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                              <Select
-                                value={vehicleName.isActive ? 'Active' : 'Inactive'}
-                                onValueChange={(v) => handleStatusChange(vehicleName, v)}
-                              >
-                                <SelectTrigger className="h-auto w-auto p-0 border-0 bg-transparent hover:bg-transparent focus:ring-0 focus:ring-offset-0 shadow-none max-w-none min-w-0 overflow-visible">
-                                  <div className="flex items-center">
-                                    <StatusBadge isActive={vehicleName.isActive} showDropdownIcon={true} />
-                                  </div>
-                                </SelectTrigger>
-                                <SelectContent className="min-w-[120px] rounded-lg shadow-lg border border-gray-200 bg-white p-1">
-                                  {['Active', 'Inactive'].map((status) => {
-                                    const isSelected = (vehicleName.isActive ? 'Active' : 'Inactive') === status;
-                                    return (
-                                      <SelectItem
-                                        key={status}
-                                        value={status}
-                                        className={cn(
-                                          "cursor-pointer rounded-md px-3 py-2.5 text-sm transition-colors pl-8",
-                                          isSelected
-                                            ? "bg-cyan-500 text-white hover:bg-cyan-600 focus:bg-cyan-600"
-                                            : "text-gray-900 hover:bg-gray-100 focus:bg-gray-100"
-                                        )}
-                                      >
-                                        <span className={cn(isSelected ? "text-white font-medium" : "text-gray-900")}>{status}</span>
-                                      </SelectItem>
-                                    );
-                                  })}
-                                </SelectContent>
-                              </Select>
+                            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                              <label className="custom-toggle-switch scale-75">
+                                <input
+                                  type="checkbox"
+                                  className="chk"
+                                  checked={vehicleName.isActive}
+                                  onChange={(e) => handleStatusChange(vehicleName, e.target.checked)}
+                                />
+                                <span className="slider"></span>
+                              </label>
+                              <span className={`text-sm font-medium ${vehicleName.isActive ? 'text-green-700' : 'text-gray-500'}`}>
+                                {vehicleName.isActive ? 'Active' : 'Inactive'}
+                              </span>
                             </div>
                           </TableCell>
                           {/* <TableCell className="text-gray-500">{new Date(vehicleName.createdAt).toLocaleDateString()}</TableCell> */}
