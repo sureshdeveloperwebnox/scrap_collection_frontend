@@ -5,15 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Employee, EmployeeRole } from '@/types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Employee, ScrapYard } from '@/types';
 import { useCreateEmployee, useUpdateEmployee } from '@/hooks/use-employees';
 import { useRoles } from '@/hooks/use-roles';
-import { useCities } from '@/hooks/use-cities';
+import { useScrapYards } from '@/hooks/use-scrap-yards';
 import { toast } from 'sonner';
-import { CountryCodeSelector } from './country-code-selector';
-import { combinePhoneNumber, validatePhoneNumber, validatePhoneNumberByCountry } from '@/utils/phone-validator';
-import { parsePhoneNumber } from 'libphonenumber-js';
+import { isValidPhoneNumber } from 'libphonenumber-js';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+import { User, Mail, Lock, MapPin, Shield } from 'lucide-react';
 
 interface EmployeeFormProps {
   employee?: Employee;
@@ -25,73 +26,56 @@ interface EmployeeFormProps {
 export function EmployeeForm({ employee, isOpen, onClose, onSubmit }: EmployeeFormProps) {
   const [phoneError, setPhoneError] = useState<string | undefined>(undefined);
   const [phoneTouched, setPhoneTouched] = useState(false);
-  
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
   const [formData, setFormData] = useState({
     organizationId: 1,
     fullName: '',
     email: '',
     phone: '',
-    countryCode: '+1',
     roleId: '',
-    cityId: 'none',
-    password: '', // Only used for updates if needed
+    scrapYardId: 'none',
+    password: '',
   });
 
-  // Fetch roles and cities
+  // Fetch roles and scrap yards
   const { data: rolesData } = useRoles({ limit: 100, status: true });
-  const { data: citiesData } = useCities({ limit: 100, status: true });
-  
+  // Pass status 'true' as string if the API expects string, or boolean if it expects boolean. 
+  // Based on use-scrap-yards.ts, it takes params which usually go to API as query params (strings).
+  // But type def says `status?: string`. So 'true' is likely correct for active yards.
+  const { data: scrapYardsData } = useScrapYards({ limit: 100, status: 'true' });
+
   const roles = rolesData?.data?.roles || [];
-  const cities = citiesData?.data?.cities || [];
+  const scrapYards = ((scrapYardsData?.data as any)?.scrapYards as ScrapYard[]) || [];
 
   useEffect(() => {
     if (employee) {
-      // Parse existing phone number to extract country code and phone
-      let countryCode = '+1';
-      let phoneNumber = '';
-      
-      if (employee.phone) {
-        try {
-          const parsed = parsePhoneNumber(employee.phone);
-          countryCode = `+${parsed.countryCallingCode}`;
-          phoneNumber = parsed.nationalNumber;
-        } catch (error) {
-          // If parsing fails, try to extract country code manually
-          const match = employee.phone.match(/^\+(\d{1,3})(.+)$/);
-          if (match) {
-            countryCode = `+${match[1]}`;
-            phoneNumber = match[2].replace(/\D/g, '');
-          } else {
-            phoneNumber = employee.phone.replace(/\D/g, '');
-          }
-        }
-      }
-      
       setFormData({
         organizationId: employee.organizationId || 1,
         fullName: employee.fullName || '',
         email: employee.email || '',
-        phone: phoneNumber,
-        countryCode: countryCode,
+        phone: employee.phone || '',
         roleId: (employee as any).roleId?.toString() || (employee as any).role?.id?.toString() || '',
-        cityId: (employee as any).cityId?.toString() || (employee as any).city?.id?.toString() || 'none',
-        password: '', // Don't populate password
+        // Prioritize scrapYardId, fallback to probing scrapYard object, fallback to 'none'
+        scrapYardId: employee.scrapYardId?.toString() || (employee as any).scrapYard?.id?.toString() || 'none',
+        password: '',
       });
       setPhoneError(undefined);
       setPhoneTouched(false);
+      setValidationErrors({});
     } else {
       setFormData({
         organizationId: 1,
         fullName: '',
         email: '',
         phone: '',
-        countryCode: '+1',
         roleId: '',
-        cityId: 'none',
+        scrapYardId: 'none',
         password: '',
       });
       setPhoneError(undefined);
       setPhoneTouched(false);
+      setValidationErrors({});
     }
   }, [employee, isOpen]);
 
@@ -100,44 +84,61 @@ export function EmployeeForm({ employee, isOpen, onClose, onSubmit }: EmployeeFo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Combine country code and phone number
-    const fullPhoneNumber = combinePhoneNumber(formData.countryCode, formData.phone);
-    
-    // Validate phone number before submit
+    setValidationErrors({});
+
+    // Validate required fields
+    const errors: Record<string, string> = {};
+    if (!formData.fullName.trim()) errors.fullName = "Full name is required";
+    if (!formData.email.trim()) errors.email = "Email is required";
+    if (!formData.roleId) errors.roleId = "Role is required";
+    if (!employee && !formData.password) errors.password = "Password is required";
+
+    // Validate phone
     setPhoneTouched(true);
-    const phoneValidation = validatePhoneNumberByCountry(formData.phone, formData.countryCode);
-    if (!phoneValidation.isValid) {
-      setPhoneError(phoneValidation.error);
-      toast.error(phoneValidation.error || 'Invalid phone number');
-      return;
+    let validPhone = formData.phone;
+    if (!validPhone || validPhone.trim() === '' || validPhone === '+') {
+      errors.phone = "Phone number is required";
+      setPhoneError("Phone number is required");
+    } else {
+      // Ensure formatting with +
+      if (!validPhone.startsWith('+')) validPhone = '+' + validPhone;
+
+      if (!isValidPhoneNumber(validPhone)) {
+        const digits = validPhone.replace(/\D/g, '');
+        if (digits.length < 7 || digits.length > 15) {
+          errors.phone = "Invalid phone number";
+          setPhoneError("Invalid phone number");
+        }
+      }
     }
-    
-    // Validate roleId
-    if (!formData.roleId) {
-      toast.error('Please select a role');
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      toast.error("Please fix the validation errors");
       return;
     }
 
-    // Prepare data with combined phone number
+    // Prepare data
+    const finalPhone = formData.phone.startsWith('+') ? formData.phone : `+${formData.phone}`;
+
     const submitData: any = {
       organizationId: formData.organizationId,
       fullName: formData.fullName,
       email: formData.email,
-      phone: phoneValidation.formatted || fullPhoneNumber,
+      phone: finalPhone,
       roleId: parseInt(formData.roleId),
     };
-    
+
     // Add optional fields
-    if (formData.cityId && formData.cityId !== 'none') {
-      submitData.cityId = parseInt(formData.cityId);
+    // Use scrapYardId instead of cityId
+    if (formData.scrapYardId && formData.scrapYardId !== 'none') {
+      submitData.scrapYardId = formData.scrapYardId; // Assuming backend expects string UUID for scrapYardId
     } else {
-      submitData.cityId = null;
+      submitData.scrapYardId = null;
     }
-    
+
     try {
       if (employee) {
-        // For update, don't include password if not provided
         const updateData: any = { ...submitData };
         if (formData.password) {
           updateData.password = formData.password;
@@ -148,199 +149,238 @@ export function EmployeeForm({ employee, isOpen, onClose, onSubmit }: EmployeeFo
         });
         toast.success('Employee updated successfully!');
       } else {
-        // Password is required for new employees
-        if (!formData.password) {
-          toast.error('Password is required for new employees');
-          return;
-        }
         submitData.password = formData.password;
         await createEmployeeMutation.mutateAsync(submitData);
         toast.success('Employee created successfully!');
       }
-      
+
       if (onSubmit) {
         onSubmit(submitData);
       }
-      
+
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving employee:', error);
-      toast.error(employee ? 'Failed to update employee' : 'Failed to create employee');
+      const errorMessage = error?.response?.data?.message || error?.message || (employee ? 'Failed to update employee' : 'Failed to create employee');
+      toast.error(errorMessage);
     }
   };
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear errors
+    if (validationErrors[field]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const isLoading = createEmployeeMutation.isPending || updateEmployeeMutation.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">
-            {employee ? 'Edit Employee' : 'Add New Employee'}
-          </DialogTitle>
+      <DialogContent
+        className="w-[95vw] sm:max-w-[800px] max-h-[90vh] bg-white border-0 shadow-2xl rounded-2xl p-0 flex flex-col [&>button]:hidden"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
+        <DialogHeader className="px-8 pt-8 pb-6 border-b border-gray-200 flex-shrink-0">
+          <div className="flex items-start justify-between">
+            <div>
+              <DialogTitle className="text-3xl font-bold text-gray-900">
+                {employee ? 'Edit Employee' : 'Add New Employee'}
+              </DialogTitle>
+              <p className="text-sm text-gray-600 mt-2">
+                {employee ? 'Update employee details and assignments' : 'Fill in the details to create a new employee account'}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isLoading}
+                className="h-12 px-6 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all hover:shadow-md"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="employee-form"
+                disabled={isLoading}
+                className="h-12 px-8 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="mr-2 h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    {employee ? 'Updating...' : 'Creating...'}
+                  </>
+                ) : (
+                  employee ? 'Update Employee' : 'Create Employee'
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name *</Label>
-                <Input
-                  id="fullName"
-                  value={formData.fullName}
-                  onChange={(e) => handleInputChange('fullName', e.target.value)}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone *</Label>
-                <div className="flex flex-col gap-2">
-                  <div className="flex gap-2">
-                    <CountryCodeSelector
-                      value={formData.countryCode}
-                      onChange={(value) => {
-                        handleInputChange('countryCode', value);
-                        // Re-validate phone when country code changes
-                        if (formData.phone && phoneTouched) {
-                          const validation = validatePhoneNumberByCountry(formData.phone, value);
-                          setPhoneError(validation.isValid ? undefined : validation.error);
-                        }
-                      }}
-                      disabled={isLoading}
-                    />
-                    <div className="flex-1">
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => {
-                          // Only allow digits
-                          const value = e.target.value.replace(/\D/g, '');
-                          handleInputChange('phone', value);
-                          
-                          // Real-time validation
-                          if (phoneTouched || value.length > 0) {
-                            const validation = validatePhoneNumberByCountry(value, formData.countryCode);
-                            setPhoneError(validation.isValid ? undefined : validation.error);
-                          }
-                        }}
-                        onBlur={() => {
-                          setPhoneTouched(true);
-                          if (formData.phone) {
-                            const validation = validatePhoneNumberByCountry(formData.phone, formData.countryCode);
-                            setPhoneError(validation.isValid ? undefined : validation.error);
-                          }
-                        }}
-                        required
-                        disabled={isLoading}
-                        className={`flex-1 ${
-                          phoneError && phoneTouched ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
-                        }`}
-                        placeholder="1234567890"
-                      />
+
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <form id="employee-form" onSubmit={handleSubmit} className="px-8 pb-8 space-y-8 mt-6">
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left Column: Personal Info */}
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-gray-900 border-b pb-2 flex items-center gap-2">
+                  <User className="h-5 w-5 text-cyan-600" />
+                  Personal Information
+                </h3>
+
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">Full Name *</Label>
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+                      <User className="h-5 w-5 text-cyan-600" />
                     </div>
+                    <Input
+                      id="fullName"
+                      value={formData.fullName}
+                      onChange={(e) => handleInputChange('fullName', e.target.value)}
+                      required
+                      disabled={isLoading}
+                      className={`pl-14 h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${validationErrors.fullName ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
+                        }`}
+                      placeholder="Enter full name"
+                    />
                   </div>
-                  {phoneError && phoneTouched && (
-                    <p className="text-sm text-red-600 mt-1">{phoneError}</p>
-                  )}
+                  {validationErrors.fullName && <p className="text-sm text-red-600">{validationErrors.fullName}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-sm font-medium text-gray-700">Phone *</Label>
+                  <PhoneInput
+                    country={'au'}
+                    value={formData.phone}
+                    onChange={(value) => {
+                      handleInputChange('phone', value);
+                      if (phoneError) setPhoneError(undefined);
+                    }}
+                    inputClass={`!w-full !h-12 !rounded-xl !border-gray-200 !bg-white !shadow-sm focus:!border-cyan-400 focus:!ring-cyan-200 focus:!ring-2 transition-all ${phoneError ? '!border-red-500 focus:!border-red-500' : ''
+                      }`}
+                    containerClass="!w-full"
+                    buttonClass={`!border-gray-200 !rounded-l-xl ${phoneError ? '!border-red-500' : ''}`}
+                    disabled={isLoading}
+                    preferredCountries={['au', 'us', 'gb', 'in', 'nz', 'ca']}
+                  />
+                  {phoneError && <p className="text-sm text-red-600">{phoneError}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email *</Label>
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+                      <Mail className="h-5 w-5 text-cyan-600" />
+                    </div>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      required
+                      disabled={isLoading}
+                      className={`pl-14 h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${validationErrors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
+                        }`}
+                      placeholder="Enter email address"
+                    />
+                  </div>
+                  {validationErrors.email && <p className="text-sm text-red-600">{validationErrors.email}</p>}
+                </div>
+              </div>
+
+              {/* Right Column: Role & Security */}
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-gray-900 border-b pb-2 flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-cyan-600" />
+                  Role & Security
+                </h3>
+
+                <div className="space-y-2">
+                  <Label htmlFor="roleId" className="text-sm font-medium text-gray-700">Role *</Label>
+                  <div className="relative">
+                    <Select
+                      value={formData.roleId}
+                      onValueChange={(value) => handleInputChange('roleId', value)}
+                      disabled={isLoading}
+                    >
+                      <SelectTrigger className={`h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${validationErrors.roleId ? 'border-red-500' : ''
+                        }`}>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {roles.map((role) => (
+                          <SelectItem key={role.id} value={role.id.toString()}>
+                            {role.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {validationErrors.roleId && <p className="text-sm text-red-600">{validationErrors.roleId}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="scrapYardId" className="text-sm font-medium text-gray-700">Work Zone (Scrap Yard)</Label>
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+                      <MapPin className="h-5 w-5 text-cyan-600" />
+                    </div>
+                    <Select
+                      value={formData.scrapYardId || 'none'}
+                      onValueChange={(value) => handleInputChange('scrapYardId', value)}
+                      disabled={isLoading}
+                    >
+                      <SelectTrigger className="pl-14 h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all">
+                        <SelectValue placeholder="Select work zone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None (No specific zone)</SelectItem>
+                        {scrapYards.map((yard) => (
+                          <SelectItem key={yard.id} value={yard.id.toString()}>
+                            {yard.yardName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                    {employee ? 'Change Password' : 'Password *'}
+                  </Label>
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+                      <Lock className="h-5 w-5 text-cyan-600" />
+                    </div>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => handleInputChange('password', e.target.value)}
+                      required={!employee}
+                      disabled={isLoading}
+                      className={`pl-14 h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${validationErrors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
+                        }`}
+                      placeholder={employee ? "Leave empty to keep current" : "Create a secure password"}
+                      minLength={6}
+                    />
+                  </div>
+                  {validationErrors.password && <p className="text-sm text-red-600">{validationErrors.password}</p>}
                 </div>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            {!employee && (
-              <div className="space-y-2">
-                <Label htmlFor="password">Password *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  required
-                  disabled={isLoading}
-                  minLength={6}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Role & Assignment */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold border-b pb-2">Role & Assignment</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="roleId">Role *</Label>
-                <Select 
-                  value={formData.roleId} 
-                  onValueChange={(value) => handleInputChange('roleId', value)}
-                  disabled={isLoading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles.map((role) => (
-                      <SelectItem key={role.id} value={role.id.toString()}>
-                        {role.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cityId">Work Zone (City)</Label>
-                <Select 
-                  value={formData.cityId || 'none'} 
-                  onValueChange={(value) => handleInputChange('cityId', value)}
-                  disabled={isLoading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select work zone (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {cities.map((city) => (
-                      <SelectItem key={city.id} value={city.id.toString()}>
-                        {city.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="pt-6 border-t">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  {employee ? 'Updating...' : 'Creating...'}
-                </>
-              ) : (
-                employee ? 'Update Employee' : 'Create Employee'
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
