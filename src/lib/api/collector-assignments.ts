@@ -2,12 +2,18 @@ import { apiClient } from './client';
 
 export interface CollectorAssignment {
   id: string;
-  collectorId: string;
+  collectorId?: string;
   collector?: {
     id: string;
     fullName: string;
     email: string;
     phone: string;
+  };
+  crewId?: string;
+  crew?: {
+    id: string;
+    name: string;
+    description: string;
   };
   vehicleNameId?: string;
   vehicleName?: {
@@ -76,7 +82,8 @@ export const collectorAssignmentsApi = {
   // Create new collector assignment
   createCollectorAssignment: async (assignmentData: {
     organizationId: number;
-    collectorId: string;
+    collectorId?: string;
+    crewId?: string;
     vehicleNameId?: string;
     scrapYardId?: string;
     isActive?: boolean;

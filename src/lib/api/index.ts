@@ -11,6 +11,7 @@ export { pickupRequestsApi } from './pickup-requests';
 export { reviewsApi } from './reviews';
 export { dashboardApi } from './dashboard';
 export { vehicleTypesApi } from './vehicleTypes';
+export * from './crews';
 export { vehicleNamesApi } from './vehicle-names';
 export { collectorAssignmentsApi } from './collector-assignments';
 export { citiesApi } from './cities';

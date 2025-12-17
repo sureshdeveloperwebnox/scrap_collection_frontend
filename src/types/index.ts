@@ -245,3 +245,13 @@ export interface VehicleName {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface Crew {
+  id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  members: Employee[];
+  createdAt: Date;
+  updatedAt: Date;
+}

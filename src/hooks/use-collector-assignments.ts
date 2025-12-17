@@ -46,7 +46,8 @@ export const useCreateCollectorAssignment = () => {
 
   return useMutation({
     mutationFn: (assignmentData: {
-      collectorId: string;
+      collectorId?: string;
+      crewId?: string;
       vehicleNameId?: string;
       scrapYardId?: string;
       isActive?: boolean;
