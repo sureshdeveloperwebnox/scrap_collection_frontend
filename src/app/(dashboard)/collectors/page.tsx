@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useEmployees, useCreateEmployee, useUpdateEmployee } from '@/hooks/use-employees';
 import { useVehicleNames } from '@/hooks/use-vehicle-names';
 import { useScrapYards } from '@/hooks/use-scrap-yards';
-import { useCollectorAssignments, useCreateCollectorAssignment, useDeleteCollectorAssignment } from '@/hooks/use-collector-assignments';
+import { useCollectorAssignments, useCreateCollectorAssignment, useUpdateCollectorAssignment, useDeleteCollectorAssignment } from '@/hooks/use-collector-assignments';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { Employee, VehicleName, ScrapYard } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -149,7 +149,9 @@ export default function CollectorAssignmentPage() {
   const createEmployeeMutation = useCreateEmployee();
   const updateEmployeeMutation = useUpdateEmployee();
   const createAssignmentMutation = useCreateCollectorAssignment();
+  const updateAssignmentMutation = useUpdateCollectorAssignment();
   const deleteAssignmentMutation = useDeleteCollectorAssignment();
+  const [selectedAssignment, setSelectedAssignment] = useState<CollectorAssignment | undefined>();
 
   const collectors = useMemo(() => {
     return employeesData?.data?.employees || [];
@@ -162,8 +164,9 @@ export default function CollectorAssignmentPage() {
 
   const scrapYards = useMemo(() => {
     const apiResponse = scrapYardsData as any;
-    const yards = apiResponse?.data || apiResponse?.data?.scrapYards || [];
-    return yards;
+    // The API returns { data: { scrapYards: [...] } }
+    // So we need to access apiResponse.data.scrapYards
+    return apiResponse?.data?.scrapYards || [];
   }, [scrapYardsData]) as ScrapYard[];
 
   const assignments = useMemo(() => {
@@ -194,22 +197,46 @@ export default function CollectorAssignmentPage() {
     setIsAssignmentFormOpen(true);
   };
 
+  const handleEditAssignment = (assignment: CollectorAssignment) => {
+    setSelectedAssignment(assignment);
+    setSelectedCollector(assignment.collector);
+    setIsAssignmentFormOpen(true);
+  };
+
+
   const handleAssignmentSubmit = async (formData: { collectorId?: string; vehicleNameId?: string; scrapYardId?: string }) => {
-    const collectorId = formData.collectorId || selectedCollector?.id;
-    if (!collectorId || !user?.organizationId) return;
+    // If editing, use existing collector ID or form data
+    const collectorId = formData.collectorId || selectedCollector?.id || selectedAssignment?.collectorId;
+
+    if (!collectorId || !user?.organizationId) {
+      toast.error('Missing collector information');
+      return;
+    }
 
     try {
-      await createAssignmentMutation.mutateAsync({
-        collectorId,
-        vehicleNameId: formData.vehicleNameId || undefined,
-        scrapYardId: formData.scrapYardId || undefined,
-      });
-      toast.success('Collector assigned successfully');
+      if (selectedAssignment) {
+        await updateAssignmentMutation.mutateAsync({
+          id: selectedAssignment.id,
+          data: {
+            vehicleNameId: (formData.vehicleNameId === 'none' ? null : (formData.vehicleNameId || null)) as any,
+            scrapYardId: (formData.scrapYardId === 'none' ? null : (formData.scrapYardId || null)) as any,
+          }
+        });
+        toast.success('Assignment updated successfully');
+      } else {
+        await createAssignmentMutation.mutateAsync({
+          collectorId,
+          vehicleNameId: formData.vehicleNameId === 'none' ? undefined : formData.vehicleNameId,
+          scrapYardId: formData.scrapYardId === 'none' ? undefined : formData.scrapYardId,
+        });
+        toast.success('Collector assigned successfully');
+      }
       setIsAssignmentFormOpen(false);
       setSelectedCollector(undefined);
+      setSelectedAssignment(undefined);
       refetchAssignments();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to assign collector');
+      toast.error(error?.response?.data?.message || 'Failed to save assignment');
     }
   };
 
@@ -443,7 +470,16 @@ export default function CollectorAssignmentPage() {
                             <StatusBadge isActive={assignment.isActive} />
                           </TableCell>
                           <TableCell>
-                            <div className="flex justify-end">
+                            <div className="flex justify-end items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditAssignment(assignment)}
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              >
+                                <Edit className="h-4 w-4 mr-1" />
+                                Edit
+                              </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -482,10 +518,10 @@ export default function CollectorAssignmentPage() {
       </Dialog>
 
       <Dialog open={isAssignmentFormOpen} onOpenChange={setIsAssignmentFormOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Assign Collector</DialogTitle>
-          </DialogHeader>
+        <DialogContent
+          className="w-[95vw] sm:max-w-[800px] bg-white border-0 shadow-2xl rounded-2xl p-0 flex flex-col [&>button]:hidden"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <AssignmentForm
             collector={selectedCollector}
             collectors={collectors}
@@ -863,6 +899,31 @@ function AssignmentForm({
   const [scrapYardId, setScrapYardId] = useState<string>('none');
   const availableScrapYards = Array.isArray(scrapYards) ? scrapYards : [];
 
+  // Auto-select scrap yard when collector changes
+  useEffect(() => {
+    if (collectorId && collectorId !== 'none') {
+      const selectedCol = collectors.find(c => c.id === collectorId);
+      if (selectedCol) {
+        // Check for scrapYardId or nested scrapYard object
+        const selectedScrapYardId = selectedCol.scrapYardId || (selectedCol as any).scrapYard?.id;
+        if (selectedScrapYardId) {
+          setScrapYardId(String(selectedScrapYardId));
+        } else {
+          setScrapYardId('none');
+        }
+      }
+    }
+  }, [collectorId, collectors]);
+
+  // If initial collector prop is provided, sync it
+  useEffect(() => {
+    if (collector) {
+      setCollectorId(collector.id);
+      const selectedScrapYardId = collector.scrapYardId || (collector as any).scrapYard?.id;
+      if (selectedScrapYardId) setScrapYardId(String(selectedScrapYardId));
+    }
+  }, [collector]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const resolvedCollectorId = collector?.id || (collectorId !== 'none' ? collectorId : undefined);
@@ -884,72 +945,120 @@ function AssignmentForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="collector">Collector</Label>
-        <Select
-          value={collector?.id || collectorId}
-          onValueChange={setCollectorId}
-          disabled={isLoading || !!collector}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select collector" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Select collector</SelectItem>
-            {collectors.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.fullName} - {c.phone}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <div className="flex flex-col h-full bg-white">
+      {/* Header */}
+      <div className="px-8 pt-8 pb-6 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Assign Resources
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Assign vehicle and work zone to collector
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isLoading}
+              className="h-12 px-6 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 font-medium transition-all"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isLoading}
+              className="h-12 px-8 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Assigning...
+                </>
+              ) : 'Confirm Assignment'}
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="vehicleName">Vehicle</Label>
-        <Select value={vehicleNameId} onValueChange={setVehicleNameId} disabled={isLoading}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select vehicle" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">None</SelectItem>
-            {vehicleNames.filter(vn => vn.isActive).map((vn) => (
-              <SelectItem key={vn.id} value={vn.id}>
-                {vn.name} ({vn.vehicleType?.name})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Content */}
+      <div className="p-8 space-y-8">
+        <div className="space-y-3">
+          <Label className="text-sm font-medium text-gray-700">Collector *</Label>
+          <div className="relative">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+              <User className="h-5 w-5 text-cyan-600" />
+            </div>
+            <Select
+              value={collectorId}
+              onValueChange={setCollectorId}
+              disabled={isLoading || !!collector}
+            >
+              <SelectTrigger className="pl-14 h-14 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all">
+                <SelectValue placeholder="Select collector" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Select collector</SelectItem>
+                {collectors.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.fullName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="scrapYard">Scrap Yard</Label>
-        <Select value={scrapYardId} onValueChange={setScrapYardId} disabled={isLoading}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select scrap yard" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">None</SelectItem>
-            {availableScrapYards
-              .filter((yard) => yard.isActive !== false)
-              .map((yard) => (
-                <SelectItem key={yard.id} value={yard.id}>
-                  {yard.yardName}
-                </SelectItem>
-              ))}
-          </SelectContent>
-        </Select>
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-gray-700">Vehicle</Label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+                <Car className="h-5 w-5 text-cyan-600" />
+              </div>
+              <Select value={vehicleNameId} onValueChange={setVehicleNameId} disabled={isLoading}>
+                <SelectTrigger className="pl-14 h-14 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all">
+                  <SelectValue placeholder="Select vehicle" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {vehicleNames.filter(vn => vn.isActive).map((vn) => (
+                    <SelectItem key={vn.id} value={vn.id}>
+                      {vn.name} ({vn.vehicleType?.name})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isLoading} className="bg-cyan-600 hover:bg-cyan-700">
-          Assign
-        </Button>
-      </DialogFooter>
-    </form>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-gray-700">Work Zone (Scrap Yard)</Label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+                <MapPin className="h-5 w-5 text-cyan-600" />
+              </div>
+              <Select value={scrapYardId} onValueChange={setScrapYardId} disabled={isLoading}>
+                <SelectTrigger className="pl-14 h-14 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all">
+                  <SelectValue placeholder="Select work zone" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {availableScrapYards
+                    .filter((yard) => yard.isActive !== false)
+                    .map((yard) => (
+                      <SelectItem key={yard.id} value={yard.id}>
+                        {yard.yardName}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
