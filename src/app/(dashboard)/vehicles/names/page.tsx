@@ -16,9 +16,10 @@ import { Label } from '@/components/ui/label';
 import { Pagination } from '@/components/ui/pagination';
 import { RowsPerPage } from '@/components/ui/rows-per-page';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, ChevronDown, ArrowUpDown, MoreHorizontal, Filter, X, Car, Building2, Shield } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, ChevronDown, ArrowUpDown, MoreHorizontal, Filter, X, Car, Building2, Shield, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { useAuthStore } from '@/lib/store/auth-store';
@@ -239,6 +240,10 @@ export default function VehicleNamesPage() {
     name: string;
     vehicleTypeId: number;
     isActive?: boolean;
+    vehicleNumber?: string;
+    make?: string;
+    model?: string;
+    year?: number;
   }) => {
     try {
       if (editingVehicleName) {
@@ -383,6 +388,10 @@ export default function VehicleNamesPage() {
                       </TableHead>
                       <TableHead>Vehicle Name</TableHead>
                       <TableHead>Vehicle Type</TableHead>
+                      <TableHead>Vehicle Number</TableHead>
+                      <TableHead>Make</TableHead>
+                      <TableHead>Model</TableHead>
+                      <TableHead>Year</TableHead>
 
                       <TableHead>Status</TableHead>
                       {/* <TableHead>Created</TableHead> */}
@@ -406,6 +415,10 @@ export default function VehicleNamesPage() {
                           </TableCell>
                           <TableCell className="font-medium text-gray-900">{vehicleName.name}</TableCell>
                           <TableCell className="text-gray-600">{vehicleName.vehicleType?.name || 'N/A'}</TableCell>
+                          <TableCell className="text-gray-600">{vehicleName.vehicleNumber || '-'}</TableCell>
+                          <TableCell className="text-gray-600">{vehicleName.make || '-'}</TableCell>
+                          <TableCell className="text-gray-600">{vehicleName.model || '-'}</TableCell>
+                          <TableCell className="text-gray-600">{vehicleName.year || '-'}</TableCell>
 
                           <TableCell>
                             <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
@@ -469,6 +482,18 @@ export default function VehicleNamesPage() {
                           <span className="text-gray-500">Type:</span>
                           <span>{vehicleName.vehicleType?.name || '-'}</span>
                         </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Number:</span>
+                          <span>{vehicleName.vehicleNumber || '-'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Make/Model:</span>
+                          <span>{vehicleName.make || '-'} / {vehicleName.model || '-'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Year:</span>
+                          <span>{vehicleName.year || '-'}</span>
+                        </div>
 
                       </div>
                       <div className="flex items-center justify-between text-sm text-muted-foreground border-t pt-2">
@@ -497,17 +522,63 @@ export default function VehicleNamesPage() {
       </Card>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingVehicleName ? 'Edit Vehicle Name' : 'Add Vehicle Name'}</DialogTitle>
+        <DialogContent
+          className="w-[95vw] sm:max-w-[800px] max-h-[95vh] bg-white border-0 shadow-2xl rounded-2xl p-0 flex flex-col [&>button]:hidden"
+          onInteractOutside={(e) => {
+            e.preventDefault();
+          }}
+          onPointerDownOutside={(e) => {
+            e.preventDefault();
+          }}
+        >
+          <DialogHeader className="px-8 pt-8 pb-6 border-b border-gray-200 flex-shrink-0">
+            <div className="flex items-start justify-between">
+              <div>
+                <DialogTitle className="text-2xl font-bold text-gray-900">
+                  {editingVehicleName ? 'Edit Vehicle Name' : 'Add Vehicle Name'}
+                </DialogTitle>
+                <p className="text-sm text-gray-600 mt-2">
+                  {editingVehicleName ? 'Update vehicle details' : 'Add a new vehicle to the fleet'}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => { setIsFormOpen(false); setEditingVehicleName(undefined); }}
+                  disabled={createVehicleNameMutation.isPending || updateVehicleNameMutation.isPending}
+                  className="h-10 px-4 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all hover:shadow-md"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  form="vehicle-name-form"
+                  disabled={createVehicleNameMutation.isPending || updateVehicleNameMutation.isPending}
+                  className="h-10 px-6 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95"
+                >
+                  {createVehicleNameMutation.isPending || updateVehicleNameMutation.isPending ? (
+                    <>
+                      <div className="mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      {editingVehicleName ? 'Updating...' : 'Creating...'}
+                    </>
+                  ) : (
+                    editingVehicleName ? 'Update' : 'Create'
+                  )}
+                </Button>
+              </div>
+            </div>
           </DialogHeader>
-          <VehicleNameForm
-            vehicleName={editingVehicleName}
-            vehicleTypes={vehicleTypes}
-            onSubmit={handleSubmit}
-            onCancel={() => { setIsFormOpen(false); setEditingVehicleName(undefined); }}
-            isLoading={createVehicleNameMutation.isPending || updateVehicleNameMutation.isPending}
-          />
+
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <VehicleNameForm
+              vehicleName={editingVehicleName}
+              vehicleTypes={vehicleTypes}
+              onSubmit={handleSubmit}
+              onCancel={() => { setIsFormOpen(false); setEditingVehicleName(undefined); }}
+              isLoading={createVehicleNameMutation.isPending || updateVehicleNameMutation.isPending}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>
@@ -517,21 +588,54 @@ export default function VehicleNamesPage() {
 function VehicleNameForm({
   vehicleName,
   vehicleTypes,
-
   onSubmit,
   onCancel,
   isLoading,
 }: {
   vehicleName?: VehicleName;
   vehicleTypes: VehicleType[];
-  onSubmit: (data: { name: string; vehicleTypeId: number; isActive?: boolean }) => void;
+  onSubmit: (data: {
+    name: string;
+    vehicleTypeId: number;
+    isActive?: boolean;
+    vehicleNumber?: string;
+    make?: string;
+    model?: string;
+    year?: number;
+  }) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }) {
   const [name, setName] = useState(vehicleName?.name || '');
   const [vehicleTypeId, setVehicleTypeId] = useState<string>(vehicleName?.vehicleTypeId.toString() || '');
-
   const [isActive, setIsActive] = useState(vehicleName?.isActive ?? true);
+
+  // New fields
+  const [vehicleNumber, setVehicleNumber] = useState(vehicleName?.vehicleNumber || '');
+  const [make, setMake] = useState(vehicleName?.make || '');
+  const [model, setModel] = useState(vehicleName?.model || '');
+  const [year, setYear] = useState<string>(vehicleName?.year?.toString() || new Date().getFullYear().toString());
+
+  // Update local state when vehicleName prop changes
+  useEffect(() => {
+    if (vehicleName) {
+      setName(vehicleName.name || '');
+      setVehicleTypeId(vehicleName.vehicleTypeId.toString() || '');
+      setIsActive(vehicleName.isActive ?? true);
+      setVehicleNumber(vehicleName.vehicleNumber || '');
+      setMake(vehicleName.make || '');
+      setModel(vehicleName.model || '');
+      setYear(vehicleName.year?.toString() || new Date().getFullYear().toString());
+    } else {
+      setName('');
+      setVehicleTypeId('');
+      setIsActive(true);
+      setVehicleNumber('');
+      setMake('');
+      setModel('');
+      setYear(new Date().getFullYear().toString());
+    }
+  }, [vehicleName]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -543,74 +647,117 @@ function VehicleNameForm({
       name,
       vehicleTypeId: parseInt(vehicleTypeId),
       isActive,
+      vehicleNumber: vehicleNumber || undefined,
+      make: make || undefined,
+      model: model || undefined,
+      year: year ? parseInt(year) : undefined,
     });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="name">Vehicle Name *</Label>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g., Toyota Camry"
-          required
-          disabled={isLoading}
-        />
+    <form id="vehicle-name-form" onSubmit={handleSubmit} className="px-8 pb-8 space-y-6 pt-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Left Column */}
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-sm font-medium text-gray-700">Vehicle Name *</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., Toyota Camry"
+              required
+              disabled={isLoading}
+              className="h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="vehicleType" className="text-sm font-medium text-gray-700">Vehicle Type *</Label>
+            <Select value={vehicleTypeId} onValueChange={setVehicleTypeId} required disabled={isLoading}>
+              <SelectTrigger className="h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all">
+                <SelectValue placeholder="Select vehicle type" />
+              </SelectTrigger>
+              <SelectContent>
+                {vehicleTypes.filter(vt => vt.isActive).map((vt) => (
+                  <SelectItem key={vt.id} value={vt.id.toString()}>
+                    {vt.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="vehicleNumber" className="text-sm font-medium text-gray-700">Vehicle Number</Label>
+            <Input
+              id="vehicleNumber"
+              value={vehicleNumber}
+              onChange={(e) => setVehicleNumber(e.target.value)}
+              placeholder="e.g., KA-01-AB-1234"
+              disabled={isLoading}
+              className="h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="make" className="text-sm font-medium text-gray-700">Make</Label>
+              <Input
+                id="make"
+                value={make}
+                onChange={(e) => setMake(e.target.value)}
+                placeholder="e.g., Toyota"
+                disabled={isLoading}
+                className="h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="model" className="text-sm font-medium text-gray-700">Model</Label>
+              <Input
+                id="model"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                placeholder="e.g., Camry"
+                disabled={isLoading}
+                className="h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="year" className="text-sm font-medium text-gray-700">Year</Label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                id="year"
+                type="number"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                placeholder="YYYY"
+                disabled={isLoading}
+                className="pl-10 h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-gray-50 mt-2">
+            <div className="space-y-0.5">
+              <Label htmlFor="isActive" className="text-base font-medium text-gray-900">Active Status</Label>
+              <p className="text-sm text-gray-500">Enable or disable this vehicle</p>
+            </div>
+            <Switch
+              id="isActive"
+              checked={isActive}
+              onCheckedChange={(checked: boolean) => setIsActive(checked)}
+              disabled={isLoading}
+            />
+          </div>
+        </div>
       </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="vehicleType">Vehicle Type *</Label>
-        <Select value={vehicleTypeId} onValueChange={setVehicleTypeId} required disabled={isLoading}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select vehicle type" />
-          </SelectTrigger>
-          <SelectContent>
-            {vehicleTypes.filter(vt => vt.isActive).map((vt) => (
-              <SelectItem key={vt.id} value={vt.id.toString()}>
-                {vt.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-
-
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="isActive"
-          checked={isActive}
-          onCheckedChange={(c) => setIsActive(c as boolean)}
-          disabled={isLoading}
-        />
-        <Label htmlFor="isActive">Active</Label>
-      </div>
-
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          variant="outline"
-          className="relative overflow-hidden group h-12 px-8 rounded-xl border-2 border-cyan-500 text-cyan-600 hover:bg-white hover:text-cyan-700 hover:border-cyan-400 font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 active:scale-95 bg-white backdrop-blur-sm"
-        >
-          <span className="absolute inset-0 w-full h-full -translate-x-full group-hover:animate-shimmer bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent z-0 skew-x-12" />
-          <span className="relative z-10 flex items-center gap-2">
-            {isLoading ? (
-              <>
-                <div className="mr-2 h-5 w-5 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin" />
-                {vehicleName ? 'Updating...' : 'Creating...'}
-              </>
-            ) : (
-              vehicleName ? 'Update' : 'Create'
-            )}
-          </span>
-        </Button>
-      </DialogFooter>
     </form>
   );
 }

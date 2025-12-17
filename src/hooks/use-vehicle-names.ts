@@ -50,6 +50,10 @@ export const useCreateVehicleName = () => {
       vehicleTypeId: number;
       scrapYardId?: string;
       isActive?: boolean;
+      vehicleNumber?: string;
+      make?: string;
+      model?: string;
+      year?: number;
     }) => vehicleNamesApi.createVehicleName({
       ...vehicleNameData,
       organizationId: organizationId!,
