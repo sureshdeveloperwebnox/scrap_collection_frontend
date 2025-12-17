@@ -74,7 +74,7 @@ export const useCreateScrapYard = () => {
   const { addScrapYardToCache } = useScrapYardsStore();
 
   return useMutation({
-    mutationFn: (yardData: Omit<ScrapYard, 'id' | 'createdAt' | 'updatedAt'>) =>
+    mutationFn: (yardData: Omit<ScrapYard, 'id' | 'createdAt' | 'updatedAt'> & { managerId?: string }) =>
       scrapYardsApi.createScrapYard(yardData),
     onMutate: async (newYardData) => {
       // Cancel any outgoing refetches

@@ -22,7 +22,7 @@ export const scrapYardsApi = {
   },
 
   // Create new scrap yard
-  createScrapYard: async (yardData: Omit<ScrapYard, 'id' | 'createdAt' | 'updatedAt'>): Promise<ScrapYard> => {
+  createScrapYard: async (yardData: Omit<ScrapYard, 'id' | 'createdAt' | 'updatedAt'> & { managerId?: string }): Promise<ScrapYard> => {
     const response = await apiClient.post('/scrap-yards', yardData);
     return response.data;
   },

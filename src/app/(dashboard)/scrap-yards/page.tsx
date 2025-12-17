@@ -322,31 +322,44 @@ export default function ScrapYardsPage() {
                               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-50">
                                 <Building2 className="h-4 w-4 text-cyan-600" />
                               </div>
-                              <div className="flex flex-col">
-                                <span className="font-semibold text-gray-900">
-                                  {yard.yardName}
-                                </span>
-                                {yard.address && (
-                                  <span className="text-xs text-gray-500 line-clamp-1">
-                                    {yard.address}
-                                  </span>
-                                )}
-                              </div>
+                              <span className="font-semibold text-gray-900">
+                                {yard.yardName}
+                              </span>
                             </div>
                           </TableCell>
                           <TableCell>
-                            {yard.latitude && yard.longitude &&
-                              yard.latitude !== 0 && yard.longitude !== 0 ? (
-                              <button
-                                onClick={() => handleLocationClick(yard)}
-                                className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-                              >
-                                <MapPin className="h-4 w-4 mr-1" />
-                                <span>View on Map</span>
-                              </button>
-                            ) : (
-                              <span className="text-gray-400 text-sm">Not set</span>
-                            )}
+                            <div className="flex flex-col gap-1 max-w-[250px]">
+                              {yard.address ? (
+                                <span className="text-sm text-gray-700 truncate" title={yard.address}>
+                                  {yard.address}
+                                </span>
+                              ) : (
+                                <span className="text-sm text-gray-400 italic">No address</span>
+                              )}
+
+                              {yard.latitude && yard.longitude &&
+                                yard.latitude !== 0 && yard.longitude !== 0 ? (
+                                <button
+                                  onClick={() => handleLocationClick(yard)}
+                                  className="flex items-center text-xs text-blue-600 hover:text-blue-800 hover:underline cursor-pointer w-fit"
+                                >
+                                  <MapPin className="h-3 w-3 mr-1" />
+                                  <span>View on Map</span>
+                                </button>
+                              ) : yard.address ? (
+                                <a
+                                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(yard.address)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center text-xs text-blue-600 hover:text-blue-800 hover:underline cursor-pointer w-fit"
+                                >
+                                  <MapPin className="h-3 w-3 mr-1" />
+                                  <span>View on Google Maps</span>
+                                </a>
+                              ) : (
+                                <span className="text-sm text-gray-400 italic">Not set</span>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>
                             {manager ? (

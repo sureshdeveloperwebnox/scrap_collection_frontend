@@ -132,6 +132,7 @@ export interface ScrapYard {
   latitude?: number;
   longitude?: number;
   assignedEmployeeIds?: string[];
+  managerId?: string;
   operatingHours?: {
     [key: string]: {
       open: string;
