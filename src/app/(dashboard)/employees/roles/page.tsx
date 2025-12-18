@@ -14,12 +14,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Pagination } from '@/components/ui/pagination';
 import { RowsPerPage } from '@/components/ui/rows-per-page';
 import { toast } from 'sonner';
-import { Plus, Search, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, MoreVertical, AlertCircle, Shield, X, Filter, Check, Loader2, Truck } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, AlertCircle, Shield, X, Filter, Check, Loader2, Truck, Users } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -331,8 +332,8 @@ export default function RolesPage() {
                   </TableHeader>
                   <TableBody>
                     {roles.map((role) => (
-                      <tr key={role.id} className="group hover:bg-cyan-50/30 transition-all duration-200 border-b border-gray-50 last:border-0">
-                        <td className="p-4 pl-6">
+                      <TableRow key={role.id} className="group hover:bg-cyan-50/30 transition-all duration-200 border-b border-gray-50 last:border-0 border-t-0">
+                        <TableCell className="p-4 pl-6">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-sm border border-white">
                               <Shield className="h-5 w-5 text-gray-600" />
@@ -341,19 +342,19 @@ export default function RolesPage() {
                               {role.name}
                             </span>
                           </div>
-                        </td>
-                        <td className="p-4 text-sm text-gray-500 font-medium italic">
+                        </TableCell>
+                        <TableCell className="p-4 text-sm text-gray-500 font-medium italic">
                           {role.description || 'Global administrative access'}
-                        </td>
-                        <td className="p-4">
+                        </TableCell>
+                        <TableCell className="p-4">
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center">
-                              <MoreVertical className="h-4 w-4 text-cyan-600" />
+                            <div className="w-8 h-8 rounded-lg bg-cyan-100/50 flex items-center justify-center">
+                              <Users className="h-4 w-4 text-cyan-600" />
                             </div>
                             <span className="text-sm font-bold text-gray-700">{role._count?.employees || 0} Members</span>
                           </div>
-                        </td>
-                        <td className="p-4">
+                        </TableCell>
+                        <TableCell className="p-4">
                           <div
                             onClick={() => handleToggleStatus(role)}
                             className={cn(
@@ -366,28 +367,34 @@ export default function RolesPage() {
                             <div className={cn("w-2 h-2 rounded-full", role.isActive ? "bg-green-500 animate-pulse" : "bg-gray-400")} />
                             {role.isActive ? 'AUTHORIZED' : 'DEACTIVATED'}
                           </div>
-                        </td>
-                        <td className="p-4 pr-6 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEdit(role)}
-                              className="h-9 w-9 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-all"
-                            >
-                              <Edit2 className="h-4.5 w-4.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(role.id.toString())}
-                              className="h-9 w-9 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                            >
-                              <Trash2 className="h-4.5 w-4.5" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                        <TableCell className="p-4 pr-6 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-all duration-200">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48 p-2 rounded-xl shadow-2xl border-gray-100">
+                              <DropdownMenuItem
+                                onClick={() => handleEdit(role)}
+                                className="rounded-lg py-2.5 cursor-pointer"
+                              >
+                                <Edit2 className="mr-2 h-4 w-4 text-cyan-500" />
+                                <span>Edit Role</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(role.id.toString())}
+                                className="rounded-lg py-2.5 cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>Delete Role</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
                     ))}
                   </TableBody>
                 </Table>
