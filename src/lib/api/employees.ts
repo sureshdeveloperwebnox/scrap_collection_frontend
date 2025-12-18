@@ -66,4 +66,22 @@ export const employeesApi = {
     const response = await apiClient.get(`/employees/${id}/performance`);
     return response.data;
   },
+
+  // Get employee statistics
+  getEmployeeStats: async (): Promise<{ data: any }> => {
+    const response = await apiClient.get('/employees/stats');
+    return response.data;
+  },
+
+  // Get employees by role name
+  getEmployeesByRole: async (role: string): Promise<{ data: { employees: Employee[], pagination: any } }> => {
+    const response = await apiClient.get('/employees', { params: { role } });
+    return response.data;
+  },
+
+  // Toggle employee status
+  toggleEmployeeStatus: async (id: string): Promise<{ data: Employee }> => {
+    const response = await apiClient.put(`/employees/${id}/toggle-status`);
+    return response.data;
+  },
 };

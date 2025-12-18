@@ -8,8 +8,9 @@ export const useEmployees = (params?: {
   page?: number;
   limit?: number;
   search?: string;
+  roleId?: number;
   role?: string;
-  status?: string;
+  isActive?: boolean;
   workZone?: string;
 }) => {
   return useQuery({
@@ -51,28 +52,23 @@ export const useCreateEmployee = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (employeeData: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>) => 
+    mutationFn: (employeeData: any) =>
       employeesApi.createEmployee(employeeData),
-    onSuccess: (newEmployee) => {
+    onSuccess: (response) => {
+      const newEmployee = response.data;
       // Invalidate employees list
       queryClient.invalidateQueries({ queryKey: queryKeys.employees.lists() });
-      
+
       // Add new employee to cache
       queryClient.setQueryData(queryKeys.employees.detail(newEmployee.id), newEmployee);
-      
+
       // Update stats
       queryClient.invalidateQueries({ queryKey: queryKeys.employees.stats() });
-      
+
       // Update role-specific lists
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.employees.byRole(newEmployee.role) 
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.employees.byRole(newEmployee.role)
       });
-      
-      // Update dashboard if collector
-      if (newEmployee.role === 'collector') {
-        queryClient.invalidateQueries({ queryKey: queryKeys.collectors.stats() });
-        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats() });
-      }
     },
   });
 };
@@ -82,26 +78,21 @@ export const useUpdateEmployee = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Employee> }) => 
+    mutationFn: ({ id, data }: { id: string; data: Partial<Employee & { password?: string; roleId?: number; cityId?: number | null }> }) =>
       employeesApi.updateEmployee(id, data),
-    onSuccess: (updatedEmployee) => {
+    onSuccess: (response) => {
+      const updatedEmployee = response.data;
       // Update employee in cache
       queryClient.setQueryData(queryKeys.employees.detail(updatedEmployee.id), updatedEmployee);
-      
+
       // Invalidate lists
       queryClient.invalidateQueries({ queryKey: queryKeys.employees.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.employees.stats() });
-      
+
       // Update role-specific lists
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.employees.byRole(updatedEmployee.role) 
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.employees.byRole(updatedEmployee.role)
       });
-      
-      // Update collector data if role is collector
-      if (updatedEmployee.role === 'collector') {
-        queryClient.invalidateQueries({ queryKey: queryKeys.collectors.lists() });
-        queryClient.invalidateQueries({ queryKey: queryKeys.collectors.stats() });
-      }
     },
   });
 };
@@ -115,14 +106,10 @@ export const useDeleteEmployee = () => {
     onSuccess: (_, deletedId) => {
       // Remove from cache
       queryClient.removeQueries({ queryKey: queryKeys.employees.detail(deletedId) });
-      
+
       // Invalidate lists
       queryClient.invalidateQueries({ queryKey: queryKeys.employees.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.employees.stats() });
-      
-      // Update collector stats if applicable
-      queryClient.invalidateQueries({ queryKey: queryKeys.collectors.stats() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats() });
     },
   });
 };
@@ -133,20 +120,19 @@ export const useToggleEmployeeStatus = () => {
 
   return useMutation({
     mutationFn: (id: string) => employeesApi.toggleEmployeeStatus(id),
-    onSuccess: (updatedEmployee) => {
+    onSuccess: (response) => {
+      const updatedEmployee = response.data;
       // Update employee in cache
       queryClient.setQueryData(queryKeys.employees.detail(updatedEmployee.id), updatedEmployee);
-      
+
       // Invalidate lists
       queryClient.invalidateQueries({ queryKey: queryKeys.employees.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.employees.stats() });
-      
-      // Update collector data if role is collector
-      if (updatedEmployee.role === 'collector') {
-        queryClient.invalidateQueries({ queryKey: queryKeys.collectors.lists() });
-        queryClient.invalidateQueries({ queryKey: queryKeys.collectors.stats() });
-        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats() });
-      }
+
+      // Update role-specific lists
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.employees.byRole(updatedEmployee.role)
+      });
     },
   });
 };

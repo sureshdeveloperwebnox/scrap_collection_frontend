@@ -7,15 +7,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EmployeeForm } from '@/components/employee-form';
 import { Employee } from '@/types';
-import { Plus, Search, Edit2, Trash2, Loader2, Filter, X, Shield, UserCheck, UserX, User, ChevronDown, Phone } from 'lucide-react';
+import {
+  Plus, Search, Edit2, Trash2, Loader2, Filter, X,
+  Shield, UserCheck, UserX, User, ChevronDown, Phone, MoreHorizontal, Eye, UserPlus
+} from 'lucide-react';
 import { useEmployees, useDeleteEmployee, useUpdateEmployee } from '@/hooks/use-employees';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Pagination } from '@/components/ui/pagination';
 import { RowsPerPage } from '@/components/ui/rows-per-page';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 
 // Dynamically import Lottie for better performance
@@ -75,15 +86,33 @@ function NoDataAnimation() {
   );
 }
 
-// Reusable Avatar Component
+// Employee Avatar Component
 function EmployeeAvatar({ name, className = '' }: { name: string; className?: string }) {
   const firstLetter = (name || 'U').charAt(0).toUpperCase();
   return (
-    <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-300 ${className}`}>
+    <div className={cn(
+      "w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-300",
+      className
+    )}>
       <span className="text-white font-semibold leading-none text-sm">
         {firstLetter}
       </span>
     </div>
+  );
+}
+
+// Status Badge Component
+function StatusBadge({ status, showDropdownIcon = false }: { status: string; showDropdownIcon?: boolean }) {
+  const isActive = status.toUpperCase() === 'ACTIVE';
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-300",
+      isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+    )}>
+      {isActive ? <UserCheck className="h-3 w-3" /> : <UserX className="h-3 w-3" />}
+      {status}
+      {showDropdownIcon && <ChevronDown className="h-3 w-3 ml-0.5 flex-shrink-0" />}
+    </span>
   );
 }
 
@@ -168,7 +197,7 @@ export default function EmployeesPage() {
       limit,
       search: debouncedSearchTerm || undefined,
       role: activeTab === 'All' ? undefined : activeTab.toLowerCase(),
-      status: statusFilter === 'ALL' ? undefined : (statusFilter === 'ACTIVE' ? 'true' : 'false')
+      isActive: statusFilter === 'ALL' ? undefined : statusFilter === 'ACTIVE'
     };
   }, [page, limit, debouncedSearchTerm, activeTab, statusFilter]);
 
@@ -210,15 +239,18 @@ export default function EmployeesPage() {
     }
   };
 
-  const toggleEmployeeStatus = async (employee: Employee) => {
+  const onInlineStatusChange = async (employee: Employee, value: string) => {
     try {
+      const newActiveStatus = value.toUpperCase() === 'ACTIVE';
+      if (employee.isActive === newActiveStatus) return;
+
       await updateEmployeeMutation.mutateAsync({
         id: employee.id,
-        data: { isActive: !employee.isActive }
+        data: { isActive: newActiveStatus }
       });
-      toast.success(`Employee ${employee.isActive ? 'deactivated' : 'activated'} successfully`);
+      toast.success(`Employee ${newActiveStatus ? 'activated' : 'deactivated'} successfully`);
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to update employee status';
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to update status';
       toast.error(errorMessage);
     }
   };
@@ -367,7 +399,7 @@ export default function EmployeesPage() {
           )}
         </CardHeader>
 
-        <CardContent className="p-6">
+        <CardContent className="p-0">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -487,59 +519,53 @@ export default function EmployeesPage() {
                               <span className="text-sm text-gray-600">{workZoneName}</span>
                             </TableCell>
                             <TableCell>
-                              <div
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${employee.isActive
-                                  ? 'bg-green-50 text-green-700 border-green-200'
-                                  : 'bg-red-50 text-red-700 border-red-200'
-                                  }`}
-                              >
-                                {employee.isActive ? (
-                                  <>
-                                    <UserCheck className="w-3 h-3" />
-                                    Active
-                                  </>
-                                ) : (
-                                  <>
-                                    <UserX className="w-3 h-3" />
-                                    Inactive
-                                  </>
-                                )}
+                              <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                                <Select
+                                  value={employee.isActive ? 'Active' : 'Inactive'}
+                                  onValueChange={(v) => onInlineStatusChange(employee, v)}
+                                >
+                                  <SelectTrigger className="h-auto w-auto p-0 border-0 bg-transparent hover:bg-transparent focus:ring-0 focus:ring-offset-0 shadow-none max-w-none min-w-0 overflow-visible">
+                                    <div className="flex items-center">
+                                      <StatusBadge status={employee.isActive ? 'Active' : 'Inactive'} showDropdownIcon={true} />
+                                    </div>
+                                  </SelectTrigger>
+                                  <SelectContent className="min-w-[120px] rounded-lg shadow-lg border border-gray-200 bg-white p-1">
+                                    {['Active', 'Inactive'].map((s) => (
+                                      <SelectItem key={s} value={s} className="cursor-pointer rounded-md px-3 py-2 text-sm hover:bg-gray-100">
+                                        {s}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
                               </div>
                             </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => {
-                                    setEditingEmployee(employee);
-                                    setIsFormOpen(true);
-                                  }}
-                                  className="h-8 w-8 text-gray-500 hover:text-cyan-600 hover:bg-cyan-50"
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => toggleEmployeeStatus(employee)}
-                                  className={`h-8 w-8 ${employee.isActive
-                                    ? 'text-gray-500 hover:text-red-600 hover:bg-red-50'
-                                    : 'text-gray-500 hover:text-green-600 hover:bg-green-50'
-                                    }`}
-                                  title={employee.isActive ? 'Deactivate' : 'Activate'}
-                                >
-                                  {employee.isActive ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDeleteEmployee(employee.id)}
-                                  className="h-8 w-8 text-gray-500 hover:text-red-600 hover:bg-red-50"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-cyan-600">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-40">
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setEditingEmployee(employee);
+                                      setIsFormOpen(true);
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    <Edit2 className="mr-2 h-4 w-4 text-cyan-600" />
+                                    <span>Edit</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleDeleteEmployee(employee.id)}
+                                    className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    <span>Delete</span>
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </TableCell>
                           </TableRow>
                         )
@@ -549,16 +575,23 @@ export default function EmployeesPage() {
                 </Table>
               </div>
               {/* Pagination */}
-              {employees.length > 0 && (
-                <div className="flex items-center justify-between mt-4">
-                  <RowsPerPage value={limit} onChange={setLimit} />
-                  <Pagination
-                    currentPage={pagination.page}
-                    totalPages={pagination.totalPages}
-                    onPageChange={setPage}
-                  />
+              <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/50">
+                <RowsPerPage
+                  value={limit}
+                  onChange={(value) => { setLimit(value); setPage(1); }}
+                  options={[5, 10, 20, 50]}
+                />
+                <div className="text-xs text-gray-500 font-medium">
+                  Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
+                  {pagination.total} employees
                 </div>
-              )}
+                <Pagination
+                  currentPage={pagination.page}
+                  totalPages={pagination.totalPages}
+                  onPageChange={(p) => setPage(p)}
+                />
+              </div>
             </>
           )}
         </CardContent>
