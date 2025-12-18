@@ -456,12 +456,12 @@ export default function EmployeesPage() {
                           className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
                         />
                       </TableHead>
-                      <TableHead>Employee</TableHead>
-                      <TableHead>Contact</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Work Zone</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Action</TableHead>
+                      <TableHead className="font-semibold text-gray-900 text-sm py-4">Employee</TableHead>
+                      <TableHead className="font-semibold text-gray-900 text-sm py-4">Contact</TableHead>
+                      <TableHead className="font-semibold text-gray-900 text-sm py-4">Role</TableHead>
+                      <TableHead className="font-semibold text-gray-900 text-sm py-4">Work Zone</TableHead>
+                      <TableHead className="font-semibold text-gray-900 text-sm py-4">Status</TableHead>
+                      <TableHead className="text-right pr-6 font-semibold text-gray-900 text-sm py-4">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

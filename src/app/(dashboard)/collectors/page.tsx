@@ -9,7 +9,7 @@ import { useCrews, useCreateCrew, useUpdateCrew, useDeleteCrew } from '@/hooks/u
 import { useAuthStore } from '@/lib/store/auth-store';
 import { Employee, VehicleName, ScrapYard, Crew } from '@/types';
 import {
-  Plus, Search, Edit2, Trash2, MoreVertical, UserPlus, Car, MapPin, Truck, CheckCircle2, Shield, Edit, User, Mail, Phone, Lock, X, Eye, EyeOff, Users, ChevronDown, UserCheck, UserX, AlertCircle, Info, Filter
+  Plus, Search, Edit2, Trash2, MoreHorizontal, UserPlus, Car, MapPin, Truck, CheckCircle2, Shield, Edit, User, Mail, Phone, Lock, X, Eye, EyeOff, Users, ChevronDown, UserCheck, UserX, AlertCircle, Info, Filter
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -319,6 +319,38 @@ export default function CollectorAssignmentPage() {
         data: { isActive: newActiveStatus }
       });
       toast.success(`Collector ${newActiveStatus ? 'activated' : 'deactivated'} successfully`);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to update status');
+    }
+  };
+
+  const onInlineCrewStatusChange = async (crew: Crew, value: string) => {
+    try {
+      const newActiveStatus = value.toUpperCase() === 'ACTIVE';
+      if (crew.isActive === newActiveStatus) return;
+
+      await updateCrewMutation.mutateAsync({
+        id: crew.id,
+        data: { isActive: newActiveStatus }
+      });
+      toast.success(`Crew ${newActiveStatus ? 'activated' : 'deactivated'} successfully`);
+      refetchCrews();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to update status');
+    }
+  };
+
+  const onInlineAssignmentStatusChange = async (assignment: any, value: string) => {
+    try {
+      const newActiveStatus = value.toUpperCase() === 'ACTIVE';
+      if (assignment.isActive === newActiveStatus) return;
+
+      await updateAssignmentMutation.mutateAsync({
+        id: assignment.id,
+        data: { isActive: newActiveStatus }
+      });
+      toast.success(`Assignment ${newActiveStatus ? 'activated' : 'deactivated'} successfully`);
+      refetchAssignments();
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to update status');
     }
@@ -637,10 +669,10 @@ export default function CollectorAssignmentPage() {
                               className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
                             />
                           </TableHead>
-                          <TableHead className="font-semibold text-gray-600 uppercase text-[11px] tracking-wider">Collector</TableHead>
-                          <TableHead className="font-semibold text-gray-600 uppercase text-[11px] tracking-wider">Contact</TableHead>
-                          <TableHead className="font-semibold text-gray-600 uppercase text-[11px] tracking-wider">Status</TableHead>
-                          <TableHead className="text-right pr-6 font-semibold text-gray-600 uppercase text-[11px] tracking-wider">Actions</TableHead>
+                          <TableHead className="font-semibold text-gray-900 text-sm py-4">Collector</TableHead>
+                          <TableHead className="font-semibold text-gray-900 text-sm py-4">Contact</TableHead>
+                          <TableHead className="font-semibold text-gray-900 text-sm py-4">Status</TableHead>
+                          <TableHead className="text-right pr-6 font-semibold text-gray-900 text-sm py-4">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -657,7 +689,7 @@ export default function CollectorAssignmentPage() {
                               <div className="flex items-center gap-3">
                                 <CollectorAvatar name={collector.fullName} />
                                 <div className="flex flex-col">
-                                  <span className="font-bold text-gray-900 group-hover:text-cyan-700 transition-colors uppercase tracking-tight text-sm">
+                                  <span className="font-semibold text-gray-900 group-hover:text-cyan-700 transition-colors text-sm">
                                     {collector.fullName}
                                   </span>
                                   <span className="text-[11px] text-gray-400 font-medium">COL-ID: {collector.id.slice(0, 8)}</span>
@@ -701,7 +733,7 @@ export default function CollectorAssignmentPage() {
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon" className="h-9 w-9 opacity-0 group-hover:opacity-100 transition-all duration-200 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg">
-                                    <MoreVertical className="h-5 w-5" />
+                                    <MoreHorizontal className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-48 p-2 rounded-xl shadow-2xl border-gray-100">
@@ -778,11 +810,11 @@ export default function CollectorAssignmentPage() {
                     <Table>
                       <TableHeader className="bg-gray-50/50">
                         <TableRow className="border-b-0">
-                          <TableHead className="pl-6 font-semibold text-gray-600 uppercase text-[11px] tracking-wider">Resource</TableHead>
-                          <TableHead className="font-semibold text-gray-600 uppercase text-[11px] tracking-wider">Vehicle</TableHead>
-                          <TableHead className="font-semibold text-gray-600 uppercase text-[11px] tracking-wider">Scrap Yard</TableHead>
-                          <TableHead className="font-semibold text-gray-600 uppercase text-[11px] tracking-wider">Status</TableHead>
-                          <TableHead className="text-right pr-6 font-semibold text-gray-600 uppercase text-[11px] tracking-wider">Control</TableHead>
+                          <TableHead className="pl-6 font-semibold text-gray-900 text-sm py-4">Resource</TableHead>
+                          <TableHead className="font-semibold text-gray-900 text-sm py-4">Vehicle</TableHead>
+                          <TableHead className="font-semibold text-gray-900 text-sm py-4">Scrap Yard</TableHead>
+                          <TableHead className="font-semibold text-gray-900 text-sm py-4">Status</TableHead>
+                          <TableHead className="text-right pr-6 font-semibold text-gray-900 text-sm py-4">Control</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -795,10 +827,10 @@ export default function CollectorAssignmentPage() {
                                     <User className="h-4 w-4" />
                                   </div>
                                   <div className="flex flex-col">
-                                    <span className="font-bold text-gray-900 group-hover:text-cyan-700 uppercase tracking-tight text-sm">
+                                    <span className="font-semibold text-gray-900 group-hover:text-cyan-700 transition-colors text-sm">
                                       {assignment.collector.fullName}
                                     </span>
-                                    <span className="text-[10px] text-gray-400 font-bold bg-gray-100 px-1.5 py-0.5 rounded w-fit mt-0.5">COLLECTOR</span>
+                                    <span className="text-[10px] text-gray-400 font-semibold bg-gray-50 px-1.5 py-0.5 rounded w-fit mt-0.5">COLLECTOR</span>
                                   </div>
                                 </div>
                               ) : assignment.crew ? (
@@ -807,10 +839,10 @@ export default function CollectorAssignmentPage() {
                                     <Users className="h-4 w-4" />
                                   </div>
                                   <div className="flex flex-col">
-                                    <span className="font-bold text-purple-700 group-hover:text-purple-800 uppercase tracking-tight text-sm">
+                                    <span className="font-semibold text-purple-700 group-hover:text-purple-800 transition-colors text-sm">
                                       {assignment.crew.name}
                                     </span>
-                                    <span className="text-[10px] text-purple-400 font-bold bg-purple-50 px-1.5 py-0.5 rounded w-fit mt-0.5 text-center">CREW</span>
+                                    <span className="text-[10px] text-purple-400 font-semibold bg-purple-50 px-1.5 py-0.5 rounded w-fit mt-0.5 text-center">CREW</span>
                                   </div>
                                 </div>
                               ) : (
@@ -821,10 +853,10 @@ export default function CollectorAssignmentPage() {
                               {assignment.vehicleName ? (
                                 <div className="flex items-center gap-2">
                                   <div className="p-1.5 bg-blue-50 rounded-lg text-blue-600 border border-blue-100 shadow-sm">
-                                    <Car className="h-3.5 w-3.5" />
+                                    <Truck className="h-3.5 w-3.5" />
                                   </div>
                                   <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-gray-700 uppercase tracking-tight">{assignment.vehicleName.name}</span>
+                                    <span className="text-sm font-semibold text-gray-700">{assignment.vehicleName.name}</span>
                                     {assignment.vehicleName.vehicleType && (
                                       <span className="text-[10px] text-gray-400 font-medium">{assignment.vehicleName.vehicleType.name}</span>
                                     )}
@@ -841,7 +873,7 @@ export default function CollectorAssignmentPage() {
                                     <MapPin className="h-3.5 w-3.5" />
                                   </div>
                                   <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-gray-700 uppercase tracking-tight">{assignment.scrapYard.yardName}</span>
+                                    <span className="text-sm font-semibold text-gray-700">{assignment.scrapYard.yardName}</span>
                                     {assignment.scrapYard.address && (
                                       <span className="text-[10px] text-gray-400 font-medium truncate max-w-[120px]">{assignment.scrapYard.address}</span>
                                     )}
@@ -852,30 +884,51 @@ export default function CollectorAssignmentPage() {
                               )}
                             </TableCell>
                             <TableCell>
-                              <StatusBadge status={assignment.isActive ? 'Active' : 'Inactive'} />
+                              <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                                <Select
+                                  value={assignment.isActive ? 'Active' : 'Inactive'}
+                                  onValueChange={(v) => onInlineAssignmentStatusChange(assignment, v)}
+                                >
+                                  <SelectTrigger className="h-auto w-auto p-0 border-0 bg-transparent hover:bg-transparent focus:ring-0 focus:ring-offset-0 shadow-none max-w-none min-w-0 overflow-visible group">
+                                    <div className="flex items-center">
+                                      <StatusBadge status={assignment.isActive ? 'Active' : 'Inactive'} showDropdownIcon={true} />
+                                    </div>
+                                  </SelectTrigger>
+                                  <SelectContent className="min-w-[120px] rounded-xl shadow-2xl border-gray-100 bg-white p-1">
+                                    {['Active', 'Inactive'].map((s) => (
+                                      <SelectItem key={s} value={s} className="cursor-pointer rounded-lg px-3 py-2 text-sm hover:bg-gray-50 focus:bg-cyan-50 focus:text-cyan-700 transition-colors">
+                                        {s}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </TableCell>
                             <TableCell className="text-right pr-6">
-                              <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditAssignment(assignment)}
-                                  className="h-8 group/btn text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-lg px-2"
-                                >
-                                  <Edit className="h-3.5 w-3.5 mr-1.5 transition-transform group-hover/btn:scale-110" />
-                                  <span className="text-[11px] font-bold uppercase">Update</span>
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRemoveAssignment(assignment.id)}
-                                  className="h-8 group/btn text-red-500 hover:text-red-700 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-lg px-2"
-                                  disabled={deleteAssignmentMutation.isPending}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5 mr-1.5 transition-transform group-hover/btn:rotate-12" />
-                                  <span className="text-[11px] font-bold uppercase">Nullify</span>
-                                </Button>
-                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-9 w-9 opacity-0 group-hover:opacity-100 transition-all duration-200 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48 p-2 rounded-xl shadow-2xl border-gray-100">
+                                  <DropdownMenuItem
+                                    onClick={() => handleEditAssignment(assignment)}
+                                    className="rounded-lg py-2.5 cursor-pointer"
+                                  >
+                                    <Edit2 className="mr-2 h-4 w-4 text-cyan-500" />
+                                    <span>Update Assignment</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => handleRemoveAssignment(assignment.id)}
+                                    className="rounded-lg py-2.5 cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    <span>Nullify Assignment</span>
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -919,10 +972,10 @@ export default function CollectorAssignmentPage() {
                     <Table>
                       <TableHeader className="bg-gray-50/50">
                         <TableRow className="border-b-0">
-                          <TableHead className="pl-6 font-semibold text-gray-600 uppercase text-[11px] tracking-wider">Crew Detail</TableHead>
-                          <TableHead className="font-semibold text-gray-600 uppercase text-[11px] tracking-wider">Collective Members</TableHead>
-                          <TableHead className="font-semibold text-gray-600 uppercase text-[11px] tracking-wider">Status</TableHead>
-                          <TableHead className="text-right pr-6 font-semibold text-gray-600 uppercase text-[11px] tracking-wider">Operations</TableHead>
+                          <TableHead className="pl-6 font-semibold text-gray-900 text-sm py-4">Crew Detail</TableHead>
+                          <TableHead className="font-semibold text-gray-900 text-sm py-4">Collective Members</TableHead>
+                          <TableHead className="font-semibold text-gray-900 text-sm py-4">Status</TableHead>
+                          <TableHead className="text-right pr-6 font-semibold text-gray-900 text-sm py-4">Operations</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -934,7 +987,7 @@ export default function CollectorAssignmentPage() {
                                   <Users className="h-5 w-5" />
                                 </div>
                                 <div className="flex flex-col">
-                                  <span className="font-bold text-gray-900 group-hover:text-purple-700 transition-colors uppercase tracking-tight text-sm">{crew.name}</span>
+                                  <span className="font-semibold text-gray-900 group-hover:text-purple-700 transition-colors text-sm">{crew.name}</span>
                                   <span className="text-[11px] text-gray-400 font-medium line-clamp-1 max-w-[200px]">{crew.description || 'No description set'}</span>
                                 </div>
                               </div>
@@ -959,32 +1012,54 @@ export default function CollectorAssignmentPage() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <StatusBadge status={crew.isActive ? 'Active' : 'Inactive'} />
+                              <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                                <Select
+                                  value={crew.isActive ? 'Active' : 'Inactive'}
+                                  onValueChange={(v) => onInlineCrewStatusChange(crew, v)}
+                                >
+                                  <SelectTrigger className="h-auto w-auto p-0 border-0 bg-transparent hover:bg-transparent focus:ring-0 focus:ring-offset-0 shadow-none max-w-none min-w-0 overflow-visible group">
+                                    <div className="flex items-center">
+                                      <StatusBadge status={crew.isActive ? 'Active' : 'Inactive'} showDropdownIcon={true} />
+                                    </div>
+                                  </SelectTrigger>
+                                  <SelectContent className="min-w-[120px] rounded-xl shadow-2xl border-gray-100 bg-white p-1">
+                                    {['Active', 'Inactive'].map((s) => (
+                                      <SelectItem key={s} value={s} className="cursor-pointer rounded-lg px-3 py-2 text-sm hover:bg-gray-50 focus:bg-cyan-50 focus:text-cyan-700 transition-colors">
+                                        {s}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </TableCell>
                             <TableCell className="text-right pr-6">
-                              <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedCrew(crew);
-                                    setIsCrewFormOpen(true);
-                                  }}
-                                  className="h-8 group/btn text-purple-600 hover:text-purple-700 hover:bg-purple-50 border border-transparent hover:border-purple-100 rounded-lg px-2"
-                                >
-                                  <Edit2 className="h-3.5 w-3.5 mr-1.5 transition-transform group-hover/btn:scale-110" />
-                                  <span className="text-[11px] font-bold uppercase">Configure</span>
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRemoveCrew(crew.id)}
-                                  className="h-8 group/btn text-red-500 hover:text-red-700 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-lg px-2"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5 mr-1.5 transition-transform group-hover/btn:rotate-12" />
-                                  <span className="text-[11px] font-bold uppercase">Disband</span>
-                                </Button>
-                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-9 w-9 opacity-0 group-hover:opacity-100 transition-all duration-200 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48 p-2 rounded-xl shadow-2xl border-gray-100">
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setSelectedCrew(crew);
+                                      setIsCrewFormOpen(true);
+                                    }}
+                                    className="rounded-lg py-2.5 cursor-pointer"
+                                  >
+                                    <Edit2 className="mr-2 h-4 w-4 text-cyan-500" />
+                                    <span>Edit Crew</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => handleRemoveCrew(crew.id)}
+                                    className="rounded-lg py-2.5 cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    <span>Disband Crew</span>
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -1219,7 +1294,7 @@ function CollectorForm({
               variant="outline"
               onClick={onCancel}
               disabled={isLoading}
-              className="h-12 px-6 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-200 disabled:hover:text-gray-700"
+              className="h-12 px-6 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </Button>
@@ -1471,7 +1546,7 @@ function CrewForm({
               variant="outline"
               onClick={onCancel}
               disabled={isLoading}
-              className="h-12 px-6 rounded-xl border-gray-200 hover:bg-gray-50 transition-all font-medium"
+              className="h-12 px-6 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all"
             >
               Cancel
             </Button>
@@ -1655,7 +1730,7 @@ function AssignmentForm({
               variant="outline"
               onClick={onCancel}
               disabled={isLoading}
-              className="h-12 px-6 rounded-xl border-gray-200 hover:bg-gray-50 transition-all font-medium"
+              className="h-12 px-6 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all"
             >
               Cancel
             </Button>
@@ -1757,7 +1832,7 @@ function AssignmentForm({
           {/* Vehicle Assignment */}
           <div className="space-y-3">
             <Label className="text-sm font-bold text-gray-700 flex items-center gap-2 uppercase tracking-wider">
-              <Car className="h-3.5 w-3.5 text-blue-500" />
+              <Truck className="h-3.5 w-3.5 text-blue-500" />
               Vehicle Name
             </Label>
             <Select value={vehicleNameId} onValueChange={setVehicleNameId} disabled={isLoading}>

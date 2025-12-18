@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Pagination } from '@/components/ui/pagination';
 import { RowsPerPage } from '@/components/ui/rows-per-page';
 import { toast } from 'sonner';
-import { Plus, Search, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, MoreVertical, AlertCircle, Shield, X, Filter, Check } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown, MoreVertical, AlertCircle, Shield, X, Filter, Check, Loader2, Truck } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
 type SortKey = 'name' | 'isActive';
 
@@ -197,40 +199,73 @@ export default function RolesPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-white shadow-sm border border-gray-200 rounded-lg">
-        <CardHeader className="pb-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <CardTitle className="text-xl font-bold text-gray-900">Roles Management</CardTitle>
+      <Card className="bg-white shadow-xl shadow-gray-200/50 border border-gray-100 rounded-2xl overflow-hidden transition-all duration-300">
+        <CardHeader className="pb-4 bg-white">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="text-2xl font-bold bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text text-transparent">
+                System Access Roles
+              </CardTitle>
+              <p className="text-sm text-gray-500 mt-1">Configure permissions and organizational hierarchies</p>
+            </div>
 
-            <div className="flex items-center gap-2">
-              {/* Search Toggle */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsSearchOpen(!isSearchOpen)}
+                  className={cn(
+                    "h-9 px-3 rounded-lg transition-all",
+                    isSearchOpen ? "bg-white text-cyan-600 shadow-sm" : "text-gray-500 hover:text-gray-900"
+                  )}
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  <span className="text-sm font-medium">Search</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className={cn(
+                    "h-9 px-3 rounded-lg transition-all",
+                    isFilterOpen || isActiveFilter !== null ? "bg-white text-cyan-600 shadow-sm" : "text-gray-500 hover:text-gray-900"
+                  )}
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  <span className="text-sm font-medium">Filter</span>
+                  {isActiveFilter !== null && (
+                    <span className="ml-1.5 w-2 h-2 rounded-full bg-cyan-500" />
+                  )}
+                </Button>
+              </div>
+
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 active:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed h-9 w-9 p-0"
+                onClick={handleCreate}
+                className="bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white shadow-lg shadow-cyan-200 border-0 h-10 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-95"
               >
-                <Search className="h-4 w-4" />
+                <Plus className="h-4 w-4 mr-2" />
+                Add New Role
               </Button>
+            </div>
+          </div>
 
+          {(isSearchOpen || isFilterOpen) && (
+            <div className="mt-4 flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-50 animate-in slide-in-from-top-2 duration-200">
               {isSearchOpen && (
-                <div className="relative">
+                <div className="relative flex-1">
                   <Input
-                    type="text"
-                    placeholder="Search..."
+                    placeholder="Search roles by name or description..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 h-11 bg-gray-50 border-gray-100 rounded-xl focus:bg-white transition-all shadow-inner"
                     autoFocus
-                    className="w-64 pl-10 pr-10 rounded-lg border-gray-200 focus:border-cyan-500 focus:ring-cyan-500"
                   />
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 h-4.5 w-4.5" />
                   {searchTerm && (
                     <button
-                      onClick={() => {
-                        setSearchTerm('');
-                        setIsSearchOpen(false);
-                      }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      onClick={() => setSearchTerm('')}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -238,33 +273,8 @@ export default function RolesPage() {
                 </div>
               )}
 
-              {/* Filter Toggle */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 active:bg-gray-200 transition-all h-9 w-9 p-0 ${isActiveFilter !== null ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : ''
-                  } ${isFilterOpen ? 'border-cyan-500 bg-cyan-50' : ''}`}
-              >
-                <Filter className={`h-4 w-4 ${isActiveFilter !== null ? 'text-cyan-700' : ''}`} />
-              </Button>
-
-              <Button
-                onClick={handleCreate}
-                className="bg-cyan-500 hover:bg-cyan-600 text-white h-9 w-9 p-0"
-                title="Add Role"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Filter Panel */}
-          {isFilterOpen && (
-            <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200 animate-in slide-in-from-top-2 duration-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 flex-1">
-                  <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter by Status:</Label>
+              {isFilterOpen && (
+                <div className="flex items-center gap-2">
                   <Select
                     value={isActiveFilter === null ? 'all' : isActiveFilter ? 'active' : 'inactive'}
                     onValueChange={(value) => {
@@ -273,125 +283,120 @@ export default function RolesPage() {
                       setPage(1);
                     }}
                   >
-                    <SelectTrigger className={`w-[200px] bg-white border-gray-200 hover:border-gray-300 transition-all ${isActiveFilter !== null ? 'border-cyan-500 ring-2 ring-cyan-200' : ''
-                      }`}>
-                      <SelectValue placeholder="All Status" />
+                    <SelectTrigger className="h-11 w-[160px] bg-gray-50 border-gray-100 rounded-xl focus:bg-white shadow-inner">
+                      <SelectValue placeholder="Status" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectContent className="rounded-xl shadow-xl border-gray-100 p-1">
+                      <SelectItem value="all" className="rounded-lg">All Statuses</SelectItem>
+                      <SelectItem value="active" className="rounded-lg">Active Only</SelectItem>
+                      <SelectItem value="inactive" className="rounded-lg">Inactive Only</SelectItem>
                     </SelectContent>
                   </Select>
-                  {isActiveFilter !== null && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsActiveFilter(null)}
-                      className="h-8 px-2 text-gray-500 hover:text-gray-700"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsFilterOpen(false)}
-                  className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+              )}
             </div>
           )}
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <span className="text-gray-600">Loading roles...</span>
+            <div className="flex flex-col items-center justify-center py-20">
+              <Loader2 className="h-10 w-10 animate-spin text-cyan-500" />
+              <p className="mt-4 text-gray-500 font-medium tracking-tight">Accessing core modules...</p>
             </div>
           ) : roles.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">No roles found</div>
+            <div className="flex flex-col items-center justify-center py-20 border-t border-gray-50">
+              <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-4">
+                <Shield className="h-8 w-8 text-gray-300" />
+              </div>
+              <p className="text-gray-600 font-bold tracking-tight">No access roles found</p>
+              <p className="text-gray-400 text-sm mt-1">Define permissions to secure your operations</p>
+            </div>
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="text-left p-4 font-semibold text-gray-600 text-sm">
-                        <button
-                          onClick={() => handleSort('name')}
-                          className="flex items-center hover:text-cyan-600 transition-colors"
-                        >
-                          Name
-                          {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />)}
+                <Table>
+                  <TableHeader className="bg-gray-50/50">
+                    <TableRow className="border-b-0">
+                      <TableHead className="pl-6 font-semibold text-gray-900 text-sm py-4">
+                        <button onClick={() => handleSort('name')} className="flex items-center gap-1 group">
+                          Role Identity
+                          <ArrowUpDown className="h-3.5 w-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </button>
-                      </th>
-                      <th className="text-left p-4 font-semibold text-gray-600 text-sm">Description</th>
-                      <th className="text-left p-4 font-semibold text-gray-600 text-sm">
-                        <button
-                          onClick={() => handleSort('isActive')}
-                          className="flex items-center hover:text-cyan-600 transition-colors"
-                        >
-                          Status
-                          {sortBy === 'isActive' && (sortOrder === 'asc' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />)}
-                        </button>
-                      </th>
-                      <th className="text-left p-4 font-semibold text-gray-600 text-sm">Employees</th>
-                      <th className="text-right p-4 font-semibold text-gray-600 text-sm">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
+                      </TableHead>
+                      <TableHead className="font-semibold text-gray-900 text-sm py-4">Operational Permission</TableHead>
+                      <TableHead className="font-semibold text-gray-900 text-sm py-4">Users Linked</TableHead>
+                      <TableHead className="font-semibold text-gray-900 text-sm py-4">System Status</TableHead>
+                      <TableHead className="text-right pr-6 font-semibold text-gray-900 text-sm py-4">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {roles.map((role) => (
-                      <tr key={role.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="p-4 font-medium text-gray-900">{role.name}</td>
-                        <td className="p-4 text-gray-600 text-sm truncate max-w-xs">
-                          {role.description || <span className="text-gray-400 italic">No description</span>}
+                      <tr key={role.id} className="group hover:bg-cyan-50/30 transition-all duration-200 border-b border-gray-50 last:border-0">
+                        <td className="p-4 pl-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-sm border border-white">
+                              <Shield className="h-5 w-5 text-gray-600" />
+                            </div>
+                            <span className="font-semibold text-gray-900 group-hover:text-cyan-700 transition-colors text-sm">
+                              {role.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-sm text-gray-500 font-medium italic">
+                          {role.description || 'Global administrative access'}
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center">
+                              <MoreVertical className="h-4 w-4 text-cyan-600" />
+                            </div>
+                            <span className="text-sm font-bold text-gray-700">{role._count?.employees || 0} Members</span>
+                          </div>
                         </td>
                         <td className="p-4">
                           <div
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${role.isActive
-                              ? 'bg-green-50 text-green-700 border-green-200'
-                              : 'bg-red-50 text-red-700 border-red-200'
-                              }`}
+                            onClick={() => handleToggleStatus(role)}
+                            className={cn(
+                              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all active:scale-95",
+                              role.isActive
+                                ? "bg-green-100 text-green-700 border border-green-200/50 shadow-sm shadow-green-100/50"
+                                : "bg-gray-100 text-gray-600 border border-gray-200/50"
+                            )}
                           >
-                            {role.isActive ? 'Active' : 'Inactive'}
+                            <div className={cn("w-2 h-2 rounded-full", role.isActive ? "bg-green-500 animate-pulse" : "bg-gray-400")} />
+                            {role.isActive ? 'AUTHORIZED' : 'DEACTIVATED'}
                           </div>
                         </td>
-                        <td className="p-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <Shield className="h-3 w-3 text-cyan-500" />
-                            {role._count?.employees || 0}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="p-4 pr-6 text-right">
+                          <div className="flex items-center justify-end gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleEdit(role)}
-                              className="h-8 w-8 text-gray-500 hover:text-cyan-600 hover:bg-cyan-50"
+                              className="h-9 w-9 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-all"
                             >
-                              <Edit2 className="h-4 w-4" />
+                              <Edit2 className="h-4.5 w-4.5" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDelete(role.id.toString())}
-                              className="h-8 w-8 text-gray-500 hover:text-red-600 hover:bg-red-50"
+                              className="h-9 w-9 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-4.5 w-4.5" />
                             </Button>
                           </div>
                         </td>
                       </tr>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
-              <div className="flex items-center justify-between p-4 border-t border-gray-100">
+              <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/50">
                 <RowsPerPage value={limit} onChange={setLimit} />
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none">
+                  Lvl {pagination.page} Profile — Syncing {roles.length} Access Groups
+                </div>
                 <Pagination
                   currentPage={pagination.page}
                   totalPages={pagination.totalPages}
