@@ -17,11 +17,11 @@ export const useScrapYards = (params?: {
   return useQuery({
     queryKey: queryKeys.scrapYards.list(params),
     queryFn: () => scrapYardsApi.getScrapYards(params),
-    placeholderData: (previousData) => previousData,
-    staleTime: 2 * 60 * 1000, // 2 minutes - data is considered fresh
+    placeholderData: (previousData: any) => previousData,
+    staleTime: 30 * 1000, // 30 seconds - shorter for responsive updates
     gcTime: 10 * 60 * 1000, // 10 minutes - cache garbage collection time (formerly cacheTime)
     refetchOnWindowFocus: false, // Don't refetch on window focus to reduce API calls
-    refetchOnMount: false, // Don't refetch on mount if data is fresh
+    refetchOnMount: false, // We invalidate explicitly when forms open
   });
 };
 

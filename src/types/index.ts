@@ -39,6 +39,7 @@ export interface Lead {
 // Order Interface
 export interface Order {
   id: string;
+  orderNumber?: string; // Format: WO-DDMMYYYY-N
   leadId?: string;
   customerName: string;
   customerPhone: string;

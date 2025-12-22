@@ -6,10 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { OrderForm } from '@/components/order-form';
-import { OrderAssignmentStepper } from '@/components/order-assignment-stepper';
 import { Order, OrderStatus, PaymentStatusEnum } from '@/types';
 import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal, Download, Filter, Check, X, Package, MapPin, User, DollarSign, Calendar } from 'lucide-react';
 import { useOrders, useDeleteOrder, useUpdateOrder, useUpdateOrderStatus, useAssignCollector } from '@/hooks/use-orders';
+import { useOrderStats } from '@/hooks/use-order-stats';
+import { useOrderStatsStore } from '@/lib/store/order-stats-store';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -86,7 +87,6 @@ function NoDataAnimation() {
 // API response type - matches backend Order model
 interface ApiOrder {
   id: string;
-  orderNumber?: string; // Format: WO-DDMMYYYY-N
   leadId?: string;
   customerId?: string;
   customerName: string;
@@ -141,7 +141,7 @@ type SortKey = 'customerName' | 'createdAt' | 'orderStatus' | 'paymentStatus';
 
 function formatDateHuman(dateStr: string): string {
   const date = new Date(dateStr);
-
+  
   if (typeof window !== 'undefined') {
     const today = new Date();
     const yday = new Date();
@@ -151,22 +151,13 @@ function formatDateHuman(dateStr: string): string {
     if (isSameDay(date, today)) return 'Today';
     if (isSameDay(date, yday)) return 'Yesterday';
   }
-
+  
   const day = date.getUTCDate().toString().padStart(2, '0');
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const month = months[date.getUTCMonth()];
   const year = date.getUTCFullYear();
   return `${day} ${month}, ${year}`;
 }
-
-function formatDateDDMMYYYY(dateStr: string): string {
-  const date = new Date(dateStr);
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
 
 function toDisplayOrderStatus(status: string): string {
   const s = status?.toUpperCase();
@@ -212,12 +203,12 @@ function getTabStyle(tab: TabKey) {
 }
 
 // Order Avatar Component
-function OrderAvatar({
-  name,
+function OrderAvatar({ 
+  name, 
   size = 'md',
   className = ''
-}: {
-  name: string;
+}: { 
+  name: string; 
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 }) {
@@ -227,7 +218,7 @@ function OrderAvatar({
     md: 'w-10 h-10 text-sm',
     lg: 'w-16 h-16 text-lg'
   };
-
+  
   return (
     <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-300 ${className}`}>
       <span className="text-white font-semibold leading-none">
@@ -241,9 +232,9 @@ function OrderStatusBadge({ status, showDropdownIcon = false }: { status: string
   const safeStatus = status || 'PENDING';
   const display = toDisplayOrderStatus(safeStatus);
   const base = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap';
-
+  
   let badgeContent = null;
-
+  
   if (safeStatus === 'PENDING') {
     badgeContent = (
       <span className={`${base} bg-yellow-100 text-yellow-800`}>
@@ -292,7 +283,7 @@ function OrderStatusBadge({ status, showDropdownIcon = false }: { status: string
       </span>
     );
   }
-
+  
   return badgeContent;
 }
 
@@ -300,7 +291,7 @@ function PaymentStatusBadge({ status }: { status: string }) {
   const safeStatus = status || 'UNPAID';
   const display = toDisplayPaymentStatus(safeStatus);
   const base = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap';
-
+  
   if (safeStatus === 'PAID') {
     return (
       <span className={`${base} bg-green-100 text-green-800`}>
@@ -323,7 +314,7 @@ function PaymentStatusBadge({ status }: { status: string }) {
       </span>
     );
   }
-
+  
   return (
     <span className={`${base} bg-gray-100 text-gray-800`}>
       <span className="whitespace-nowrap">{display}</span>
@@ -331,98 +322,15 @@ function PaymentStatusBadge({ status }: { status: string }) {
   );
 }
 
-// Collector Info Dialog Component
-function CollectorInfoDialog({
-  order,
-  isOpen,
-  onClose
-}: {
-  order: ApiOrder | null;
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  if (!order) return null;
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-gray-900">Assignment Details</DialogTitle>
-          <p className="text-sm text-gray-600 mt-1">Order #{order.id}</p>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-3">
-            <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg border border-cyan-200">
-              <div className="w-10 h-10 rounded-full bg-cyan-500 flex items-center justify-center flex-shrink-0">
-                <User className="h-5 w-5 text-white" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600">Assigned Collector</p>
-                <p className="text-base font-semibold text-gray-900 mt-1">
-                  {order.assignedCollector?.fullName || order.assignedCollectorId || 'Not assigned'}
-                </p>
-              </div>
-            </div>
-
-            {order.yardId && (
-              <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                  <MapPin className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Scrap Yard</p>
-                  <p className="text-base font-semibold text-gray-900 mt-1">{order.yardId}</p>
-                </div>
-              </div>
-            )}
-
-            {order.pickupTime && (
-              <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-purple-50 to-violet-50 rounded-lg border border-purple-200">
-                <div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0">
-                  <Calendar className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Pickup Time</p>
-                  <p className="text-base font-semibold text-gray-900 mt-1">
-                    {new Date(order.pickupTime).toLocaleString('en-US', {
-                      dateStyle: 'medium',
-                      timeStyle: 'short'
-                    })}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg border border-orange-200">
-              <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0">
-                <MapPin className="h-5 w-5 text-white" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600">Collection Address</p>
-                <p className="text-base font-semibold text-gray-900 mt-1">{order.address}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button onClick={onClose} className="bg-cyan-500 hover:bg-cyan-600">
-            Close
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export default function OrdersPage() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const organizationId = user?.organizationId;
-
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-
+  
   // Filter and search state
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -431,7 +339,7 @@ export default function OrdersPage() {
   const [editingOrder, setEditingOrder] = useState<Order | undefined>();
   const [activeTab, setActiveTab] = useState<'All' | 'Pending' | 'Assigned' | 'In Progress' | 'Completed' | 'Cancelled'>('All');
   const [paymentFilter, setPaymentFilter] = useState<string>('ALL');
-
+  
   // Sorting state
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -442,17 +350,14 @@ export default function OrdersPage() {
   const highlightedRowRef = useRef<HTMLTableRowElement | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
-
+  
   // Selection state
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [collectorInfoOrder, setCollectorInfoOrder] = useState<ApiOrder | null>(null);
-  const [assignmentOrder, setAssignmentOrder] = useState<ApiOrder | null>(null);
-  const [isAssignmentStepperOpen, setIsAssignmentStepperOpen] = useState(false);
-
+  
   // Mounted state to prevent hydration mismatch
   const [mounted, setMounted] = useState(false);
-
+  
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -465,7 +370,7 @@ export default function OrdersPage() {
       setTimeout(() => {
         const newSearchParams = new URLSearchParams(searchParams.toString());
         newSearchParams.delete('highlight');
-        const newUrl = newSearchParams.toString()
+        const newUrl = newSearchParams.toString() 
           ? `${window.location.pathname}?${newSearchParams.toString()}`
           : window.location.pathname;
         router.replace(newUrl);
@@ -508,7 +413,7 @@ export default function OrdersPage() {
 
   // Memoize payment filter value
   const paymentFilterValue = useMemo(() => paymentFilter !== 'ALL' ? paymentFilter as PaymentStatusEnum : undefined, [paymentFilter]);
-
+  
   // Memoize query parameters for better performance
   const queryParams = useMemo(() => {
     const status = getStatusFromTab(activeTab);
@@ -531,65 +436,21 @@ export default function OrdersPage() {
   const updateOrderStatusMutation = useUpdateOrderStatus();
   const assignCollectorMutation = useAssignCollector();
 
-  // Fetch stats by querying each status count directly
-  const { data: allOrdersData } = useOrders({
-    page: 1,
-    limit: 1,
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  });
-
-  const { data: pendingOrdersData } = useOrders({
-    page: 1,
-    limit: 1,
-    status: 'PENDING',
-  });
-
-  const { data: assignedOrdersData } = useOrders({
-    page: 1,
-    limit: 1,
-    status: 'ASSIGNED',
-  });
-
-  const { data: inProgressOrdersData } = useOrders({
-    page: 1,
-    limit: 1,
-    status: 'IN_PROGRESS',
-  });
-
-  const { data: completedOrdersData } = useOrders({
-    page: 1,
-    limit: 1,
-    status: 'COMPLETED',
-  });
-
-  const { data: cancelledOrdersData } = useOrders({
-    page: 1,
-    limit: 1,
-    status: 'CANCELLED',
-  });
-
-  // Calculate stats from pagination totals
-  const stats = useMemo(() => {
-    const allData = allOrdersData as unknown as ApiResponse;
-    const pendingData = pendingOrdersData as unknown as ApiResponse;
-    const assignedData = assignedOrdersData as unknown as ApiResponse;
-    const inProgressData = inProgressOrdersData as unknown as ApiResponse;
-    const completedData = completedOrdersData as unknown as ApiResponse;
-    const cancelledData = cancelledOrdersData as unknown as ApiResponse;
-
-    return {
-      total: allData?.data?.pagination?.total || 0,
-      pending: pendingData?.data?.pagination?.total || 0,
-      assigned: assignedData?.data?.pagination?.total || 0,
-      inProgress: inProgressData?.data?.pagination?.total || 0,
-      completed: completedData?.data?.pagination?.total || 0,
-      cancelled: cancelledData?.data?.pagination?.total || 0,
-      unpaid: 0,
-      paid: 0,
-      refunded: 0,
-    };
-  }, [allOrdersData, pendingOrdersData, assignedOrdersData, inProgressOrdersData, completedOrdersData, cancelledOrdersData]);
+  // Fetch and sync order stats to Zustand store
+  useOrderStats();
+  
+  // Get stats from Zustand store
+  const stats = useOrderStatsStore((state) => state.stats) || {
+    total: 0,
+    pending: 0,
+    assigned: 0,
+    inProgress: 0,
+    completed: 0,
+    cancelled: 0,
+    unpaid: 0,
+    paid: 0,
+    refunded: 0,
+  };
 
   // Handle the actual API response structure
   const apiResponse = ordersData as unknown as ApiResponse;
@@ -602,14 +463,14 @@ export default function OrdersPage() {
     hasNextPage: false,
     hasPreviousPage: false
   }, [apiResponse]);
-
+  
   // Scroll to highlighted row when data is loaded
   useEffect(() => {
     if (highlightedOrderId && highlightedRowRef.current && orders && orders.length > 0) {
       setTimeout(() => {
-        highlightedRowRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
+        highlightedRowRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
         });
       }, 300);
     }
@@ -665,7 +526,7 @@ export default function OrdersPage() {
 
   const handleDeleteConfirm = async () => {
     if (!orderToDelete) return;
-
+    
     try {
       await deleteOrderMutation.mutateAsync(orderToDelete.id);
       toast.success(`Order "${orderToDelete.customerName}" deleted successfully`);
@@ -726,13 +587,13 @@ export default function OrdersPage() {
       }
 
       const normalizedStatus = value.toUpperCase() as OrderStatus;
-
+      
       if (order.orderStatus.toUpperCase() === normalizedStatus) {
         return;
       }
 
-      await updateOrderStatusMutation.mutateAsync({
-        orderId: String(order.id),
+      await updateOrderStatusMutation.mutateAsync({ 
+        orderId: String(order.id), 
         status: normalizedStatus
       });
       toast.success('Status updated successfully');
@@ -823,7 +684,7 @@ export default function OrdersPage() {
               >
                 <Search className="h-4 w-4" />
               </Button>
-
+              
               {isSearchOpen && (
                 <div className="relative">
                   <Input
@@ -853,19 +714,21 @@ export default function OrdersPage() {
                   )}
                 </div>
               )}
-
+              
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 active:bg-gray-200 transition-all h-9 w-9 p-0 ${paymentFilter !== 'ALL' ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : ''
-                  } ${isFilterOpen ? 'border-cyan-500 bg-cyan-50' : ''
-                  }`}
+                className={`border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 active:bg-gray-200 transition-all h-9 w-9 p-0 ${
+                  paymentFilter !== 'ALL' ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : ''
+                } ${
+                  isFilterOpen ? 'border-cyan-500 bg-cyan-50' : ''
+                }`}
                 title={isFilterOpen ? "Hide filters" : "Show filters"}
               >
                 <Filter className={`h-4 w-4 ${paymentFilter !== 'ALL' ? 'text-cyan-700' : ''}`} />
               </Button>
-
+              
               <Button
                 onClick={() => setIsFormOpen(true)}
                 className="bg-cyan-500 hover:bg-cyan-600 text-white h-9 w-9 p-0"
@@ -882,15 +745,16 @@ export default function OrdersPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 flex-1">
                   <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter by Payment:</Label>
-                  <Select
-                    value={paymentFilter || 'ALL'}
+                  <Select 
+                    value={paymentFilter || 'ALL'} 
                     onValueChange={(v) => {
                       setPaymentFilter(v);
                       setCurrentPage(1);
                     }}
                   >
-                    <SelectTrigger className={`w-[200px] bg-white border-gray-200 hover:border-gray-300 transition-all ${paymentFilter !== 'ALL' ? 'border-cyan-500 ring-2 ring-cyan-200' : ''
-                      }`}>
+                    <SelectTrigger className={`w-[200px] bg-white border-gray-200 hover:border-gray-300 transition-all ${
+                      paymentFilter !== 'ALL' ? 'border-cyan-500 ring-2 ring-cyan-200' : ''
+                    }`}>
                       <SelectValue placeholder="All Payment Status">
                         {paymentFilter === 'ALL' ? 'All Payment Status' : toDisplayPaymentStatus(paymentFilter)}
                       </SelectValue>
@@ -944,10 +808,10 @@ export default function OrdersPage() {
                   <TableHeader className="bg-white">
                     {/* Status Tabs Row */}
                     <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50">
-                      <TableHead colSpan={7} className="p-0 bg-transparent">
+                      <TableHead colSpan={9} className="p-0 bg-transparent">
                         <div className="w-full overflow-x-auto">
                           <div className="inline-flex items-center gap-1 px-2 py-2">
-                            {(['All', 'Pending', 'Assigned', 'In Progress', 'Completed', 'Cancelled'] as const).map((tab) => {
+                            {(['All','Pending','Assigned','In Progress','Completed','Cancelled'] as const).map((tab) => {
                               const style = getTabStyle(tab);
                               const isActive = activeTab === tab;
                               return (
@@ -987,23 +851,30 @@ export default function OrdersPage() {
                       </TableHead>
                       <TableHead>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('customerName')}>
-                          Customer
+                          Customer 
                           {sortKey === 'customerName' && <ArrowUpDown className="h-3 w-3" />}
                         </button>
                       </TableHead>
-                      <TableHead>Order</TableHead>
+                      <TableHead>Phone</TableHead>
                       <TableHead>Address</TableHead>
+                      <TableHead>Vehicle</TableHead>
                       <TableHead>Collector</TableHead>
                       <TableHead>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('orderStatus')}>
-                          Order Status
+                          Order Status 
                           {sortKey === 'orderStatus' && <ArrowUpDown className="h-3 w-3" />}
                         </button>
                       </TableHead>
                       <TableHead>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('paymentStatus')}>
-                          Payment
+                          Payment 
                           {sortKey === 'paymentStatus' && <ArrowUpDown className="h-3 w-3" />}
+                        </button>
+                      </TableHead>
+                      <TableHead>
+                        <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('createdAt')}>
+                          Created Date 
+                          {sortKey === 'createdAt' && <ArrowUpDown className="h-3 w-3" />}
                         </button>
                       </TableHead>
                       <TableHead className="w-12">Action</TableHead>
@@ -1012,7 +883,7 @@ export default function OrdersPage() {
                   <TableBody>
                     {orders.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-12">
+                        <TableCell colSpan={9} className="text-center py-12">
                           <NoDataAnimation />
                         </TableCell>
                       </TableRow>
@@ -1020,7 +891,7 @@ export default function OrdersPage() {
                       orders.map((order) => {
                         const isHighlighted = highlightedOrderId === order.id;
                         return (
-                          <TableRow
+                          <TableRow 
                             key={order.id}
                             ref={isHighlighted ? highlightedRowRef : null}
                             className={cn(
@@ -1039,51 +910,53 @@ export default function OrdersPage() {
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-3">
-                                <OrderAvatar
-                                  name={order.customerName || 'N/A'}
+                                <OrderAvatar 
+                                  name={order.customerName || 'N/A'} 
                                   size="md"
                                 />
                                 <div className="flex flex-col">
                                   <span className="font-medium text-gray-900">{order.customerName || 'N/A'}</span>
-                                  <span className="text-xs text-gray-500">{order.customerPhone || 'N/A'}</span>
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex flex-col">
-                                <span className="text-sm font-semibold text-cyan-600">{order.orderNumber || 'N/A'}</span>
-                                <span className="text-xs text-gray-500">{formatDateDDMMYYYY(order.createdAt)}</span>
-                              </div>
+                              <div className="text-gray-900">{order.customerPhone || 'N/A'}</div>
                             </TableCell>
-
                             <TableCell>
                               <div className="flex items-center gap-1 max-w-[200px]">
                                 <MapPin className="h-3 w-3 text-gray-400 flex-shrink-0" />
                                 <span className="truncate text-sm text-gray-700">{order.address || 'N/A'}</span>
                               </div>
                             </TableCell>
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                              {order.assignedCollector || order.assignedCollectorId ? (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setCollectorInfoOrder(order);
-                                  }}
-                                  className="h-7 text-xs text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50"
-                                >
-                                  <User className="h-3 w-3 mr-1" />
-                                  {order.assignedCollector?.fullName || 'View Details'}
-                                </Button>
+                            <TableCell>
+                              {order.vehicleDetails ? (
+                                <div className="text-sm">
+                                  {order.vehicleDetails.make && order.vehicleDetails.model ? (
+                                    <span className="text-gray-900">{order.vehicleDetails.make} {order.vehicleDetails.model}</span>
+                                  ) : (
+                                    <span className="text-gray-400 italic">No vehicle info</span>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-gray-400 text-sm italic">No vehicle info</div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {order.assignedCollector ? (
+                                <div className="flex items-center gap-1">
+                                  <User className="h-3 w-3 text-gray-400" />
+                                  <span className="text-sm text-gray-700">{order.assignedCollector.fullName}</span>
+                                </div>
                               ) : (
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setAssignmentOrder(order);
-                                    setIsAssignmentStepperOpen(true);
+                                    assignCollectorMutation.mutate({
+                                      orderId: order.id,
+                                      collectorId: 'auto' // This would need actual collector selection
+                                    });
                                   }}
                                   className="h-7 text-xs"
                                 >
@@ -1092,8 +965,8 @@ export default function OrdersPage() {
                               )}
                             </TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()}>
-                              <Select
-                                value={order.orderStatus || 'PENDING'}
+                              <Select 
+                                value={order.orderStatus || 'PENDING'} 
                                 onValueChange={(v) => onInlineStatusChange(order, v)}
                               >
                                 <SelectTrigger className="h-auto w-auto p-0 border-0 bg-transparent hover:bg-transparent focus:ring-0 focus:ring-offset-0 shadow-none max-w-none min-w-0 overflow-visible">
@@ -1101,42 +974,21 @@ export default function OrdersPage() {
                                     <OrderStatusBadge status={order.orderStatus || 'PENDING'} showDropdownIcon={true} />
                                   </div>
                                 </SelectTrigger>
-                                <SelectContent className="min-w-[170px] rounded-lg shadow-xl border border-gray-200 bg-white p-1.5 animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2">
-                                  {(['PENDING', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] as OrderStatus[]).map((s) => {
+                                <SelectContent className="min-w-[160px] rounded-lg shadow-lg border border-gray-200 bg-white p-1">
+                                  {(['PENDING','ASSIGNED','IN_PROGRESS','COMPLETED','CANCELLED'] as OrderStatus[]).map((s) => {
                                     const isSelected = (order.orderStatus || 'PENDING') === s;
-
-                                    // Status Config for Icons and Colors
-                                    const statusConfig = {
-                                      PENDING: { icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-50' },
-                                      ASSIGNED: { icon: User, color: 'text-blue-500', bg: 'bg-blue-50' },
-                                      IN_PROGRESS: { icon: Package, color: 'text-orange-500', bg: 'bg-orange-50' },
-                                      COMPLETED: { icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-50' },
-                                      CANCELLED: { icon: X, color: 'text-red-500', bg: 'bg-red-50' }
-                                    };
-
-                                    const config = statusConfig[s];
-                                    const Icon = config.icon;
-
                                     return (
-                                      <SelectItem
-                                        key={s}
+                                      <SelectItem 
+                                        key={s} 
                                         value={s}
                                         className={cn(
-                                          "relative cursor-pointer rounded-md px-3 py-2.5 text-sm transition-all pl-9 hover:bg-gray-50",
-                                          isSelected
-                                            ? "bg-cyan-50 text-cyan-700 font-semibold"
-                                            : "text-gray-700"
+                                          "cursor-pointer rounded-md px-3 py-2.5 text-sm transition-colors pl-8",
+                                          isSelected 
+                                            ? "bg-cyan-500 text-white hover:bg-cyan-600 data-[highlighted]:bg-cyan-600 focus:bg-cyan-600" 
+                                            : "text-gray-900 hover:bg-gray-100 data-[highlighted]:bg-gray-100 focus:bg-gray-100"
                                         )}
                                       >
-                                        <div className="flex items-center gap-2.5">
-                                          <div className={cn(
-                                            "flex items-center justify-center h-5 w-5 rounded-md",
-                                            isSelected ? "bg-white/80 shadow-sm" : config.bg
-                                          )}>
-                                            <Icon className={cn("h-3.5 w-3.5", config.color)} />
-                                          </div>
-                                          <span>{toDisplayOrderStatus(s)}</span>
-                                        </div>
+                                        <span className={cn(isSelected ? "text-white font-medium" : "text-gray-900")}>{toDisplayOrderStatus(s)}</span>
                                       </SelectItem>
                                     );
                                   })}
@@ -1146,7 +998,9 @@ export default function OrdersPage() {
                             <TableCell>
                               <PaymentStatusBadge status={order.paymentStatus} />
                             </TableCell>
-
+                            <TableCell className="text-gray-600">
+                              {formatDateHuman(order.createdAt)}
+                            </TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()}>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -1191,7 +1045,7 @@ export default function OrdersPage() {
                                     Edit
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem
+                                  <DropdownMenuItem 
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleDeleteClick(order);
@@ -1222,26 +1076,23 @@ export default function OrdersPage() {
                   orders.map((order) => {
                     const isHighlighted = highlightedOrderId === order.id;
                     return (
-                      <div
-                        key={order.id}
+                      <div 
+                        key={order.id} 
                         ref={isHighlighted ? highlightedRowRef : null}
                         className={cn(
                           "rounded-lg border bg-card p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:bg-gradient-to-br hover:from-cyan-50 hover:to-purple-50 cursor-pointer",
                           isHighlighted && "bg-cyan-50 border-cyan-200 border-2 animate-pulse"
-                        )}
+                        )} 
                         onClick={() => setDetailsOrder(order)}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-3">
-                            <OrderAvatar
-                              name={order.customerName || 'N/A'}
+                            <OrderAvatar 
+                              name={order.customerName || 'N/A'} 
                               size="md"
                             />
                             <div>
                               <div className="font-semibold">{order.customerName || 'N/A'}</div>
-                              <div className="text-xs font-semibold text-cyan-600">
-                                {order.orderNumber || 'N/A'} • {formatDateDDMMYYYY(order.createdAt)}
-                              </div>
                               <div className="text-sm text-muted-foreground">{order.customerPhone || 'N/A'}</div>
                             </div>
                           </div>
@@ -1256,29 +1107,28 @@ export default function OrdersPage() {
                             <MapPin className="h-3 w-3 text-gray-400" />
                             <span className="truncate">{order.address || 'N/A'}</span>
                           </div>
+                          <div className="text-muted-foreground">Vehicle</div>
+                          <div>
+                            {order.vehicleDetails?.make && order.vehicleDetails?.model ? (
+                              <span>{order.vehicleDetails.make} {order.vehicleDetails.model}</span>
+                            ) : (
+                              <span className="text-gray-400 text-sm italic">No vehicle info</span>
+                            )}
+                          </div>
                           <div className="text-muted-foreground">Collector</div>
                           <div>
-                            {order.assignedCollector || order.assignedCollectorId ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCollectorInfoOrder(order);
-                                }}
-                                className="h-7 text-xs text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 p-0"
-                              >
-                                <User className="h-3 w-3 mr-1" />
-                                {order.assignedCollector?.fullName || 'View Details'}
-                              </Button>
+                            {order.assignedCollector ? (
+                              <span className="text-sm">{order.assignedCollector.fullName}</span>
                             ) : (
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setAssignmentOrder(order);
-                                  setIsAssignmentStepperOpen(true);
+                                  assignCollectorMutation.mutate({
+                                    orderId: order.id,
+                                    collectorId: 'auto'
+                                  });
                                 }}
                                 className="h-7 text-xs"
                               >
@@ -1290,18 +1140,18 @@ export default function OrdersPage() {
                           <div>{formatDateHuman(order.createdAt)}</div>
                         </div>
                         <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setDetailsOrder(order)}
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setDetailsOrder(order)} 
                             className="bg-cyan-50/50 hover:bg-cyan-100 text-cyan-600 hover:text-cyan-700 transition-all duration-200 border border-cyan-200/50 hover:border-cyan-300 shadow-sm hover:shadow-md z-10 relative"
                             title="View Details"
                           >
                             <Eye className="h-4 w-4 mr-1" /> View
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
                             onClick={() => {
                               const convertedOrder: Order = {
                                 id: order.id,
@@ -1329,19 +1179,19 @@ export default function OrdersPage() {
                               };
                               setEditingOrder(convertedOrder);
                               setIsFormOpen(true);
-                            }}
+                            }} 
                             className="bg-cyan-50/50 hover:bg-cyan-100 text-cyan-600 hover:text-cyan-700 transition-all duration-200 border border-cyan-200/50 hover:border-cyan-300 shadow-sm hover:shadow-md z-10 relative"
                             title="Edit Order"
                           >
                             <Edit2 className="h-4 w-4 mr-1" /> Edit
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteClick(order);
-                            }}
+                            }} 
                             className="bg-red-50/50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all duration-200 border border-red-200/50 hover:border-red-300 shadow-sm hover:shadow-md z-10 relative"
                             title="Delete Order"
                             disabled={deleteOrderMutation.isPending}
@@ -1362,7 +1212,7 @@ export default function OrdersPage() {
             </>
           )}
         </CardContent>
-
+        
         {/* Pagination Controls */}
         {!isLoading && pagination.totalPages > 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t">
@@ -1375,7 +1225,7 @@ export default function OrdersPage() {
                 }}
                 options={[5, 10, 20, 50, 100]}
               />
-              <div className="text-xs text-gray-500 font-medium">
+              <div className="text-sm text-gray-600">
                 Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalOrders)} of {totalOrders} orders
               </div>
             </div>
@@ -1402,7 +1252,7 @@ export default function OrdersPage() {
             <DialogTitle className="text-xl font-bold text-gray-900">Order Details</DialogTitle>
             <div className="flex items-center gap-2">
               {detailsOrder && (
-                <Button
+                <Button 
                   onClick={() => {
                     const convertedOrder: Order = {
                       id: detailsOrder.id,
@@ -1456,13 +1306,6 @@ export default function OrdersPage() {
                     Customer Information
                   </h3>
                   <div className="grid grid-cols-1 gap-4">
-                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-cyan-300 shadow-sm">
-                      <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Order</span>
-                      <div className="flex flex-col items-end">
-                        <span className="text-sm font-bold text-cyan-600">{detailsOrder.orderNumber || 'N/A'}</span>
-                        <span className="text-xs text-gray-500">{formatDateDDMMYYYY(detailsOrder.createdAt)}</span>
-                      </div>
-                    </div>
                     <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
                       <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Customer Name</span>
                       <span className="text-sm font-medium text-gray-900">{detailsOrder.customerName}</span>
@@ -1611,8 +1454,8 @@ export default function OrdersPage() {
             {orderToDelete && (
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center gap-3">
-                  <OrderAvatar
-                    name={orderToDelete.customerName || 'N/A'}
+                  <OrderAvatar 
+                    name={orderToDelete.customerName || 'N/A'} 
                     size="md"
                   />
                   <div>
@@ -1660,54 +1503,6 @@ export default function OrdersPage() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Collector Info Dialog */}
-      <CollectorInfoDialog
-        order={collectorInfoOrder}
-        isOpen={!!collectorInfoOrder}
-        onClose={() => setCollectorInfoOrder(null)}
-      />
-
-      {/* Order Assignment Stepper */}
-      {assignmentOrder && (
-        <OrderAssignmentStepper
-          order={{
-            id: assignmentOrder.id,
-            leadId: assignmentOrder.leadId,
-            customerId: assignmentOrder.customerId,
-            customerName: assignmentOrder.customerName,
-            customerPhone: assignmentOrder.customerPhone,
-            customerCountryCode: assignmentOrder.customerCountryCode,
-            address: assignmentOrder.address,
-            latitude: assignmentOrder.latitude,
-            longitude: assignmentOrder.longitude,
-            vehicleDetails: assignmentOrder.vehicleDetails,
-            assignedCollectorId: assignmentOrder.assignedCollectorId,
-            pickupTime: assignmentOrder.pickupTime ? new Date(assignmentOrder.pickupTime) : undefined,
-            orderStatus: assignmentOrder.orderStatus,
-            paymentStatus: assignmentOrder.paymentStatus,
-            quotedPrice: assignmentOrder.quotedPrice,
-            actualPrice: assignmentOrder.actualPrice,
-            yardId: assignmentOrder.yardId,
-            customerNotes: assignmentOrder.customerNotes,
-            adminNotes: assignmentOrder.adminNotes,
-            organizationId: assignmentOrder.organizationId,
-            createdAt: new Date(assignmentOrder.createdAt),
-            updatedAt: new Date(assignmentOrder.updatedAt),
-          }}
-          isOpen={isAssignmentStepperOpen}
-          onClose={() => {
-            setIsAssignmentStepperOpen(false);
-            setAssignmentOrder(null);
-          }}
-          onSuccess={() => {
-            setIsAssignmentStepperOpen(false);
-            setAssignmentOrder(null);
-            // Invalidate queries to refresh the table
-            queryClient.invalidateQueries({ queryKey: ['orders'] });
-          }}
-        />
-      )}
     </div>
   );
 }

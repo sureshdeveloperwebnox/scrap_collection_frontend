@@ -18,11 +18,11 @@ export const useScrapCategories = (params?: {
     queryKey: ['scrap-categories', { ...params, organizationId }],
     queryFn: () => scrapApi.getScrapCategories({ ...params, organizationId }),
     enabled: !!organizationId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 30 * 1000, // 30 seconds - shorter for more responsive updates
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    placeholderData: (previousData) => previousData,
+    refetchOnMount: false, // We invalidate explicitly when order form opens
+    placeholderData: (previousData: any) => previousData,
   });
 };
 
@@ -175,11 +175,11 @@ export const useScrapNames = (params?: {
     queryKey: ['scrap-names', { ...params, organizationId }],
     queryFn: () => scrapApi.getScrapNames({ ...params, organizationId }),
     enabled: !!organizationId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 30 * 1000, // 30 seconds - shorter for more responsive updates
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    placeholderData: (previousData) => previousData,
+    refetchOnMount: false, // We invalidate explicitly when order form opens
+    placeholderData: (previousData: any) => previousData,
   });
 };
 
