@@ -300,6 +300,15 @@ export default function CustomersPage() {
   // Mounted state to prevent hydration mismatch
   const [mounted, setMounted] = useState(false);
 
+  // Close handler that checks for returnTo URL
+  const handleCloseDetails = () => {
+    setDetailsCustomer(null);
+    const returnTo = searchParams.get('returnTo');
+    if (returnTo) {
+      router.push(returnTo);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -320,6 +329,33 @@ export default function CustomersPage() {
         // Remove highlight after animation completes
         setTimeout(() => setHighlightedCustomerId(null), 3000);
       }, 100);
+    }
+  }, [searchParams, router]);
+
+  // Handle view parameter from URL to show customer details
+  useEffect(() => {
+    const viewId = searchParams.get('view');
+    if (viewId) {
+      const fetchCustomerAndShow = async () => {
+        try {
+          const response = await customersApi.getCustomer(viewId);
+          if (response.data) {
+            setDetailsCustomer(response.data as any);
+          }
+        } catch (error) {
+          console.error('Error fetching customer for view:', error);
+          toast.error('Failed to load customer details');
+        } finally {
+          // Remove view parameter from URL
+          const newSearchParams = new URLSearchParams(searchParams.toString());
+          newSearchParams.delete('view');
+          const newUrl = newSearchParams.toString()
+            ? `${window.location.pathname}?${newSearchParams.toString()}`
+            : window.location.pathname;
+          router.replace(newUrl);
+        }
+      };
+      fetchCustomerAndShow();
     }
   }, [searchParams, router]);
 
@@ -1080,7 +1116,7 @@ export default function CustomersPage() {
       </Button>
 
       {/* Quick View Dialog */}
-      <Dialog open={!!detailsCustomer} onOpenChange={(open) => !open && setDetailsCustomer(null)}>
+      <Dialog open={!!detailsCustomer} onOpenChange={(open) => !open && handleCloseDetails()}>
         <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto [&>button]:hidden">
           <DialogHeader className="flex flex-row items-center justify-between pb-4 border-b border-gray-200">
             <DialogTitle className="text-xl font-bold text-gray-900">Customer Details</DialogTitle>
@@ -1119,7 +1155,7 @@ export default function CustomersPage() {
               )}
               <Button
                 variant="outline"
-                onClick={() => setDetailsCustomer(null)}
+                onClick={handleCloseDetails}
                 className="h-10 px-4 border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all"
               >
                 Cancel

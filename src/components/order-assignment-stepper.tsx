@@ -9,7 +9,7 @@ import { useEmployees } from '@/hooks/use-employees';
 import { useCrews } from '@/hooks/use-crews';
 import { useScrapYards } from '@/hooks/use-scrap-yards';
 import { useUpdateOrder } from '@/hooks/use-orders';
-import { Order } from '@/types';
+import { Order, OrderStatus } from '@/types';
 import { toast } from 'sonner';
 import {
     MapPin,
@@ -50,7 +50,7 @@ export function OrderAssignmentStepper({
     const [assignmentData, setAssignmentData] = useState<AssignmentData>({
         yardId: order.yardId || '',
         collectorIds: order.assignedCollectorId ? [order.assignedCollectorId] : [],
-        crewId: '',
+        crewId: order.crewId || '',
         routeDistance: undefined,
         routeDuration: undefined,
     });
@@ -194,10 +194,10 @@ export function OrderAssignmentStepper({
                 data: {
                     yardId: assignmentData.yardId,
                     assignedCollectorId: assignmentData.collectorIds[0] || undefined,
-                    orderStatus: 'ASSIGNED',
-                    // Note: Add these fields to your Order model if not present
-                    // routeDistance: assignmentData.routeDistance,
-                    // routeDuration: assignmentData.routeDuration,
+                    crewId: assignmentData.crewId || undefined,
+                    orderStatus: 'ASSIGNED' as OrderStatus,
+                    routeDistance: assignmentData.routeDistance,
+                    routeDuration: assignmentData.routeDuration,
                 },
             });
 
@@ -530,11 +530,15 @@ export function OrderAssignmentStepper({
                                                         <ul className="space-y-1">
                                                             {assignmentData.collectorIds.map(id => {
                                                                 const collector = allCollectors.find((c: any) => c.id === id);
-                                                                return collector ? (
+                                                                // Use order object as a fallback if available
+                                                                const name = collector?.fullName ||
+                                                                    (order.assignedCollectorId === id ? order.assignedCollector?.fullName : null) ||
+                                                                    'Unknown Collector';
+                                                                return (
                                                                     <li key={id} className="text-sm font-medium text-gray-900">
-                                                                        • {collector.fullName}
+                                                                        • {name}
                                                                     </li>
-                                                                ) : null;
+                                                                );
                                                             })}
                                                         </ul>
                                                     </div>
@@ -544,11 +548,17 @@ export function OrderAssignmentStepper({
                                                         <p className="text-sm text-gray-600 mb-2">Crew:</p>
                                                         {(() => {
                                                             const crew = allCrews.find((c: any) => c.id === assignmentData.crewId);
-                                                            return crew ? (
+                                                            const name = crew?.name ||
+                                                                (order.crewId === assignmentData.crewId ? order.crew?.name : null) ||
+                                                                'Selected Crew';
+                                                            const members = crew?.members?.length ||
+                                                                (order.crewId === assignmentData.crewId ? order.crew?.members?.length : 0);
+
+                                                            return (
                                                                 <p className="text-sm font-medium text-gray-900">
-                                                                    {crew.name} ({crew.members?.length || 0} members)
+                                                                    {name} {members > 0 ? `(${members} members)` : ''}
                                                                 </p>
-                                                            ) : null;
+                                                            );
                                                         })()}
                                                     </div>
                                                 )}

@@ -26,8 +26,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { cn, formatDateDDMMYYYY } from '@/lib/utils';
 import dynamic from 'next/dynamic';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { employeesApi } from '@/lib/api';
+import { Mail, MapPin, Calendar, Clock } from 'lucide-react';
 
 // Dynamically import Lottie for better performance
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -181,6 +185,45 @@ export default function EmployeesPage() {
   // Sorting (Managed locally for now or pass to API if supported)
   const [sortKey, setSortKey] = useState<'fullName' | 'createdAt'>('createdAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [detailsEmployee, setDetailsEmployee] = useState<Employee | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Close handler that checks for returnTo URL
+  const handleCloseDetails = () => {
+    setDetailsEmployee(null);
+    const returnTo = searchParams.get('returnTo');
+    if (returnTo) {
+      router.push(returnTo);
+    }
+  };
+
+  // Handle view parameter from URL to show employee details
+  useEffect(() => {
+    const viewId = searchParams.get('view');
+    if (viewId) {
+      const fetchEmployeeAndShow = async () => {
+        try {
+          const response = await employeesApi.getEmployee(viewId);
+          if (response.data) {
+            setDetailsEmployee(response.data as any);
+          }
+        } catch (error) {
+          console.error('Error fetching employee for view:', error);
+          toast.error('Failed to load employee details');
+        } finally {
+          // Remove view parameter from URL
+          const newSearchParams = new URLSearchParams(searchParams.toString());
+          newSearchParams.delete('view');
+          const newUrl = newSearchParams.toString()
+            ? `${window.location.pathname}?${newSearchParams.toString()}`
+            : window.location.pathname;
+          router.replace(newUrl);
+        }
+      };
+      fetchEmployeeAndShow();
+    }
+  }, [searchParams, router]);
 
   // Debounce search
   useEffect(() => {
@@ -605,6 +648,120 @@ export default function EmployeesPage() {
           setEditingEmployee(undefined);
         }}
       />
+
+      {/* Employee Quick View Dialog */}
+      <Dialog open={!!detailsEmployee} onOpenChange={(open) => !open && handleCloseDetails()}>
+        <DialogContent className="sm:max-w-[550px] border-none shadow-2xl bg-white p-0 overflow-hidden">
+          {(() => {
+            const role = ((detailsEmployee as any)?.role?.name || detailsEmployee?.role || 'staff').toLowerCase();
+            const colors = {
+              admin: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-100', icon: 'text-purple-600' },
+              manager: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-100', icon: 'text-blue-600' },
+              collector: { bg: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-100', icon: 'text-cyan-600' },
+              supervisor: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-100', icon: 'text-orange-600' },
+              staff: { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-100', icon: 'text-gray-600' }
+            }[role] || { bg: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-100', icon: 'text-cyan-600' };
+
+            return (
+              <>
+                <DialogHeader className="p-5 border-b border-gray-100 flex flex-row items-center justify-between space-y-0">
+                  <div className="flex items-center gap-3">
+                    <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-sm",
+                      role === 'admin' ? 'bg-purple-500' :
+                        role === 'manager' ? 'bg-blue-500' :
+                          role === 'collector' ? 'bg-cyan-500' :
+                            role === 'supervisor' ? 'bg-orange-500' : 'bg-gray-500'
+                    )}>
+                      {(detailsEmployee?.fullName || 'E').charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <DialogTitle className="text-xl font-bold text-gray-900">{detailsEmployee?.fullName}</DialogTitle>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <Badge className={cn("border-none px-2 py-0 text-[10px] uppercase font-bold tracking-wider", colors.bg, colors.text)}>
+                          {role}
+                        </Badge>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">• {detailsEmployee?.isActive ? 'Active' : 'Inactive'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCloseDetails}
+                      className="h-9 border-gray-200 text-gray-600 font-bold text-[10px] uppercase px-4 hover:bg-gray-50 hover:text-red-500 transition-colors"
+                    >
+                      Close
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setEditingEmployee(detailsEmployee!);
+                        setIsFormOpen(true);
+                        setDetailsEmployee(null);
+                      }}
+                      className={cn("h-9 text-white font-bold text-[10px] uppercase px-4 shadow-md transition-transform active:scale-95",
+                        role === 'admin' ? 'bg-purple-600 hover:bg-purple-700' :
+                          role === 'manager' ? 'bg-blue-600 hover:bg-blue-700' :
+                            role === 'collector' ? 'bg-cyan-600 hover:bg-cyan-700' :
+                              role === 'supervisor' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-gray-900 hover:bg-black'
+                      )}
+                    >
+                      Edit Info
+                    </Button>
+                  </div>
+                </DialogHeader>
+
+                <div className="p-6 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className={cn("p-4 rounded-xl border transition-all hover:shadow-md", colors.bg, colors.border)}>
+                      <div className="flex items-center gap-3 mb-2">
+                        <Phone className={cn("h-4 w-4", colors.icon)} />
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Mobile Number</span>
+                      </div>
+                      <p className="text-sm font-bold text-gray-900 ml-7">{detailsEmployee?.phone || 'Not provided'}</p>
+                    </div>
+
+                    <div className={cn("p-4 rounded-xl border transition-all hover:shadow-md", colors.bg, colors.border)}>
+                      <div className="flex items-center gap-3 mb-2">
+                        <Mail className={cn("h-4 w-4", colors.icon)} />
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Email Address</span>
+                      </div>
+                      <p className="text-sm font-bold text-gray-900 ml-7 truncate">{detailsEmployee?.email || 'Not provided'}</p>
+                    </div>
+
+                    <div className={cn("p-4 rounded-xl border transition-all hover:shadow-md sm:col-span-2", colors.bg, colors.border)}>
+                      <div className="flex items-center gap-3 mb-2">
+                        <MapPin className={cn("h-4 w-4", colors.icon)} />
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Work Location / Primary Yard</span>
+                      </div>
+                      <p className="text-sm font-bold text-gray-900 ml-7 uppercase">
+                        {(detailsEmployee as any)?.scrapYard?.yardName || (detailsEmployee as any)?.scrapYard?.name || detailsEmployee?.workZone || 'General Operations'}
+                      </p>
+                    </div>
+
+                    <div className={cn("p-4 rounded-xl border transition-all hover:shadow-md sm:col-span-2", colors.bg, colors.border)}>
+                      <div className="flex items-center gap-3 mb-2">
+                        <Calendar className={cn("h-4 w-4", colors.icon)} />
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">System Registration Date</span>
+                      </div>
+                      <div className="flex items-center justify-between ml-7">
+                        <p className="text-sm font-bold text-gray-900">
+                          {detailsEmployee?.createdAt ? new Date(detailsEmployee.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
+                        </p>
+                        <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase">
+                          <Clock className="h-3 w-3" />
+                          Joined {detailsEmployee?.createdAt ? new Date(detailsEmployee.createdAt).getHours() % 12 || 12 : '0'}:{detailsEmployee?.createdAt ? new Date(detailsEmployee.createdAt).getMinutes().toString().padStart(2, '0') : '00'} {detailsEmployee?.createdAt && new Date(detailsEmployee.createdAt).getHours() >= 12 ? 'PM' : 'AM'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -141,18 +141,18 @@ type SortKey = 'fullName' | 'createdAt' | 'status';
 function formatDateHuman(dateStr: string): string {
   // Use a consistent date parsing to avoid hydration issues
   const date = new Date(dateStr);
-  
+
   // Only use relative dates on client side to avoid hydration mismatch
   if (typeof window !== 'undefined') {
-  const today = new Date();
-  const yday = new Date();
-  yday.setDate(today.getDate() - 1);
+    const today = new Date();
+    const yday = new Date();
+    yday.setDate(today.getDate() - 1);
 
-  const isSameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
-  if (isSameDay(date, today)) return 'Today';
-  if (isSameDay(date, yday)) return 'Yesterday';
+    const isSameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+    if (isSameDay(date, today)) return 'Today';
+    if (isSameDay(date, yday)) return 'Yesterday';
   }
-  
+
   // Format: DD Mon, YYYY (e.g., "01 Dec, 2027")
   // Use UTC methods for consistency between server and client
   const day = date.getUTCDate().toString().padStart(2, '0');
@@ -195,13 +195,13 @@ function getTabStyle(tab: TabKey) {
 
 // Reusable Lead Avatar Component - Always shows first letter, no images
 // Inspired by modern avatar design with circular shape and gradient
-function LeadAvatar({ 
-  name, 
-  imageUrl, 
+function LeadAvatar({
+  name,
+  imageUrl,
   size = 'md',
   className = ''
-}: { 
-  name: string; 
+}: {
+  name: string;
   imageUrl?: string | null; // Not used, kept for API compatibility
   size?: 'sm' | 'md' | 'lg';
   className?: string;
@@ -212,7 +212,7 @@ function LeadAvatar({
     md: 'w-10 h-10 text-sm',
     lg: 'w-16 h-16 text-lg'
   };
-  
+
   // Always show letter-based avatar with circular design, never load images
   return (
     <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-300 ${className}`}>
@@ -226,9 +226,9 @@ function LeadAvatar({
 function StatusBadge({ status, showDropdownIcon = false }: { status: string; showDropdownIcon?: boolean }) {
   const display = toDisplayStatus(status);
   const base = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap';
-  
+
   let badgeContent = null;
-  
+
   if (display === 'Converted') {
     badgeContent = (
       <span className={`${base} bg-green-100 text-green-800`}>
@@ -277,7 +277,7 @@ function StatusBadge({ status, showDropdownIcon = false }: { status: string; sho
       </span>
     );
   }
-  
+
   return badgeContent;
 }
 
@@ -285,11 +285,11 @@ export default function LeadsPage() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const organizationId = user?.organizationId;
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  
+
   // Filter and search state
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -298,7 +298,7 @@ export default function LeadsPage() {
   const [editingLead, setEditingLead] = useState<Lead | undefined>();
   const [activeTab, setActiveTab] = useState<'All' | 'New' | 'Contacted' | 'Qualified' | 'Converted' | 'Rejected'>('All');
   const [scrapFilter, setScrapFilter] = useState<string>('ALL');
-  
+
   // Sorting state
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -309,14 +309,14 @@ export default function LeadsPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [leadToDelete, setLeadToDelete] = useState<ApiLead | null>(null);
   const router = useRouter();
-  
+
   // Selection state
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  
+
   // Mounted state to prevent hydration mismatch
   const [mounted, setMounted] = useState(false);
-  
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -354,22 +354,22 @@ export default function LeadsPage() {
 
   // Get available scrap conditions - memoized for performance
   const scrapOptions = useMemo(() => ['ALL', 'JUNK', 'DAMAGED', 'WRECKED', 'ACCIDENTAL', 'FULLY_SCRAP'], []);
-  
+
   // Memoize condition filter value to prevent unnecessary re-renders
   const conditionFilterValue = useMemo(() => scrapFilter !== 'ALL' ? scrapFilter : undefined, [scrapFilter]);
-  
+
   // Memoize query parameters for better performance
   const queryParams = useMemo(() => {
     const status = getStatusFromTab(activeTab);
     const sortBy = getApiSortBy(sortKey);
     return {
-    page: currentPage,
-    limit: rowsPerPage,
-    search: debouncedSearchTerm || undefined,
+      page: currentPage,
+      limit: rowsPerPage,
+      search: debouncedSearchTerm || undefined,
       status: status as any,
       vehicleCondition: conditionFilterValue,
       sortBy,
-    sortOrder: sortDir,
+      sortOrder: sortDir,
     };
   }, [currentPage, rowsPerPage, debouncedSearchTerm, activeTab, conditionFilterValue, sortKey, sortDir]);
 
@@ -380,7 +380,7 @@ export default function LeadsPage() {
 
   // Fetch and sync lead stats to Zustand store
   useLeadStats();
-  
+
   // Get stats from Zustand store
   const stats = useLeadStatsStore((state) => state.stats);
 
@@ -395,7 +395,7 @@ export default function LeadsPage() {
     hasNextPage: false,
     hasPreviousPage: false
   }, [apiResponse]);
-  
+
   const totalLeads = pagination.total;
 
   // Map stats to tab counts
@@ -447,16 +447,16 @@ export default function LeadsPage() {
 
   const handleDeleteConfirm = async () => {
     if (!leadToDelete) return;
-    
-      try {
+
+    try {
       await deleteLeadMutation.mutateAsync(leadToDelete.id);
       toast.success(`Lead "${leadToDelete.fullName || 'N/A'}" deleted successfully`);
       setDeleteConfirmOpen(false);
       setLeadToDelete(null);
-      } catch (error) {
-        console.error('Error deleting lead:', error);
-        toast.error('Failed to delete lead');
-      }
+    } catch (error) {
+      console.error('Error deleting lead:', error);
+      toast.error('Failed to delete lead');
+    }
   };
 
   const handleConvertToCustomer = (lead: ApiLead) => {
@@ -535,18 +535,18 @@ export default function LeadsPage() {
       }
 
       const normalizedStatus = value.toUpperCase() as 'NEW' | 'CONTACTED' | 'QUOTED' | 'CONVERTED' | 'REJECTED';
-      
+
       // Don't update if status hasn't changed
       if (lead.status.toUpperCase() === normalizedStatus) {
         return;
       }
 
-      await updateLeadMutation.mutateAsync({ 
-        id: String(lead.id), 
-        data: { status: normalizedStatus } 
+      await updateLeadMutation.mutateAsync({
+        id: String(lead.id),
+        data: { status: normalizedStatus }
       });
       toast.success('Status updated successfully');
-      
+
       // Zustand store will be updated automatically by the mutation hook
     } catch (e: any) {
       const errorMessage = e?.response?.data?.message || e?.message || 'Failed to update status';
@@ -568,7 +568,7 @@ export default function LeadsPage() {
 
   return (
     <div className="space-y-6">
-     
+
 
       {/* Tabs - Now moved inside the table */}
 
@@ -591,15 +591,15 @@ export default function LeadsPage() {
               >
                 <Search className="h-4 w-4" />
               </Button>
-              
+
               {/* Search Input - shown when isSearchOpen is true */}
               {isSearchOpen && (
                 <div className="relative">
-              <Input
-                type="text"
+                  <Input
+                    type="text"
                     placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     onBlur={() => {
                       // Keep search open if there's a search term
                       if (!searchTerm) {
@@ -621,24 +621,22 @@ export default function LeadsPage() {
                       <X className="h-4 w-4" />
                     </button>
                   )}
-            </div>
+                </div>
               )}
-              
+
               {/* Filter Icon Button - Toggle filter panel */}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 active:bg-gray-200 transition-all h-9 w-9 p-0 ${
-                  scrapFilter !== 'ALL' ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : ''
-                } ${
-                  isFilterOpen ? 'border-cyan-500 bg-cyan-50' : ''
-                }`}
+                className={`border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 active:bg-gray-200 transition-all h-9 w-9 p-0 ${scrapFilter !== 'ALL' ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : ''
+                  } ${isFilterOpen ? 'border-cyan-500 bg-cyan-50' : ''
+                  }`}
                 title={isFilterOpen ? "Hide filters" : "Show filters"}
               >
                 <Filter className={`h-4 w-4 ${scrapFilter !== 'ALL' ? 'text-cyan-700' : ''}`} />
               </Button>
-              
+
               <Button
                 onClick={() => setIsFormOpen(true)}
                 className="bg-cyan-500 hover:bg-cyan-600 text-white h-9 w-9 p-0"
@@ -655,29 +653,28 @@ export default function LeadsPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 flex-1">
                   <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter by Condition:</Label>
-                  <Select 
-                    value={scrapFilter} 
+                  <Select
+                    value={scrapFilter}
                     onValueChange={(v) => {
                       setScrapFilter(v);
                       setCurrentPage(1); // Reset to first page when filter changes
                     }}
                   >
-                    <SelectTrigger className={`w-[200px] bg-white border-gray-200 hover:border-gray-300 transition-all ${
-                      scrapFilter !== 'ALL' ? 'border-cyan-500 ring-2 ring-cyan-200' : ''
-                    }`}>
+                    <SelectTrigger className={`w-[200px] bg-white border-gray-200 hover:border-gray-300 transition-all ${scrapFilter !== 'ALL' ? 'border-cyan-500 ring-2 ring-cyan-200' : ''
+                      }`}>
                       <SelectValue placeholder="All Categories">
                         {scrapFilter === 'ALL' ? 'All Categories' : scrapFilter.replace(/_/g, ' ')}
                       </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Categories</SelectItem>
-                    {scrapOptions.filter(opt => opt !== 'ALL').map((opt) => (
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All Categories</SelectItem>
+                      {scrapOptions.filter(opt => opt !== 'ALL').map((opt) => (
                         <SelectItem key={opt} value={opt}>
                           {opt.replace(/_/g, ' ')}
                         </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {scrapFilter !== 'ALL' && (
                     <Button
                       variant="ghost"
@@ -702,8 +699,8 @@ export default function LeadsPage() {
                 >
                   <X className="h-4 w-4" />
                 </Button>
+              </div>
             </div>
-          </div>
           )}
         </CardHeader>
         <CardContent className="p-6">
@@ -723,7 +720,7 @@ export default function LeadsPage() {
                       <TableHead colSpan={8} className="p-0 bg-transparent">
                         <div className="w-full overflow-x-auto">
                           <div className="inline-flex items-center gap-1 px-2 py-2">
-                            {(['All','New','Contacted','Qualified','Converted','Rejected'] as const).map((tab) => {
+                            {(['All', 'New', 'Contacted', 'Qualified', 'Converted', 'Rejected'] as const).map((tab) => {
                               const style = getTabStyle(tab);
                               const isActive = activeTab === tab;
                               return (
@@ -763,19 +760,19 @@ export default function LeadsPage() {
                       </TableHead>
                       <TableHead>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('fullName')}>
-                          Lead 
+                          Lead
                         </button>
                       </TableHead>
                       <TableHead>Phone</TableHead>
                       <TableHead>Scrap Details</TableHead>
                       <TableHead>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('status')}>
-                          Status 
+                          Status
                         </button>
                       </TableHead>
                       <TableHead>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('createdAt')}>
-                          Lead Date 
+                          Lead Date
                         </button>
                       </TableHead>
                       <TableHead className="w-12">Action</TableHead>
@@ -790,227 +787,8 @@ export default function LeadsPage() {
                       </TableRow>
                     ) : (
                       leads.map((lead) => {
-                      const leadPhotos = lead.photos || [];
-                      const firstPhoto = leadPhotos.length > 0 ? getImageUrl(leadPhotos[0]) : null;
-                                const convertedLead: Lead = {
-                                  id: lead.id,
-                                  organizationId: lead.organizationId,
-                                  fullName: lead.fullName || '',
-                                  phone: lead.phone || '',
-                                  email: lead.email,
-                                  vehicleType: lead.vehicleType as any,
-                                  vehicleMake: lead.vehicleMake,
-                                  vehicleModel: lead.vehicleModel,
-                                  vehicleYear: lead.vehicleYear,
-                                  vehicleCondition: lead.vehicleCondition as any,
-                                  locationAddress: lead.locationAddress,
-                                  latitude: lead.latitude,
-                                  longitude: lead.longitude,
-                                  leadSource: lead.leadSource as any,
-                                  photos: lead.photos,
-                                  notes: lead.notes,
-                                  status: lead.status as any,
-                                  customerId: lead.customerId,
-                                  createdAt: new Date(lead.createdAt),
-                                  updatedAt: new Date(lead.updatedAt),
-                                };
-                      
-                      return (
-                        <TableRow 
-                          key={lead.id} 
-                          className="border-b hover:bg-gray-50 transition-colors bg-white"
-                            >
-                          <TableCell>
-                            <Checkbox
-                              checked={selectedLeads.has(lead.id)}
-                              onCheckedChange={(checked) => handleSelectLead(lead.id, checked as boolean)}
-                              onClick={(e) => e.stopPropagation()}
-                              className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <LeadAvatar 
-                                name={lead.fullName || 'N/A'} 
-                                imageUrl={firstPhoto}
-                                size="md"
-                              />
-                              <div className="flex flex-col">
-                                <span className="font-medium text-gray-900">{lead.fullName || 'N/A'}</span>
-                                {lead.email && (
-                                  <span className="text-sm text-gray-500">{lead.email}</span>
-                              )}
-                              </div>
-                          </div>
-                        </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="text-gray-900">{lead.phone || 'N/A'}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {(lead.vehicleType || lead.vehicleMake || lead.vehicleModel || lead.vehicleYear || lead.vehicleCondition) ? (
-                              <Button
-                                variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setVehicleDetailsLead(lead);
-                                }}
-                                className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all"
-                              >
-                                <Car className="h-4 w-4 mr-2" />
-                                <span className="text-sm font-medium">View Scrap Details</span>
-                              </Button>
-                            ) : (
-                              <div className="text-gray-400 text-sm italic">No scrap info</div>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                              <Select value={lead.status} onValueChange={(v) => onInlineStatusChange(lead, v)}>
-                                <SelectTrigger className="h-auto w-auto p-0 border-0 bg-transparent hover:bg-transparent focus:ring-0 focus:ring-offset-0 shadow-none max-w-none min-w-0 overflow-visible">
-                                  <div className="flex items-center">
-                                    <StatusBadge status={lead.status} showDropdownIcon={true} />
-                                  </div>
-                                </SelectTrigger>
-                                <SelectContent className="min-w-[160px] rounded-lg shadow-lg border border-gray-200 bg-white p-1">
-                                  {['NEW','CONTACTED','QUOTED','CONVERTED','REJECTED'].map((s) => {
-                                    const isSelected = lead.status.toUpperCase() === s;
-                                    return (
-                                      <SelectItem 
-                                        key={s} 
-                                        value={s}
-                                        className={cn(
-                                          "cursor-pointer rounded-md px-3 py-2.5 text-sm transition-colors pl-8",
-                                          isSelected 
-                                            ? "bg-cyan-500 text-white hover:bg-cyan-600 data-[highlighted]:bg-cyan-600 focus:bg-cyan-600" 
-                                            : "text-gray-900 hover:bg-gray-100 data-[highlighted]:bg-gray-100 focus:bg-gray-100"
-                                        )}
-                                      >
-                                        <span className={cn(isSelected ? "text-white font-medium" : "text-gray-900")}>{toDisplayStatus(s)}</span>
-                                      </SelectItem>
-                                    );
-                                  })}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-gray-600">
-                            {formatDateHuman(lead.createdAt)}
-                          </TableCell>
-                          <TableCell onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="h-4 w-4 text-gray-600" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
-                                <DropdownMenuItem onClick={() => setDetailsLead(lead)}>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => {
-                                  setEditingLead(convertedLead);
-                                  setIsFormOpen(true);
-                                }}>
-                                  <Edit2 className="h-4 w-4 mr-2" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  onClick={() => handleConvertToCustomer(lead)}
-                                  className="text-cyan-600 focus:text-cyan-600"
-                                >
-                                  <UserPlus className="h-4 w-4 mr-2" />
-                                  Convert Customer
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteClick(lead);
-                                  }}
-                                  className="text-red-600 focus:text-red-600"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                      );
-                    })
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Mobile cards */}
-              <div className="sm:hidden space-y-3">
-                {leads.length === 0 ? (
-                  <div className="py-8">
-                    <NoDataAnimation />
-                  </div>
-                ) : (
-                  leads.map((lead) => {
-                  const leadPhotos = lead.photos || [];
-                  const firstPhoto = leadPhotos.length > 0 ? getImageUrl(leadPhotos[0]) : null;
-                  return (
-                  <div key={lead.id} className="rounded-lg border bg-card p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:bg-gradient-to-br hover:from-cyan-50 hover:to-purple-50 cursor-pointer" onClick={() => setDetailsLead(lead)}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <LeadAvatar 
-                          name={lead.fullName || 'N/A'} 
-                          imageUrl={firstPhoto}
-                          size="md"
-                        />
-                      <div>
-                        <div className="font-semibold">{lead.fullName || 'N/A'}</div>
-                        {lead.email && <div className="text-sm text-muted-foreground">{lead.email}</div>}
-                        </div>
-                      </div>
-                      <StatusBadge status={lead.status} />
-                    </div>
-                    <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                      <div className="text-muted-foreground">Phone</div>
-                      <div>{lead.phone || 'N/A'}</div>
-                      <div className="text-muted-foreground">Scrap</div>
-                      <div>
-                        {(lead.vehicleType || lead.vehicleMake || lead.vehicleModel || lead.vehicleYear || lead.vehicleCondition) ? (
-                          <Button
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setVehicleDetailsLead(lead);
-                            }}
-                            className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all w-full justify-start"
-                          >
-                            <Car className="h-4 w-4 mr-2" />
-                            <span className="text-sm font-medium">View Scrap Details</span>
-                          </Button>
-                        ) : (
-                          <div className="text-gray-400 text-sm italic">No scrap info</div>
-                        )}
-                      </div>
-                      <div className="text-muted-foreground">Created</div>
-                      <div>{formatDateHuman(lead.createdAt)}</div>
-                    </div>
-                    <div className="mt-3 flex items-center gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => setDetailsLead(lead)} 
-                        className="bg-cyan-50/50 hover:bg-cyan-100 text-cyan-600 hover:text-cyan-700 transition-all duration-200 border border-cyan-200/50 hover:border-cyan-300 shadow-sm hover:shadow-md z-10 relative"
-                        title="View Details"
-                      >
-                        <Eye className="h-4 w-4 mr-1" /> View
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => {
+                        const leadPhotos = lead.photos || [];
+                        const firstPhoto = leadPhotos.length > 0 ? getImageUrl(leadPhotos[0]) : null;
                         const convertedLead: Lead = {
                           id: lead.id,
                           organizationId: lead.organizationId,
@@ -1033,51 +811,270 @@ export default function LeadsPage() {
                           createdAt: new Date(lead.createdAt),
                           updatedAt: new Date(lead.updatedAt),
                         };
-                        setEditingLead(convertedLead);
-                        setIsFormOpen(true);
-                        }} 
-                        className="bg-cyan-50/50 hover:bg-cyan-100 text-cyan-600 hover:text-cyan-700 transition-all duration-200 border border-cyan-200/50 hover:border-cyan-300 shadow-sm hover:shadow-md z-10 relative"
-                        title="Edit Lead"
-                      >
-                        <Edit2 className="h-4 w-4 mr-1" /> Edit
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleConvertToCustomer(lead)} 
-                        className="bg-green-50/50 hover:bg-green-100 text-green-600 hover:text-green-700 transition-all duration-200 border border-green-200/50 hover:border-green-300 shadow-sm hover:shadow-md z-10 relative"
-                        title="Convert to Customer"
-                      >
-                        <UserPlus className="h-4 w-4 mr-1" /> Convert
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteClick(lead);
-                        }} 
-                        className="bg-red-50/50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all duration-200 border border-red-200/50 hover:border-red-300 shadow-sm hover:shadow-md z-10 relative"
-                        title="Delete Lead"
-                        disabled={deleteLeadMutation.isPending}
-                      >
-                        {deleteLeadMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4 mr-1" />
-                        )}
-                        Delete
-                      </Button>
-                    </div>
+
+                        return (
+                          <TableRow
+                            key={lead.id}
+                            className="border-b hover:bg-gray-50 transition-colors bg-white"
+                          >
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedLeads.has(lead.id)}
+                                onCheckedChange={(checked) => handleSelectLead(lead.id, checked as boolean)}
+                                onClick={(e) => e.stopPropagation()}
+                                className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <LeadAvatar
+                                  name={lead.fullName || 'N/A'}
+                                  imageUrl={firstPhoto}
+                                  size="md"
+                                />
+                                <div className="flex flex-col">
+                                  <span className="font-medium text-gray-900">{lead.fullName || 'N/A'}</span>
+                                  {lead.email && (
+                                    <span className="text-sm text-gray-500">{lead.email}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="text-gray-900">{lead.phone || 'N/A'}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {(lead.vehicleMake || lead.vehicleModel) ? (
+                                <Button
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setVehicleDetailsLead(lead);
+                                  }}
+                                  className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all"
+                                >
+                                  <Car className="h-4 w-4 mr-2" />
+                                  <span className="text-sm font-medium">View Scrap Details</span>
+                                </Button>
+                              ) : (
+                                <div className="text-gray-400 text-sm italic">No scrap info</div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                                <Select value={lead.status} onValueChange={(v) => onInlineStatusChange(lead, v)}>
+                                  <SelectTrigger className="h-auto w-auto p-0 border-0 bg-transparent hover:bg-transparent focus:ring-0 focus:ring-offset-0 shadow-none max-w-none min-w-0 overflow-visible">
+                                    <div className="flex items-center">
+                                      <StatusBadge status={lead.status} showDropdownIcon={true} />
+                                    </div>
+                                  </SelectTrigger>
+                                  <SelectContent className="min-w-[160px] rounded-lg shadow-lg border border-gray-200 bg-white p-1">
+                                    {['NEW', 'CONTACTED', 'QUOTED', 'CONVERTED', 'REJECTED'].map((s) => {
+                                      const isSelected = lead.status.toUpperCase() === s;
+                                      return (
+                                        <SelectItem
+                                          key={s}
+                                          value={s}
+                                          className={cn(
+                                            "cursor-pointer rounded-md px-3 py-2.5 text-sm transition-colors pl-8",
+                                            isSelected
+                                              ? "bg-cyan-500 text-white hover:bg-cyan-600 data-[highlighted]:bg-cyan-600 focus:bg-cyan-600"
+                                              : "text-gray-900 hover:bg-gray-100 data-[highlighted]:bg-gray-100 focus:bg-gray-100"
+                                          )}
+                                        >
+                                          <span className={cn(isSelected ? "text-white font-medium" : "text-gray-900")}>{toDisplayStatus(s)}</span>
+                                        </SelectItem>
+                                      );
+                                    })}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-gray-600">
+                              {formatDateHuman(lead.createdAt)}
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="h-4 w-4 text-gray-600" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
+                                  <DropdownMenuItem onClick={() => setDetailsLead(lead)}>
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => {
+                                    setEditingLead(convertedLead);
+                                    setIsFormOpen(true);
+                                  }}>
+                                    <Edit2 className="h-4 w-4 mr-2" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => handleConvertToCustomer(lead)}
+                                    className="text-cyan-600 focus:text-cyan-600"
+                                  >
+                                    <UserPlus className="h-4 w-4 mr-2" />
+                                    Convert Customer
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteClick(lead);
+                                    }}
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="sm:hidden space-y-3">
+                {leads.length === 0 ? (
+                  <div className="py-8">
+                    <NoDataAnimation />
                   </div>
-                  );
+                ) : (
+                  leads.map((lead) => {
+                    const leadPhotos = lead.photos || [];
+                    const firstPhoto = leadPhotos.length > 0 ? getImageUrl(leadPhotos[0]) : null;
+                    return (
+                      <div key={lead.id} className="rounded-lg border bg-card p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:bg-gradient-to-br hover:from-cyan-50 hover:to-purple-50 cursor-pointer" onClick={() => setDetailsLead(lead)}>
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <LeadAvatar
+                              name={lead.fullName || 'N/A'}
+                              imageUrl={firstPhoto}
+                              size="md"
+                            />
+                            <div>
+                              <div className="font-semibold">{lead.fullName || 'N/A'}</div>
+                              {lead.email && <div className="text-sm text-muted-foreground">{lead.email}</div>}
+                            </div>
+                          </div>
+                          <StatusBadge status={lead.status} />
+                        </div>
+                        <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                          <div className="text-muted-foreground">Phone</div>
+                          <div>{lead.phone || 'N/A'}</div>
+                          <div className="text-muted-foreground">Scrap</div>
+                          <div>
+                            {(lead.vehicleMake || lead.vehicleModel) ? (
+                              <Button
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setVehicleDetailsLead(lead);
+                                }}
+                                className="h-auto py-2 px-3 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 border border-cyan-200 hover:border-cyan-300 rounded-md transition-all w-full justify-start"
+                              >
+                                <Car className="h-4 w-4 mr-2" />
+                                <span className="text-sm font-medium">View Scrap Details</span>
+                              </Button>
+                            ) : (
+                              <div className="text-gray-400 text-sm italic">No scrap info</div>
+                            )}
+                          </div>
+                          <div className="text-muted-foreground">Created</div>
+                          <div>{formatDateHuman(lead.createdAt)}</div>
+                        </div>
+                        <div className="mt-3 flex items-center gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDetailsLead(lead)}
+                            className="bg-cyan-50/50 hover:bg-cyan-100 text-cyan-600 hover:text-cyan-700 transition-all duration-200 border border-cyan-200/50 hover:border-cyan-300 shadow-sm hover:shadow-md z-10 relative"
+                            title="View Details"
+                          >
+                            <Eye className="h-4 w-4 mr-1" /> View
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const convertedLead: Lead = {
+                                id: lead.id,
+                                organizationId: lead.organizationId,
+                                fullName: lead.fullName || '',
+                                phone: lead.phone || '',
+                                email: lead.email,
+                                vehicleType: lead.vehicleType as any,
+                                vehicleMake: lead.vehicleMake,
+                                vehicleModel: lead.vehicleModel,
+                                vehicleYear: lead.vehicleYear,
+                                vehicleCondition: lead.vehicleCondition as any,
+                                locationAddress: lead.locationAddress,
+                                latitude: lead.latitude,
+                                longitude: lead.longitude,
+                                leadSource: lead.leadSource as any,
+                                photos: lead.photos,
+                                notes: lead.notes,
+                                status: lead.status as any,
+                                customerId: lead.customerId,
+                                createdAt: new Date(lead.createdAt),
+                                updatedAt: new Date(lead.updatedAt),
+                              };
+                              setEditingLead(convertedLead);
+                              setIsFormOpen(true);
+                            }}
+                            className="bg-cyan-50/50 hover:bg-cyan-100 text-cyan-600 hover:text-cyan-700 transition-all duration-200 border border-cyan-200/50 hover:border-cyan-300 shadow-sm hover:shadow-md z-10 relative"
+                            title="Edit Lead"
+                          >
+                            <Edit2 className="h-4 w-4 mr-1" /> Edit
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleConvertToCustomer(lead)}
+                            className="bg-green-50/50 hover:bg-green-100 text-green-600 hover:text-green-700 transition-all duration-200 border border-green-200/50 hover:border-green-300 shadow-sm hover:shadow-md z-10 relative"
+                            title="Convert to Customer"
+                          >
+                            <UserPlus className="h-4 w-4 mr-1" /> Convert
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClick(lead);
+                            }}
+                            className="bg-red-50/50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all duration-200 border border-red-200/50 hover:border-red-300 shadow-sm hover:shadow-md z-10 relative"
+                            title="Delete Lead"
+                            disabled={deleteLeadMutation.isPending}
+                          >
+                            {deleteLeadMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4 mr-1" />
+                            )}
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    );
                   })
                 )}
               </div>
             </>
           )}
         </CardContent>
-        
+
         {/* Pagination Controls */}
         {!isLoading && pagination.totalPages > 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t">
@@ -1095,11 +1092,11 @@ export default function LeadsPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={pagination.totalPages}
-              onPageChange={setCurrentPage}
-            />
+              <Pagination
+                currentPage={currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={setCurrentPage}
+              />
             </div>
           </div>
         )}
@@ -1117,7 +1114,7 @@ export default function LeadsPage() {
             <DialogTitle className="text-xl font-bold text-gray-900">Lead Details</DialogTitle>
             <div className="flex items-center gap-2">
               {detailsLead && (
-                <Button 
+                <Button
                   onClick={() => {
                     const convertedLead: Lead = {
                       id: detailsLead.id,
@@ -1150,8 +1147,8 @@ export default function LeadsPage() {
                   <Edit2 className="h-4 w-4 mr-2" /> Edit
                 </Button>
               )}
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setDetailsLead(null)}
                 className="h-10 px-4 border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all"
               >
@@ -1163,19 +1160,19 @@ export default function LeadsPage() {
             <div className="space-y-4">
               {/* Lead Header with Avatar */}
               <div className="flex items-center gap-4">
-                <LeadAvatar 
-                  name={detailsLead.fullName || 'N/A'} 
+                <LeadAvatar
+                  name={detailsLead.fullName || 'N/A'}
                   imageUrl={detailsLead.photos && detailsLead.photos.length > 0 ? getImageUrl(detailsLead.photos[0]) : null}
                   size="lg"
                 />
                 <div>
-              <div className="text-xl font-bold text-gray-900">{detailsLead.fullName || 'N/A'}</div>
+                  <div className="text-xl font-bold text-gray-900">{detailsLead.fullName || 'N/A'}</div>
                   {detailsLead.email && (
                     <div className="text-sm text-gray-600 mt-1">{detailsLead.email}</div>
                   )}
                 </div>
               </div>
-              
+
               {/* Basic Information */}
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Contact Information</h3>
@@ -1196,12 +1193,12 @@ export default function LeadsPage() {
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Location Information</h3>
                   <div className="grid grid-cols-2 gap-3 text-sm">
-                  {detailsLead.locationAddress && (
-                    <>
-                      <div className="text-muted-foreground">Address</div>
+                    {detailsLead.locationAddress && (
+                      <>
+                        <div className="text-muted-foreground">Address</div>
                         <div className="font-medium break-words">{detailsLead.locationAddress}</div>
-                    </>
-                  )}
+                      </>
+                    )}
                     {(detailsLead.latitude !== undefined && detailsLead.latitude !== null) && (
                       <>
                         <div className="text-muted-foreground">Latitude</div>
@@ -1229,10 +1226,10 @@ export default function LeadsPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                             </svg>
                           </a>
-                </div>
+                        </div>
                       </>
                     )}
-              </div>
+                  </div>
                 </div>
               )}
 
@@ -1240,10 +1237,6 @@ export default function LeadsPage() {
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Scrap Details</h3>
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="text-muted-foreground">Type</div>
-                  <div className="font-medium capitalize">{detailsLead.vehicleType || 'N/A'}</div>
-                  <div className="text-muted-foreground">Condition</div>
-                  <div className="font-medium capitalize">{String(detailsLead.vehicleCondition || '').replace(/_/g, ' ')}</div>
                   {detailsLead.vehicleMake && (
                     <>
                       <div className="text-muted-foreground">Make</div>
@@ -1254,12 +1247,6 @@ export default function LeadsPage() {
                     <>
                       <div className="text-muted-foreground">Model</div>
                       <div className="font-medium">{detailsLead.vehicleModel}</div>
-                    </>
-                  )}
-                  {detailsLead.vehicleYear && (
-                    <>
-                      <div className="text-muted-foreground">Year</div>
-                      <div className="font-medium">{detailsLead.vehicleYear}</div>
                     </>
                   )}
                 </div>
@@ -1336,21 +1323,21 @@ export default function LeadsPage() {
               Scrap Details
             </DialogTitle>
             <div className="flex items-center gap-2">
-                <Button 
+              <Button
                 onClick={() => setVehicleDetailsLead(null)}
                 className="h-10 px-4 border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all"
-                >
+              >
                 Close
-                </Button>
-              </div>
+              </Button>
+            </div>
           </DialogHeader>
 
           {vehicleDetailsLead && (
             <div className="space-y-6">
               {/* Lead Info Header */}
               <div className="flex items-center gap-4 pb-4 border-b border-gray-200">
-                <LeadAvatar 
-                  name={vehicleDetailsLead.fullName || 'N/A'} 
+                <LeadAvatar
+                  name={vehicleDetailsLead.fullName || 'N/A'}
                   imageUrl={vehicleDetailsLead.photos && vehicleDetailsLead.photos.length > 0 ? getImageUrl(vehicleDetailsLead.photos[0]) : null}
                   size="md"
                 />
@@ -1363,19 +1350,13 @@ export default function LeadsPage() {
               </div>
 
               {/* Scrap Details */}
-              {(vehicleDetailsLead.vehicleType || vehicleDetailsLead.vehicleMake || vehicleDetailsLead.vehicleModel || vehicleDetailsLead.vehicleYear || vehicleDetailsLead.vehicleCondition) ? (
+              {(vehicleDetailsLead.vehicleMake || vehicleDetailsLead.vehicleModel) ? (
                 <div className="space-y-4">
                   <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-4 border border-cyan-200">
                     <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4 flex items-center gap-2">
                       Scrap Details
                     </h3>
                     <div className="grid grid-cols-1 gap-4">
-                      {vehicleDetailsLead.vehicleType && (
-                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Type</span>
-                          <span className="px-3 py-1.5 bg-cyan-100 text-cyan-700 rounded-md text-sm font-medium capitalize">{vehicleDetailsLead.vehicleType}</span>
-                        </div>
-                      )}
                       {vehicleDetailsLead.vehicleMake && (
                         <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
                           <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Make</span>
@@ -1386,18 +1367,6 @@ export default function LeadsPage() {
                         <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
                           <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Model</span>
                           <span className="text-sm font-medium text-gray-900">{vehicleDetailsLead.vehicleModel}</span>
-                        </div>
-                      )}
-                      {vehicleDetailsLead.vehicleYear && (
-                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Year</span>
-                          <span className="text-sm font-medium text-gray-900">{vehicleDetailsLead.vehicleYear}</span>
-                        </div>
-                      )}
-                      {vehicleDetailsLead.vehicleCondition && (
-                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Condition</span>
-                          <span className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-md text-sm font-medium capitalize">{String(vehicleDetailsLead.vehicleCondition).replace(/_/g, ' ')}</span>
                         </div>
                       )}
                     </div>
@@ -1456,8 +1425,8 @@ export default function LeadsPage() {
             {leadToDelete && (
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center gap-3">
-                  <LeadAvatar 
-                    name={leadToDelete.fullName || 'N/A'} 
+                  <LeadAvatar
+                    name={leadToDelete.fullName || 'N/A'}
                     imageUrl={leadToDelete.photos && leadToDelete.photos.length > 0 ? getImageUrl(leadToDelete.photos[0]) : null}
                     size="md"
                   />
