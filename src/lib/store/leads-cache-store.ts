@@ -9,25 +9,25 @@ interface LeadsCacheState {
     pagination: any;
     timestamp: number;
   }>;
-  
+
   // Cache TTL in milliseconds (5 minutes)
   cacheTTL: number;
-  
+
   // Get cached data for a specific query
   getCachedData: (queryKey: string) => { leads: Lead[]; pagination: any } | null;
-  
+
   // Set cached data for a specific query
   setCachedData: (queryKey: string, leads: Lead[], pagination: any) => void;
-  
+
   // Invalidate cache for a specific query or all queries
   invalidateCache: (queryKey?: string) => void;
-  
+
   // Clear all cache
   clearCache: () => void;
-  
+
   // Update a single lead in all cached pages
   updateLeadInCache: (leadId: string, updatedLead: Partial<Lead>) => void;
-  
+
   // Remove a lead from all cached pages
   removeLeadFromCache: (leadId: string) => void;
 }
@@ -42,7 +42,7 @@ const generateQueryKey = (params: Record<string, any>): string => {
       }
       return acc;
     }, {} as Record<string, any>);
-  
+
   return JSON.stringify(sortedParams);
 };
 
@@ -56,21 +56,15 @@ export const useLeadsCacheStore = create<LeadsCacheState>()(
         getCachedData: (queryKey: string) => {
           const state = get();
           const cached = state.cachedPages[queryKey];
-          
+
           if (!cached) return null;
-          
+
           // Check if cache is still valid
           const now = Date.now();
           if (now - cached.timestamp > state.cacheTTL) {
-            // Cache expired, remove it
-            set((state) => {
-              const newCachedPages = { ...state.cachedPages };
-              delete newCachedPages[queryKey];
-              return { cachedPages: newCachedPages };
-            });
             return null;
           }
-          
+
           return {
             leads: cached.leads,
             pagination: cached.pagination,
@@ -109,11 +103,11 @@ export const useLeadsCacheStore = create<LeadsCacheState>()(
         updateLeadInCache: (leadId: string, updatedLead: Partial<Lead>) => {
           set((state) => {
             const newCachedPages = { ...state.cachedPages };
-            
+
             Object.keys(newCachedPages).forEach((key) => {
               const cached = newCachedPages[key];
               const leadIndex = cached.leads.findIndex((l) => l.id === leadId);
-              
+
               if (leadIndex !== -1) {
                 newCachedPages[key] = {
                   ...cached,
@@ -123,7 +117,7 @@ export const useLeadsCacheStore = create<LeadsCacheState>()(
                 };
               }
             });
-            
+
             return { cachedPages: newCachedPages };
           });
         },
@@ -131,7 +125,7 @@ export const useLeadsCacheStore = create<LeadsCacheState>()(
         removeLeadFromCache: (leadId: string) => {
           set((state) => {
             const newCachedPages = { ...state.cachedPages };
-            
+
             Object.keys(newCachedPages).forEach((key) => {
               const cached = newCachedPages[key];
               newCachedPages[key] = {
@@ -143,7 +137,7 @@ export const useLeadsCacheStore = create<LeadsCacheState>()(
                 },
               };
             });
-            
+
             return { cachedPages: newCachedPages };
           });
         },

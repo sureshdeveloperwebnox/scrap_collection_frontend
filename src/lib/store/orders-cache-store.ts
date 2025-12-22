@@ -9,28 +9,28 @@ interface OrdersCacheState {
     pagination: any;
     timestamp: number;
   }>;
-  
+
   // Cache TTL in milliseconds (5 minutes)
   cacheTTL: number;
-  
+
   // Get cached data for a specific query
   getCachedData: (queryKey: string) => { orders: Order[]; pagination: any } | null;
-  
+
   // Set cached data for a specific query
   setCachedData: (queryKey: string, orders: Order[], pagination: any) => void;
-  
+
   // Invalidate cache for a specific query or all queries
   invalidateCache: (queryKey?: string) => void;
-  
+
   // Clear all cache
   clearCache: () => void;
-  
+
   // Update a single order in all cached pages
   updateOrderInCache: (orderId: string, updatedOrder: Partial<Order>) => void;
-  
+
   // Remove an order from all cached pages
   removeOrderFromCache: (orderId: string) => void;
-  
+
   // Add a new order to all relevant cached pages (optimistic update)
   addOrderToCache: (newOrder: Order, queryKey?: string) => void;
 }
@@ -45,21 +45,15 @@ export const useOrdersCacheStore = create<OrdersCacheState>()(
         getCachedData: (queryKey: string) => {
           const state = get();
           const cached = state.cachedPages[queryKey];
-          
+
           if (!cached) return null;
-          
+
           // Check if cache is still valid
           const now = Date.now();
           if (now - cached.timestamp > state.cacheTTL) {
-            // Cache expired, remove it
-            set((state) => {
-              const newCachedPages = { ...state.cachedPages };
-              delete newCachedPages[queryKey];
-              return { cachedPages: newCachedPages };
-            });
             return null;
           }
-          
+
           return {
             orders: cached.orders,
             pagination: cached.pagination,
@@ -98,11 +92,11 @@ export const useOrdersCacheStore = create<OrdersCacheState>()(
         updateOrderInCache: (orderId: string, updatedOrder: Partial<Order>) => {
           set((state) => {
             const newCachedPages = { ...state.cachedPages };
-            
+
             Object.keys(newCachedPages).forEach((key) => {
               const cached = newCachedPages[key];
               const orderIndex = cached.orders.findIndex((o) => o.id === orderId);
-              
+
               if (orderIndex !== -1) {
                 newCachedPages[key] = {
                   ...cached,
@@ -112,7 +106,7 @@ export const useOrdersCacheStore = create<OrdersCacheState>()(
                 };
               }
             });
-            
+
             return { cachedPages: newCachedPages };
           });
         },
@@ -120,7 +114,7 @@ export const useOrdersCacheStore = create<OrdersCacheState>()(
         removeOrderFromCache: (orderId: string) => {
           set((state) => {
             const newCachedPages = { ...state.cachedPages };
-            
+
             Object.keys(newCachedPages).forEach((key) => {
               const cached = newCachedPages[key];
               newCachedPages[key] = {
@@ -132,7 +126,7 @@ export const useOrdersCacheStore = create<OrdersCacheState>()(
                 },
               };
             });
-            
+
             return { cachedPages: newCachedPages };
           });
         },
@@ -140,7 +134,7 @@ export const useOrdersCacheStore = create<OrdersCacheState>()(
         addOrderToCache: (newOrder: Order, queryKey?: string) => {
           set((state) => {
             const newCachedPages = { ...state.cachedPages };
-            
+
             if (queryKey) {
               // Add to specific cache entry
               const cached = newCachedPages[queryKey];
@@ -164,7 +158,7 @@ export const useOrdersCacheStore = create<OrdersCacheState>()(
                 const cached = newCachedPages[key];
                 const shouldInclude = true; // For now, add to all caches for instant visibility
                 const exists = cached.orders.some(o => o.id === newOrder.id);
-                
+
                 if (shouldInclude && !exists) {
                   newCachedPages[key] = {
                     ...cached,
@@ -177,7 +171,7 @@ export const useOrdersCacheStore = create<OrdersCacheState>()(
                 }
               });
             }
-            
+
             return { cachedPages: newCachedPages };
           });
         },

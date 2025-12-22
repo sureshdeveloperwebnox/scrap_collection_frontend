@@ -71,7 +71,7 @@ export const useNearestScrapYard = (location: { lat: number; lng: number }) => {
 // Create scrap yard mutation - OPTIMIZED WITH OPTIMISTIC UPDATES
 export const useCreateScrapYard = () => {
   const queryClient = useQueryClient();
-  const { addScrapYardToCache } = useScrapYardsStore();
+  const addScrapYardToCache = useScrapYardsStore((state) => state.addScrapYardToCache);
 
   return useMutation({
     mutationFn: (yardData: Omit<ScrapYard, 'id' | 'createdAt' | 'updatedAt'> & { managerId?: string }) =>
@@ -119,7 +119,7 @@ export const useCreateScrapYard = () => {
 // Update scrap yard mutation - OPTIMIZED WITH OPTIMISTIC UPDATES
 export const useUpdateScrapYard = () => {
   const queryClient = useQueryClient();
-  const { updateScrapYardInCache } = useScrapYardsStore();
+  const updateScrapYardInCache = useScrapYardsStore((state) => state.updateScrapYardInCache);
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<ScrapYard> }) =>
@@ -184,7 +184,7 @@ export const useUpdateScrapYard = () => {
 // Delete scrap yard mutation - OPTIMIZED WITH OPTIMISTIC UPDATES
 export const useDeleteScrapYard = () => {
   const queryClient = useQueryClient();
-  const { removeScrapYardFromCache } = useScrapYardsStore();
+  const removeScrapYardFromCache = useScrapYardsStore((state) => state.removeScrapYardFromCache);
 
   return useMutation({
     mutationFn: (id: string) => scrapYardsApi.deleteScrapYard(id),

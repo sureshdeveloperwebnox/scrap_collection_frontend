@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useLoadingStore } from '@/lib/store/loading-store';
 
 // Dynamically import Lottie for better performance (code splitting)
-const Lottie = dynamic(() => import('lottie-react'), { 
+const Lottie = dynamic(() => import('lottie-react'), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center w-32 h-32">
@@ -25,8 +25,8 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
   const [showLoader, setShowLoader] = useState(false);
   const loaderStartTimeRef = useRef<number | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  const { isLoading } = useLoadingStore();
+
+  const isLoading = useLoadingStore((state) => state.isLoading);
   const pathname = usePathname();
   const prevPathnameRef = useRef<string | null>(null);
   const [isRouteChanging, setIsRouteChanging] = useState(false);
@@ -34,7 +34,7 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
   // Load animation data once (optimized - cached)
   useEffect(() => {
     let mounted = true;
-    
+
     // Check if animation is already cached in memory
     const cachedAnimation = (window as any).__lottieLoaderCache;
     if (cachedAnimation) {
@@ -44,7 +44,7 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
       }
       return;
     }
-    
+
     const loadAnimation = async () => {
       try {
         const response = await fetch('/animation/loader.json');
@@ -65,7 +65,7 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
     };
 
     loadAnimation();
-    
+
     return () => {
       mounted = false;
     };
@@ -101,7 +101,7 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
       if (showLoader && loaderStartTimeRef.current) {
         const elapsed = Date.now() - loaderStartTimeRef.current;
         const remainingDelay = Math.max(0, minDelay - elapsed);
-        
+
         timeoutRef.current = setTimeout(() => {
           setShowLoader(false);
           loaderStartTimeRef.current = null;
@@ -139,7 +139,7 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
   }
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/90 backdrop-blur-sm transition-opacity duration-300"
       aria-label="Loading"
       role="status"
@@ -151,8 +151,8 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
             animationData={animationData}
             loop={true}
             autoplay={true}
-            style={{ 
-              width: '100%', 
+            style={{
+              width: '100%',
               height: '100%',
               maxWidth: '160px',
               maxHeight: '160px',

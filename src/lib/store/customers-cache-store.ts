@@ -9,28 +9,28 @@ interface CustomersCacheState {
     pagination: any;
     timestamp: number;
   }>;
-  
+
   // Cache TTL in milliseconds (5 minutes)
   cacheTTL: number;
-  
+
   // Get cached data for a specific query
   getCachedData: (queryKey: string) => { customers: Customer[]; pagination: any } | null;
-  
+
   // Set cached data for a specific query
   setCachedData: (queryKey: string, customers: Customer[], pagination: any) => void;
-  
+
   // Invalidate cache for a specific query or all queries
   invalidateCache: (queryKey?: string) => void;
-  
+
   // Clear all cache
   clearCache: () => void;
-  
+
   // Update a single customer in all cached pages
   updateCustomerInCache: (customerId: string, updatedCustomer: Partial<Customer>) => void;
-  
+
   // Remove a customer from all cached pages
   removeCustomerFromCache: (customerId: string) => void;
-  
+
   // Add a new customer to all relevant cached pages (optimistic update)
   addCustomerToCache: (newCustomer: Customer, queryKey?: string) => void;
 }
@@ -45,7 +45,7 @@ const generateQueryKey = (params: Record<string, any>): string => {
       }
       return acc;
     }, {} as Record<string, any>);
-  
+
   return JSON.stringify(sortedParams);
 };
 
@@ -59,21 +59,15 @@ export const useCustomersCacheStore = create<CustomersCacheState>()(
         getCachedData: (queryKey: string) => {
           const state = get();
           const cached = state.cachedPages[queryKey];
-          
+
           if (!cached) return null;
-          
+
           // Check if cache is still valid
           const now = Date.now();
           if (now - cached.timestamp > state.cacheTTL) {
-            // Cache expired, remove it
-            set((state) => {
-              const newCachedPages = { ...state.cachedPages };
-              delete newCachedPages[queryKey];
-              return { cachedPages: newCachedPages };
-            });
             return null;
           }
-          
+
           return {
             customers: cached.customers,
             pagination: cached.pagination,
@@ -112,11 +106,11 @@ export const useCustomersCacheStore = create<CustomersCacheState>()(
         updateCustomerInCache: (customerId: string, updatedCustomer: Partial<Customer>) => {
           set((state) => {
             const newCachedPages = { ...state.cachedPages };
-            
+
             Object.keys(newCachedPages).forEach((key) => {
               const cached = newCachedPages[key];
               const customerIndex = cached.customers.findIndex((c) => c.id === customerId);
-              
+
               if (customerIndex !== -1) {
                 newCachedPages[key] = {
                   ...cached,
@@ -126,7 +120,7 @@ export const useCustomersCacheStore = create<CustomersCacheState>()(
                 };
               }
             });
-            
+
             return { cachedPages: newCachedPages };
           });
         },
@@ -134,7 +128,7 @@ export const useCustomersCacheStore = create<CustomersCacheState>()(
         removeCustomerFromCache: (customerId: string) => {
           set((state) => {
             const newCachedPages = { ...state.cachedPages };
-            
+
             Object.keys(newCachedPages).forEach((key) => {
               const cached = newCachedPages[key];
               newCachedPages[key] = {
@@ -146,7 +140,7 @@ export const useCustomersCacheStore = create<CustomersCacheState>()(
                 },
               };
             });
-            
+
             return { cachedPages: newCachedPages };
           });
         },
@@ -154,7 +148,7 @@ export const useCustomersCacheStore = create<CustomersCacheState>()(
         addCustomerToCache: (newCustomer: Customer, queryKey?: string) => {
           set((state) => {
             const newCachedPages = { ...state.cachedPages };
-            
+
             if (queryKey) {
               // Add to specific cache entry
               const cached = newCachedPages[queryKey];
@@ -180,7 +174,7 @@ export const useCustomersCacheStore = create<CustomersCacheState>()(
                 // (e.g., if it's "All" tab or matches the customer's status)
                 const shouldInclude = true; // For now, add to all caches for instant visibility
                 const exists = cached.customers.some(c => c.id === newCustomer.id);
-                
+
                 if (shouldInclude && !exists) {
                   newCachedPages[key] = {
                     ...cached,
@@ -193,7 +187,7 @@ export const useCustomersCacheStore = create<CustomersCacheState>()(
                 }
               });
             }
-            
+
             return { cachedPages: newCachedPages };
           });
         },

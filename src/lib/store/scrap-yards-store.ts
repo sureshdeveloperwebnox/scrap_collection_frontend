@@ -107,12 +107,6 @@ export const useScrapYardsStore = create<ScrapYardsState>()(
                     // Check if cache is still valid
                     const now = Date.now();
                     if (now - cached.timestamp > state.cacheTTL) {
-                        // Cache expired, remove it
-                        set((state) => {
-                            const newCachedPages = { ...state.cachedPages };
-                            delete newCachedPages[queryKey];
-                            return { cachedPages: newCachedPages };
-                        });
                         return null;
                     }
 

@@ -8,8 +8,8 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { initializeFromStorage } = useAuthStore();
-  
+  const initializeFromStorage = useAuthStore((state) => state.initializeFromStorage);
+
   // Initialize authentication state from localStorage
   useEffect(() => {
     // Quick initialization without blocking

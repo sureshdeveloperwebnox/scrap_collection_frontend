@@ -14,12 +14,12 @@ import { usePathname } from 'next/navigation';
  */
 export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
-  const { setLoading } = useLoadingStore();
-  const { isLoading: authLoading } = useAuthStore();
+  const setLoading = useLoadingStore((state) => state.setLoading);
+  const authLoading = useAuthStore((state) => state.isLoading);
   const pathname = usePathname();
   const prevPathnameRef = useRef<string | null>(null);
   const [isRouteChanging, setIsRouteChanging] = useState(false);
-  
+
   // Use React Query's optimized hooks for fetching/mutating states
   const isFetching = useIsFetching();
   const isMutating = useIsMutating();
@@ -30,7 +30,7 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
       // Route changed - set loading state
       setIsRouteChanging(true);
       setLoading(true);
-      
+
       const timer = setTimeout(() => {
         setIsRouteChanging(false);
         // Check if queries are still loading after route change
@@ -39,7 +39,7 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
           setLoading(false);
         }
       }, 300);
-      
+
       return () => clearTimeout(timer);
     }
     prevPathnameRef.current = pathname;
@@ -48,7 +48,7 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   // Update loading state based on all conditions (debounced for performance)
   useEffect(() => {
     const hasAnyLoading = authLoading || isFetching > 0 || isMutating > 0 || isRouteChanging;
-    
+
     // Use a small delay to batch rapid state changes
     const timer = setTimeout(() => {
       setLoading(hasAnyLoading);

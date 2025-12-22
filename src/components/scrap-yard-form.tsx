@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,12 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrapYard } from '@/types';
 import { useCreateScrapYard, useUpdateScrapYard } from '@/hooks/use-scrap-yards';
-import { employeesApi } from '@/lib/api';
-import { useQuery } from '@tanstack/react-query';
-import { queryKeys } from '@/lib/query-client';
 import { toast } from 'sonner';
 import { GoogleMapPicker } from '@/components/google-map-picker';
-import { Users } from 'lucide-react';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { z } from 'zod';
 
@@ -25,7 +21,7 @@ interface ScrapYardFormProps {
 }
 
 export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYardFormProps) {
-  const { user } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
   const organizationId = user?.organizationId || 1;
 
   const schema = z.object({
@@ -44,7 +40,6 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
       .max(180, 'Longitude must be between -180 and 180')
       .optional()
       .or(z.literal(0)),
-    managerId: z.string().optional().or(z.literal('')),
   });
 
   const [formData, setFormData] = useState<{
@@ -53,46 +48,22 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
     address: string;
     latitude: number;
     longitude: number;
-    managerId: string;
   }>({
     organizationId,
     yardName: '',
     address: '',
     latitude: 0,
     longitude: 0,
-    managerId: '',
   });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   // Fetch active employees for manager selection
-  const { data: employeesData } = useQuery({
-    queryKey: ['employees', 'for-manager-selection'],
-    queryFn: () => employeesApi.getEmployees({
-      isActive: true,
-      limit: 100 // Get more employees for selection
-    }),
-  });
 
-  const employees = useMemo(() => {
-    const apiResponse = employeesData as any;
-    return apiResponse?.data?.employees || [];
-  }, [employeesData]);
 
   // Initialize form data when scrapYard prop changes
   useEffect(() => {
     if (scrapYard) {
-      // Get manager from employees array or assignedEmployeeIds
-      let managerId = '';
-      if (scrapYard.employees && scrapYard.employees.length > 0) {
-        // Find manager/supervisor or use first employee
-        const manager = scrapYard.employees.find(
-          (emp) => emp.role?.name?.toUpperCase().includes('MANAGER') ||
-            emp.role?.name?.toUpperCase().includes('SUPERVISOR')
-        );
-        managerId = manager?.id || scrapYard.employees[0]?.id || '';
-      } else if (scrapYard.assignedEmployeeIds && scrapYard.assignedEmployeeIds.length > 0) {
-        managerId = scrapYard.assignedEmployeeIds[0];
-      }
+
 
       setFormData({
         organizationId: scrapYard.organizationId || organizationId,
@@ -100,7 +71,6 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
         address: scrapYard.address || '',
         latitude: scrapYard.latitude || 0,
         longitude: scrapYard.longitude || 0,
-        managerId: managerId,
       });
     } else {
       // Reset form for new scrap yard
@@ -110,7 +80,6 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
         address: '',
         latitude: 0,
         longitude: 0,
-        managerId: '',
       });
     }
   }, [scrapYard, isOpen]);
@@ -139,8 +108,7 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
     }
 
     try {
-      // Prepare assignedEmployeeIds - include manager if selected
-      const assignedEmployeeIds = formData.managerId ? [formData.managerId] : [];
+
 
       if (scrapYard) {
         // Update existing scrap yard
@@ -151,7 +119,6 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
             address: formData.address,
             latitude: formData.latitude || undefined,
             longitude: formData.longitude || undefined,
-            assignedEmployeeIds: assignedEmployeeIds.length > 0 ? assignedEmployeeIds : undefined,
           }
         });
         toast.success('Scrap yard updated successfully!');
@@ -163,7 +130,6 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
           address: formData.address,
           latitude: formData.latitude || undefined,
           longitude: formData.longitude || undefined,
-          assignedEmployeeIds: assignedEmployeeIds.length > 0 ? assignedEmployeeIds : undefined,
         });
         toast.success('Scrap yard created successfully!');
       }
@@ -180,12 +146,20 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
     }
   };
 
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = useCallback((field: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (validationErrors[field]) {
       setValidationErrors(prev => ({ ...prev, [field]: '' }));
     }
-  };
+  }, [validationErrors]);
+
+  const handleLocationChange = useCallback((lat: number, lng: number) => {
+    setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
+  }, []);
+
+  const handleAddressChange = useCallback((address: string) => {
+    setFormData(prev => ({ ...prev, address }));
+  }, []);
 
   const isLoading = createScrapYardMutation.isPending || updateScrapYardMutation.isPending;
 
@@ -263,35 +237,7 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="managerId" className="text-sm font-medium text-gray-700">Manager</Label>
-                      <Select
-                        value={formData.managerId || 'none'}
-                        onValueChange={(value) => handleInputChange('managerId', value === 'none' ? '' : value)}
-                        disabled={isLoading}
-                      >
-                        <SelectTrigger className="h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all">
-                          <div className="flex items-center">
-                            <Users className="h-4 w-4 mr-2 text-gray-400" />
-                            <SelectValue placeholder="Select a manager" />
-                          </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">No Manager</SelectItem>
-                          {employees.map((employee: any) => {
-                            const roleName = employee.role?.name || employee.role || '';
-                            return (
-                              <SelectItem key={employee.id} value={employee.id}>
-                                {employee.fullName} {roleName ? `(${roleName})` : ''}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-gray-500">
-                        Select a manager to assign to this scrap yard.
-                      </p>
-                    </div>
+
                   </div>
                 </div>
               </div>
@@ -305,13 +251,9 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
                       <GoogleMapPicker
                         latitude={formData.latitude}
                         longitude={formData.longitude}
-                        onLocationChange={(lat, lng) => {
-                          setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
-                        }}
+                        onLocationChange={handleLocationChange}
                         address={formData.address}
-                        onAddressChange={(address) => {
-                          setFormData(prev => ({ ...prev, address }));
-                        }}
+                        onAddressChange={handleAddressChange}
                       />
                     </div>
                     {validationErrors.address && (

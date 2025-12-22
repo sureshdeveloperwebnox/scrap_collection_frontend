@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, MapPin, Building2, Users, Plus, Edit2, Trash2, MoreHorizontal, Filter, X, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown } from 'lucide-react';
+import { Search, MapPin, Plus, Edit2, Trash2, MoreHorizontal, Filter, X, Loader2, CheckCircle2, Clock, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -126,16 +126,14 @@ interface ApiResponse {
 type TabKey = 'All' | 'Active' | 'Inactive';
 
 export default function ScrapYardsPage() {
-  const {
-    activeTab,
-    setActiveTab,
-    searchTerm,
-    setSearchTerm,
-    page,
-    setPage,
-    limit,
-    setLimit,
-  } = useScrapYardsStore();
+  const activeTab = useScrapYardsStore((state) => state.activeTab);
+  const setActiveTab = useScrapYardsStore((state) => state.setActiveTab);
+  const searchTerm = useScrapYardsStore((state) => state.searchTerm);
+  const setSearchTerm = useScrapYardsStore((state) => state.setSearchTerm);
+  const page = useScrapYardsStore((state) => state.page);
+  const setPage = useScrapYardsStore((state) => state.setPage);
+  const limit = useScrapYardsStore((state) => state.limit);
+  const setLimit = useScrapYardsStore((state) => state.setLimit);
 
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [selectedLocation, setSelectedLocation] = useState<{
@@ -231,16 +229,7 @@ export default function ScrapYardsPage() {
     }
   };
 
-  const getManager = (yard: ScrapYard) => {
-    if (yard.employees && yard.employees.length > 0) {
-      const manager = yard.employees.find(
-        (emp) => emp.role?.name?.toUpperCase().includes('MANAGER') ||
-          emp.role?.name?.toUpperCase().includes('SUPERVISOR')
-      );
-      return manager || yard.employees[0];
-    }
-    return null;
-  };
+
 
   const onInlineStatusChange = async (yard: ScrapYard, value: string) => {
     try {
@@ -340,7 +329,7 @@ export default function ScrapYardsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50">
-                      <TableHead colSpan={5} className="p-0 bg-transparent">
+                      <TableHead colSpan={4} className="p-0 bg-transparent">
                         <div className="w-full overflow-x-auto">
                           <div className="inline-flex items-center gap-1 px-2 py-2">
                             {(['All', 'Active', 'Inactive'] as const).map((tab) => {
@@ -376,9 +365,7 @@ export default function ScrapYardsPage() {
                       <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                         Location
                       </TableHead>
-                      <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Manager
-                      </TableHead>
+
                       <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                         Status
                       </TableHead>
@@ -390,13 +377,12 @@ export default function ScrapYardsPage() {
                   <TableBody>
                     {scrapYards.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-12">
+                        <TableCell colSpan={4} className="text-center py-12">
                           <NoDataAnimation />
                         </TableCell>
                       </TableRow>
                     ) : (
                       scrapYards.map((yard) => {
-                        const manager = getManager(yard);
                         const status = yard.isActive !== false ? 'Active' : 'Inactive';
 
                         return (
@@ -445,16 +431,7 @@ export default function ScrapYardsPage() {
                                 ) : null}
                               </div>
                             </TableCell>
-                            <TableCell>
-                              {manager ? (
-                                <div className="flex items-center text-sm font-medium text-gray-700">
-                                  <Users className="h-3.5 w-3.5 mr-2 text-gray-400" />
-                                  <span>{manager.fullName}</span>
-                                </div>
-                              ) : (
-                                <span className="text-gray-400 text-xs italic">No manager</span>
-                              )}
-                            </TableCell>
+
                             <TableCell>
                               <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
                                 <Select value={status} onValueChange={(v) => onInlineStatusChange(yard, v)}>
