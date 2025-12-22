@@ -86,6 +86,7 @@ function NoDataAnimation() {
 // API response type - matches backend Order model
 interface ApiOrder {
   id: string;
+  orderNumber?: string; // Format: WO-DDMMYYYY-N
   leadId?: string;
   customerId?: string;
   customerName: string;
@@ -157,6 +158,15 @@ function formatDateHuman(dateStr: string): string {
   const year = date.getUTCFullYear();
   return `${day} ${month}, ${year}`;
 }
+
+function formatDateDDMMYYYY(dateStr: string): string {
+  const date = new Date(dateStr);
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 
 function toDisplayOrderStatus(status: string): string {
   const s = status?.toUpperCase();
@@ -934,7 +944,7 @@ export default function OrdersPage() {
                   <TableHeader className="bg-white">
                     {/* Status Tabs Row */}
                     <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50">
-                      <TableHead colSpan={8} className="p-0 bg-transparent">
+                      <TableHead colSpan={7} className="p-0 bg-transparent">
                         <div className="w-full overflow-x-auto">
                           <div className="inline-flex items-center gap-1 px-2 py-2">
                             {(['All', 'Pending', 'Assigned', 'In Progress', 'Completed', 'Cancelled'] as const).map((tab) => {
@@ -981,7 +991,7 @@ export default function OrdersPage() {
                           {sortKey === 'customerName' && <ArrowUpDown className="h-3 w-3" />}
                         </button>
                       </TableHead>
-                      <TableHead>Phone</TableHead>
+                      <TableHead>Order</TableHead>
                       <TableHead>Address</TableHead>
                       <TableHead>Collector</TableHead>
                       <TableHead>
@@ -996,19 +1006,13 @@ export default function OrdersPage() {
                           {sortKey === 'paymentStatus' && <ArrowUpDown className="h-3 w-3" />}
                         </button>
                       </TableHead>
-                      <TableHead>
-                        <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('createdAt')}>
-                          Created Date
-                          {sortKey === 'createdAt' && <ArrowUpDown className="h-3 w-3" />}
-                        </button>
-                      </TableHead>
                       <TableHead className="w-12">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {orders.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-12">
+                        <TableCell colSpan={7} className="text-center py-12">
                           <NoDataAnimation />
                         </TableCell>
                       </TableRow>
@@ -1041,12 +1045,17 @@ export default function OrdersPage() {
                                 />
                                 <div className="flex flex-col">
                                   <span className="font-medium text-gray-900">{order.customerName || 'N/A'}</span>
+                                  <span className="text-xs text-gray-500">{order.customerPhone || 'N/A'}</span>
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="text-gray-900">{order.customerPhone || 'N/A'}</div>
+                              <div className="flex flex-col">
+                                <span className="text-sm font-semibold text-cyan-600">{order.orderNumber || 'N/A'}</span>
+                                <span className="text-xs text-gray-500">{formatDateDDMMYYYY(order.createdAt)}</span>
+                              </div>
                             </TableCell>
+
                             <TableCell>
                               <div className="flex items-center gap-1 max-w-[200px]">
                                 <MapPin className="h-3 w-3 text-gray-400 flex-shrink-0" />
@@ -1092,21 +1101,42 @@ export default function OrdersPage() {
                                     <OrderStatusBadge status={order.orderStatus || 'PENDING'} showDropdownIcon={true} />
                                   </div>
                                 </SelectTrigger>
-                                <SelectContent className="min-w-[160px] rounded-lg shadow-lg border border-gray-200 bg-white p-1">
+                                <SelectContent className="min-w-[170px] rounded-lg shadow-xl border border-gray-200 bg-white p-1.5 animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2">
                                   {(['PENDING', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] as OrderStatus[]).map((s) => {
                                     const isSelected = (order.orderStatus || 'PENDING') === s;
+
+                                    // Status Config for Icons and Colors
+                                    const statusConfig = {
+                                      PENDING: { icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-50' },
+                                      ASSIGNED: { icon: User, color: 'text-blue-500', bg: 'bg-blue-50' },
+                                      IN_PROGRESS: { icon: Package, color: 'text-orange-500', bg: 'bg-orange-50' },
+                                      COMPLETED: { icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-50' },
+                                      CANCELLED: { icon: X, color: 'text-red-500', bg: 'bg-red-50' }
+                                    };
+
+                                    const config = statusConfig[s];
+                                    const Icon = config.icon;
+
                                     return (
                                       <SelectItem
                                         key={s}
                                         value={s}
                                         className={cn(
-                                          "cursor-pointer rounded-md px-3 py-2.5 text-sm transition-colors pl-8",
+                                          "relative cursor-pointer rounded-md px-3 py-2.5 text-sm transition-all pl-9 hover:bg-gray-50",
                                           isSelected
-                                            ? "bg-cyan-500 text-white hover:bg-cyan-600 data-[highlighted]:bg-cyan-600 focus:bg-cyan-600"
-                                            : "text-gray-900 hover:bg-gray-100 data-[highlighted]:bg-gray-100 focus:bg-gray-100"
+                                            ? "bg-cyan-50 text-cyan-700 font-semibold"
+                                            : "text-gray-700"
                                         )}
                                       >
-                                        <span className={cn(isSelected ? "text-white font-medium" : "text-gray-900")}>{toDisplayOrderStatus(s)}</span>
+                                        <div className="flex items-center gap-2.5">
+                                          <div className={cn(
+                                            "flex items-center justify-center h-5 w-5 rounded-md",
+                                            isSelected ? "bg-white/80 shadow-sm" : config.bg
+                                          )}>
+                                            <Icon className={cn("h-3.5 w-3.5", config.color)} />
+                                          </div>
+                                          <span>{toDisplayOrderStatus(s)}</span>
+                                        </div>
                                       </SelectItem>
                                     );
                                   })}
@@ -1116,9 +1146,7 @@ export default function OrdersPage() {
                             <TableCell>
                               <PaymentStatusBadge status={order.paymentStatus} />
                             </TableCell>
-                            <TableCell className="text-gray-600">
-                              {formatDateHuman(order.createdAt)}
-                            </TableCell>
+
                             <TableCell onClick={(e) => e.stopPropagation()}>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -1211,6 +1239,9 @@ export default function OrdersPage() {
                             />
                             <div>
                               <div className="font-semibold">{order.customerName || 'N/A'}</div>
+                              <div className="text-xs font-semibold text-cyan-600">
+                                {order.orderNumber || 'N/A'} • {formatDateDDMMYYYY(order.createdAt)}
+                              </div>
                               <div className="text-sm text-muted-foreground">{order.customerPhone || 'N/A'}</div>
                             </div>
                           </div>
@@ -1425,6 +1456,13 @@ export default function OrdersPage() {
                     Customer Information
                   </h3>
                   <div className="grid grid-cols-1 gap-4">
+                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-cyan-300 shadow-sm">
+                      <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Order</span>
+                      <div className="flex flex-col items-end">
+                        <span className="text-sm font-bold text-cyan-600">{detailsOrder.orderNumber || 'N/A'}</span>
+                        <span className="text-xs text-gray-500">{formatDateDDMMYYYY(detailsOrder.createdAt)}</span>
+                      </div>
+                    </div>
                     <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
                       <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Customer Name</span>
                       <span className="text-sm font-medium text-gray-900">{detailsOrder.customerName}</span>
