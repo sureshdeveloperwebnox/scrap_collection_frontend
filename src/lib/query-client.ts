@@ -110,7 +110,7 @@ export const queryKeys = {
     list: (filters?: Record<string, any>) => [...queryKeys.employees.lists(), filters] as const,
     details: () => [...queryKeys.employees.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.employees.details(), id] as const,
-    stats: () => [...queryKeys.employees.all, 'stats'] as const,
+    stats: (organizationId?: number) => [...queryKeys.employees.all, 'stats', organizationId] as const,
     byRole: (role: string) => [...queryKeys.employees.all, 'by-role', role] as const,
   },
 
@@ -170,6 +170,7 @@ export const queryKeys = {
     list: (filters?: Record<string, any>) => [...queryKeys.roles.lists(), filters] as const,
     details: () => [...queryKeys.roles.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.roles.details(), id] as const,
+    stats: () => [...queryKeys.roles.all, 'stats'] as const,
   },
 
   // Crews

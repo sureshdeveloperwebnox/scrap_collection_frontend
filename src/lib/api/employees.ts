@@ -68,8 +68,8 @@ export const employeesApi = {
   },
 
   // Get employee statistics
-  getEmployeeStats: async (): Promise<{ data: any }> => {
-    const response = await apiClient.get('/employees/stats');
+  getEmployeeStats: async (organizationId: number): Promise<{ data: any }> => {
+    const response = await apiClient.get(`/employees/stats/${organizationId}`);
     return response.data;
   },
 

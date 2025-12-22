@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { employeesApi } from '@/lib/api';
 import { queryKeys } from '@/lib/query-client';
 import { Employee } from '@/types';
+import { useAuthStore } from '@/lib/store/auth-store';
 
 // Get all employees with optional filters
 export const useEmployees = (params?: {
@@ -35,9 +36,16 @@ export const useEmployee = (id: string) => {
 
 // Get employee statistics
 export const useEmployeeStats = () => {
+  const { user } = useAuthStore();
+  const organizationId = user?.organizationId;
+
   return useQuery({
-    queryKey: queryKeys.employees.stats(),
-    queryFn: () => employeesApi.getEmployeeStats(),
+    queryKey: queryKeys.employees.stats(organizationId),
+    queryFn: async () => {
+      const response = await employeesApi.getEmployeeStats(organizationId || 0);
+      return response.data;
+    },
+    enabled: !!organizationId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

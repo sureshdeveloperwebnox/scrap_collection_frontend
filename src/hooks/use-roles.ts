@@ -34,7 +34,7 @@ export const useCreateRole = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (roleData: { name: string; description?: string; isActive?: boolean }) => 
+    mutationFn: (roleData: { name: string; description?: string; isActive?: boolean }) =>
       rolesApi.createRole(roleData),
     onSuccess: () => {
       // Invalidate all roles list queries
@@ -48,12 +48,12 @@ export const useUpdateRole = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { name?: string; description?: string; isActive?: boolean } }) => 
+    mutationFn: ({ id, data }: { id: string; data: { name?: string; description?: string; isActive?: boolean } }) =>
       rolesApi.updateRole(id, data),
     onSuccess: (updatedRole, variables) => {
       // Update the role in cache
       queryClient.setQueryData(queryKeys.roles.detail(variables.id), updatedRole);
-      
+
       // Invalidate all roles list queries to ensure consistency
       queryClient.invalidateQueries({ queryKey: queryKeys.roles.lists() });
     },
@@ -69,7 +69,7 @@ export const useDeleteRole = () => {
     onSuccess: (_, deletedId) => {
       // Remove role from cache
       queryClient.removeQueries({ queryKey: queryKeys.roles.detail(deletedId) });
-      
+
       // Invalidate roles list
       queryClient.invalidateQueries({ queryKey: queryKeys.roles.lists() });
     },
@@ -99,6 +99,18 @@ export const useDeactivateRole = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.roles.detail(deactivatedId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.roles.lists() });
     },
+  });
+};
+
+// Get role statistics
+export const useRoleStats = () => {
+  return useQuery({
+    queryKey: queryKeys.roles.stats(),
+    queryFn: async () => {
+      const response = await rolesApi.getRoleStats();
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 

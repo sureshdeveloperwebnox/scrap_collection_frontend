@@ -88,5 +88,11 @@ export const rolesApi = {
     const response = await apiClient.put(`/roles/${id}/deactivate`);
     return response.data;
   },
+
+  // Get role stats
+  getRoleStats: async (): Promise<ApiResponse<{ total: number; active: number; inactive: number }>> => {
+    const response = await apiClient.get('/roles/stats');
+    return response.data;
+  },
 };
 
