@@ -45,14 +45,14 @@ export const scrapYardsApi = {
   },
 
   // Get scrap yard statistics
-  getScrapYardStats: async (): Promise<{
+  getScrapYardStats: async (organizationId?: number): Promise<{
     total: number;
     active: number;
     maintenance: number;
     byState: Record<string, number>;
   }> => {
-    const response = await apiClient.get('/scrap-yards/stats');
-    return response.data;
+    const response = await apiClient.get('/scrap-yards/stats', { params: { organizationId } });
+    return response.data.data;
   },
 
   // Find nearest scrap yard to location

@@ -3,6 +3,7 @@ import { scrapYardsApi } from '@/lib/api';
 import { queryKeys } from '@/lib/query-client';
 import { ScrapYard } from '@/types';
 import { useScrapYardsStore } from '@/lib/store/scrap-yards-store';
+import { useAuthStore } from '@/lib/store/auth-store';
 
 // Get all scrap yards with optional filters - OPTIMIZED
 export const useScrapYards = (params?: {
@@ -37,9 +38,12 @@ export const useScrapYard = (id: string) => {
 
 // Get scrap yard statistics - OPTIMIZED
 export const useScrapYardStats = () => {
+  const { user } = useAuthStore();
+  const organizationId = user?.organizationId;
+
   return useQuery({
-    queryKey: queryKeys.scrapYards.stats(),
-    queryFn: () => scrapYardsApi.getScrapYardStats(),
+    queryKey: queryKeys.scrapYards.stats(organizationId),
+    queryFn: () => scrapYardsApi.getScrapYardStats(organizationId),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes
     refetchOnWindowFocus: false,
