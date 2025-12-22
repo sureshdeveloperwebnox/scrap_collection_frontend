@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { OrderForm } from '@/components/order-form';
 import { OrderAssignmentStepper } from '@/components/order-assignment-stepper';
 import { Order, OrderStatus, PaymentStatusEnum } from '@/types';
-import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal, Download, Filter, Check, X, Package, MapPin, User, DollarSign, Calendar } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal, Download, Filter, Check, X, Package, MapPin, User, Users, DollarSign, Calendar, Map as MapIcon, Share2, Printer } from 'lucide-react';
 import { useOrders, useDeleteOrder, useUpdateOrder, useUpdateOrderStatus, useAssignCollector } from '@/hooks/use-orders';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,6 +25,7 @@ import { ordersApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { OrderStatusBadge, PaymentStatusBadge, toDisplayOrderStatus, toDisplayPaymentStatus } from '@/components/status-badges';
 
 // Dynamically import Lottie for better performance
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -107,6 +108,11 @@ interface ApiOrder {
     fullName: string;
     email: string;
   };
+  crewId?: string;
+  crew?: {
+    id: string;
+    name: string;
+  };
   pickupTime?: string;
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatusEnum;
@@ -168,27 +174,7 @@ function formatDateDDMMYYYY(dateStr: string): string {
 }
 
 
-function toDisplayOrderStatus(status: string): string {
-  const s = status?.toUpperCase();
-  const statusMap: Record<string, string> = {
-    'PENDING': 'Pending',
-    'ASSIGNED': 'Assigned',
-    'IN_PROGRESS': 'In Progress',
-    'COMPLETED': 'Completed',
-    'CANCELLED': 'Cancelled'
-  };
-  return statusMap[s] || status;
-}
 
-function toDisplayPaymentStatus(status: string): string {
-  const s = status?.toUpperCase();
-  const statusMap: Record<string, string> = {
-    'UNPAID': 'Unpaid',
-    'PAID': 'Paid',
-    'REFUNDED': 'Refunded'
-  };
-  return statusMap[s] || status;
-}
 
 // Tab color styles for order status
 type TabKey = 'All' | 'Pending' | 'Assigned' | 'In Progress' | 'Completed' | 'Cancelled';
@@ -237,99 +223,9 @@ function OrderAvatar({
   );
 }
 
-function OrderStatusBadge({ status, showDropdownIcon = false }: { status: string; showDropdownIcon?: boolean }) {
-  const safeStatus = status || 'PENDING';
-  const display = toDisplayOrderStatus(safeStatus);
-  const base = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap';
 
-  let badgeContent = null;
 
-  if (safeStatus === 'PENDING') {
-    badgeContent = (
-      <span className={`${base} bg-yellow-100 text-yellow-800`}>
-        <Clock className="h-3 w-3 flex-shrink-0" />
-        <span className="whitespace-nowrap">Pending</span>
-        {showDropdownIcon && <ChevronDown className="h-3 w-3 ml-0.5 flex-shrink-0" />}
-      </span>
-    );
-  } else if (safeStatus === 'ASSIGNED') {
-    badgeContent = (
-      <span className={`${base} bg-blue-100 text-blue-800`}>
-        <User className="h-3 w-3 flex-shrink-0" />
-        <span className="whitespace-nowrap">Assigned</span>
-        {showDropdownIcon && <ChevronDown className="h-3 w-3 ml-0.5 flex-shrink-0" />}
-      </span>
-    );
-  } else if (safeStatus === 'IN_PROGRESS') {
-    badgeContent = (
-      <span className={`${base} bg-orange-100 text-orange-800`}>
-        <Package className="h-3 w-3 flex-shrink-0" />
-        <span className="whitespace-nowrap">In Progress</span>
-        {showDropdownIcon && <ChevronDown className="h-3 w-3 ml-0.5 flex-shrink-0" />}
-      </span>
-    );
-  } else if (safeStatus === 'COMPLETED') {
-    badgeContent = (
-      <span className={`${base} bg-green-100 text-green-800`}>
-        <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
-        <span className="whitespace-nowrap">Completed</span>
-        {showDropdownIcon && <ChevronDown className="h-3 w-3 ml-0.5 flex-shrink-0" />}
-      </span>
-    );
-  } else if (safeStatus === 'CANCELLED') {
-    badgeContent = (
-      <span className={`${base} bg-red-100 text-red-800`}>
-        <X className="h-3 w-3 flex-shrink-0" />
-        <span className="whitespace-nowrap">Cancelled</span>
-        {showDropdownIcon && <ChevronDown className="h-3 w-3 ml-0.5 flex-shrink-0" />}
-      </span>
-    );
-  } else {
-    badgeContent = (
-      <span className={`${base} bg-gray-100 text-gray-800`}>
-        <span className="whitespace-nowrap">{display}</span>
-        {showDropdownIcon && <ChevronDown className="h-3 w-3 ml-0.5 flex-shrink-0" />}
-      </span>
-    );
-  }
 
-  return badgeContent;
-}
-
-function PaymentStatusBadge({ status }: { status: string }) {
-  const safeStatus = status || 'UNPAID';
-  const display = toDisplayPaymentStatus(safeStatus);
-  const base = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap';
-
-  if (safeStatus === 'PAID') {
-    return (
-      <span className={`${base} bg-green-100 text-green-800`}>
-        <DollarSign className="h-3 w-3 flex-shrink-0" />
-        <span className="whitespace-nowrap">Paid</span>
-      </span>
-    );
-  } else if (safeStatus === 'UNPAID') {
-    return (
-      <span className={`${base} bg-yellow-100 text-yellow-800`}>
-        <Clock className="h-3 w-3 flex-shrink-0" />
-        <span className="whitespace-nowrap">Unpaid</span>
-      </span>
-    );
-  } else if (safeStatus === 'REFUNDED') {
-    return (
-      <span className={`${base} bg-red-100 text-red-800`}>
-        <X className="h-3 w-3 flex-shrink-0" />
-        <span className="whitespace-nowrap">Refunded</span>
-      </span>
-    );
-  }
-
-  return (
-    <span className={`${base} bg-gray-100 text-gray-800`}>
-      <span className="whitespace-nowrap">{display}</span>
-    </span>
-  );
-}
 
 // Collector Info Dialog Component
 function CollectorInfoDialog({
@@ -341,6 +237,7 @@ function CollectorInfoDialog({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  const router = useRouter();
   if (!order) return null;
 
   return (
@@ -352,17 +249,56 @@ function CollectorInfoDialog({
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-3">
-            <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg border border-cyan-200">
-              <div className="w-10 h-10 rounded-full bg-cyan-500 flex items-center justify-center flex-shrink-0">
-                <User className="h-5 w-5 text-white" />
+            {order.crewId ? (
+              <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg border border-emerald-200">
+                <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                  <Users className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600">Assigned Crew</p>
+                  <p className="text-base font-semibold text-gray-900 mt-1">
+                    {order.crew?.name || 'Loading Crew...'}
+                  </p>
+                  {order.crew?.members && order.crew.members.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-emerald-100">
+                      {order.crew.members.map((member: any) => (
+                        <div
+                          key={member.id}
+                          className="flex items-center gap-1.5 bg-white/60 px-2 py-1 rounded-md border border-emerald-100 cursor-pointer hover:bg-white hover:border-emerald-300 transition-all active:scale-95 shadow-sm hover:shadow"
+                          onClick={() => {
+                            onClose();
+                            router.push(`/employees?view=${member.id}&returnTo=/orders`);
+                          }}
+                        >
+                          <div className="h-4 w-4 rounded-full bg-emerald-500 flex items-center justify-center text-[8px] text-white font-bold">
+                            {member.fullName.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-[10px] font-medium text-gray-700">{member.fullName}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600">Assigned Collector</p>
-                <p className="text-base font-semibold text-gray-900 mt-1">
-                  {order.assignedCollector?.fullName || order.assignedCollectorId || 'Not assigned'}
-                </p>
+            ) : (
+              <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg border border-cyan-200">
+                <div className="w-10 h-10 rounded-full bg-cyan-500 flex items-center justify-center flex-shrink-0">
+                  <User className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600">Assigned Collector</p>
+                  <p
+                    className="text-base font-semibold text-gray-900 mt-1 cursor-pointer hover:text-cyan-600 transition-colors"
+                    onClick={() => {
+                      onClose();
+                      router.push(`/employees?view=${order.assignedCollectorId}&returnTo=/orders`);
+                    }}
+                  >
+                    {order.assignedCollector?.fullName || order.assignedCollectorId || 'Not assigned'}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
             {order.yardId && (
               <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
@@ -456,6 +392,58 @@ export default function OrdersPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Handle edit parameter from URL
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId && organizationId) {
+      const fetchAndEdit = async () => {
+        try {
+          const response = await ordersApi.getOrder(editId);
+          if (response.data) {
+            const o = response.data;
+            const convertedOrder: Order = {
+              id: o.id,
+              leadId: o.leadId,
+              customerId: o.customerId,
+              customerName: o.customerName,
+              customerPhone: o.customerPhone,
+              customerCountryCode: o.customerCountryCode,
+              address: o.address,
+              latitude: o.latitude,
+              longitude: o.longitude,
+              vehicleDetails: o.vehicleDetails,
+              assignedCollectorId: o.assignedCollectorId,
+              pickupTime: o.pickupTime ? new Date(o.pickupTime) : undefined,
+              orderStatus: o.orderStatus,
+              paymentStatus: o.paymentStatus,
+              quotedPrice: o.quotedPrice,
+              actualPrice: o.actualPrice,
+              yardId: o.yardId,
+              customerNotes: o.customerNotes,
+              adminNotes: o.adminNotes,
+              organizationId: o.organizationId,
+              createdAt: new Date(o.createdAt),
+              updatedAt: new Date(o.updatedAt),
+            };
+            setEditingOrder(convertedOrder);
+            setIsFormOpen(true);
+
+            // Clean up URL
+            const newSearchParams = new URLSearchParams(searchParams.toString());
+            newSearchParams.delete('edit');
+            const newUrl = newSearchParams.toString()
+              ? `${window.location.pathname}?${newSearchParams.toString()}`
+              : window.location.pathname;
+            router.replace(newUrl);
+          }
+        } catch (e) {
+          console.error('Failed to fetch order for editing', e);
+        }
+      };
+      fetchAndEdit();
+    }
+  }, [searchParams, router, organizationId]);
 
   // Handle highlight parameter from URL
   useEffect(() => {
@@ -1027,7 +1015,7 @@ export default function OrdersPage() {
                               "border-b hover:bg-gray-50 transition-colors bg-white cursor-pointer",
                               isHighlighted && "bg-cyan-50 border-cyan-200 border-2 animate-pulse"
                             )}
-                            onClick={() => setDetailsOrder(order)}
+                            onClick={() => router.push(`/orders/${order.id}`)}
                           >
                             <TableCell onClick={(e) => e.stopPropagation()}>
                               <Checkbox
@@ -1063,7 +1051,7 @@ export default function OrdersPage() {
                               </div>
                             </TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()}>
-                              {order.assignedCollector || order.assignedCollectorId ? (
+                              {order.assignedCollector || order.assignedCollectorId || order.crewId ? (
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -1071,10 +1059,17 @@ export default function OrdersPage() {
                                     e.stopPropagation();
                                     setCollectorInfoOrder(order);
                                   }}
-                                  className="h-7 text-xs text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50"
+                                  className={cn(
+                                    "h-7 text-xs hover:bg-opacity-10",
+                                    order.crewId ? "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" : "text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50"
+                                  )}
                                 >
-                                  <User className="h-3 w-3 mr-1" />
-                                  {order.assignedCollector?.fullName || 'View Details'}
+                                  {order.crewId ? (
+                                    <Users className="h-3 w-3 mr-1" />
+                                  ) : (
+                                    <User className="h-3 w-3 mr-1" />
+                                  )}
+                                  {order.crew?.name || order.assignedCollector?.fullName || 'View Details'}
                                 </Button>
                               ) : (
                                 <Button
@@ -1155,7 +1150,7 @@ export default function OrdersPage() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-40" onClick={(e) => e.stopPropagation()}>
-                                  <DropdownMenuItem onClick={() => setDetailsOrder(order)}>
+                                  <DropdownMenuItem onClick={() => router.push(`/orders/${order.id}`)}>
                                     <Eye className="h-4 w-4 mr-2" />
                                     View
                                   </DropdownMenuItem>
@@ -1178,6 +1173,9 @@ export default function OrdersPage() {
                                       quotedPrice: order.quotedPrice,
                                       actualPrice: order.actualPrice,
                                       yardId: order.yardId,
+                                      crewId: order.crewId,
+                                      routeDistance: order.routeDistance,
+                                      routeDuration: order.routeDuration,
                                       customerNotes: order.customerNotes,
                                       adminNotes: order.adminNotes,
                                       organizationId: order.organizationId,
@@ -1229,7 +1227,7 @@ export default function OrdersPage() {
                           "rounded-lg border bg-card p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:bg-gradient-to-br hover:from-cyan-50 hover:to-purple-50 cursor-pointer",
                           isHighlighted && "bg-cyan-50 border-cyan-200 border-2 animate-pulse"
                         )}
-                        onClick={() => setDetailsOrder(order)}
+                        onClick={() => router.push(`/orders/${order.id}`)}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-3">

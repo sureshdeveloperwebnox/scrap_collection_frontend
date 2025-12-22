@@ -846,7 +846,7 @@ export default function LeadsPage() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              {(lead.vehicleType || lead.vehicleMake || lead.vehicleModel || lead.vehicleYear || lead.vehicleCondition) ? (
+                              {(lead.vehicleMake || lead.vehicleModel) ? (
                                 <Button
                                   variant="ghost"
                                   onClick={(e) => {
@@ -975,7 +975,7 @@ export default function LeadsPage() {
                           <div>{lead.phone || 'N/A'}</div>
                           <div className="text-muted-foreground">Scrap</div>
                           <div>
-                            {(lead.vehicleType || lead.vehicleMake || lead.vehicleModel || lead.vehicleYear || lead.vehicleCondition) ? (
+                            {(lead.vehicleMake || lead.vehicleModel) ? (
                               <Button
                                 variant="ghost"
                                 onClick={(e) => {
@@ -1237,10 +1237,6 @@ export default function LeadsPage() {
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Scrap Details</h3>
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="text-muted-foreground">Type</div>
-                  <div className="font-medium capitalize">{detailsLead.vehicleType || 'N/A'}</div>
-                  <div className="text-muted-foreground">Condition</div>
-                  <div className="font-medium capitalize">{String(detailsLead.vehicleCondition || '').replace(/_/g, ' ')}</div>
                   {detailsLead.vehicleMake && (
                     <>
                       <div className="text-muted-foreground">Make</div>
@@ -1251,12 +1247,6 @@ export default function LeadsPage() {
                     <>
                       <div className="text-muted-foreground">Model</div>
                       <div className="font-medium">{detailsLead.vehicleModel}</div>
-                    </>
-                  )}
-                  {detailsLead.vehicleYear && (
-                    <>
-                      <div className="text-muted-foreground">Year</div>
-                      <div className="font-medium">{detailsLead.vehicleYear}</div>
                     </>
                   )}
                 </div>
@@ -1360,19 +1350,13 @@ export default function LeadsPage() {
               </div>
 
               {/* Scrap Details */}
-              {(vehicleDetailsLead.vehicleType || vehicleDetailsLead.vehicleMake || vehicleDetailsLead.vehicleModel || vehicleDetailsLead.vehicleYear || vehicleDetailsLead.vehicleCondition) ? (
+              {(vehicleDetailsLead.vehicleMake || vehicleDetailsLead.vehicleModel) ? (
                 <div className="space-y-4">
                   <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-4 border border-cyan-200">
                     <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4 flex items-center gap-2">
                       Scrap Details
                     </h3>
                     <div className="grid grid-cols-1 gap-4">
-                      {vehicleDetailsLead.vehicleType && (
-                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Type</span>
-                          <span className="px-3 py-1.5 bg-cyan-100 text-cyan-700 rounded-md text-sm font-medium capitalize">{vehicleDetailsLead.vehicleType}</span>
-                        </div>
-                      )}
                       {vehicleDetailsLead.vehicleMake && (
                         <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
                           <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Make</span>
@@ -1383,18 +1367,6 @@ export default function LeadsPage() {
                         <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
                           <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Model</span>
                           <span className="text-sm font-medium text-gray-900">{vehicleDetailsLead.vehicleModel}</span>
-                        </div>
-                      )}
-                      {vehicleDetailsLead.vehicleYear && (
-                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Year</span>
-                          <span className="text-sm font-medium text-gray-900">{vehicleDetailsLead.vehicleYear}</span>
-                        </div>
-                      )}
-                      {vehicleDetailsLead.vehicleCondition && (
-                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Condition</span>
-                          <span className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-md text-sm font-medium capitalize">{String(vehicleDetailsLead.vehicleCondition).replace(/_/g, ' ')}</span>
                         </div>
                       )}
                     </div>

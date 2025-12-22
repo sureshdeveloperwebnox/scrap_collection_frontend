@@ -43,6 +43,7 @@ export interface Order {
   leadId?: string;
   customerName: string;
   customerPhone: string;
+  customerEmail?: string;
   customerCountryCode?: string;
   address: string;
   latitude?: number;
@@ -57,16 +58,31 @@ export interface Order {
     condition?: string;
     // Optional free-text description
     description?: string;
+    // Scrap Category and Name from scrap module
+    scrapCategoryId?: string;
+    scrapNameId?: string;
   };
   assignedCollectorId?: string;
+  assignedCollector?: {
+    id: string;
+    fullName: string;
+    email: string;
+    phone?: string;
+  };
   pickupTime?: Date;
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatusEnum;
   quotedPrice?: number;
   actualPrice?: number;
   yardId?: string;
+  crewId?: string;
+  crew?: Crew;
+  routeDistance?: string;
+  routeDuration?: string;
   customerNotes?: string;
   adminNotes?: string;
+  instructions?: string;
+  photos?: string[];
   organizationId: number;
   customerId?: string;
   createdAt: Date;

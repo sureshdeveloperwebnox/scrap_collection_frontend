@@ -31,6 +31,9 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { employeesApi } from '@/lib/api';
+import { Mail, MapPin, Calendar, Clock } from 'lucide-react';
 
 // Dynamically import Lottie for better performance
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
