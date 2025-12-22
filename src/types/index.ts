@@ -75,6 +75,7 @@ export interface Order {
   quotedPrice?: number;
   actualPrice?: number;
   yardId?: string;
+  yard?: ScrapYard;
   crewId?: string;
   crew?: Crew;
   routeDistance?: string;

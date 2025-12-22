@@ -112,6 +112,11 @@ interface ApiOrder {
   crew?: {
     id: string;
     name: string;
+    members?: Array<{
+      id: string;
+      fullName: string;
+      email: string;
+    }>;
   };
   pickupTime?: string;
   orderStatus: OrderStatus;
@@ -119,6 +124,8 @@ interface ApiOrder {
   quotedPrice?: number;
   actualPrice?: number;
   yardId?: string;
+  routeDistance?: string;
+  routeDuration?: string;
   customerNotes?: string;
   adminNotes?: string;
   organizationId: number;
@@ -1681,6 +1688,7 @@ export default function OrdersPage() {
             longitude: assignmentOrder.longitude,
             vehicleDetails: assignmentOrder.vehicleDetails,
             assignedCollectorId: assignmentOrder.assignedCollectorId,
+            crewId: assignmentOrder.crewId,
             pickupTime: assignmentOrder.pickupTime ? new Date(assignmentOrder.pickupTime) : undefined,
             orderStatus: assignmentOrder.orderStatus,
             paymentStatus: assignmentOrder.paymentStatus,

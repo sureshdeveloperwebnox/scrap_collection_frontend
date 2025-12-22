@@ -73,20 +73,6 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                 updatedAt: new Date(orderData.updatedAt),
             };
 
-            // Fetch customer details if email is missing
-            if (!orderData.customerEmail && orderData.customerId) {
-                try {
-                    const customerResponse = await customersApi.getCustomer(orderData.customerId);
-                    if (customerResponse.data?.email) {
-                        convertedOrder.customerEmail = customerResponse.data.email;
-                    }
-                } catch (e) {
-                    console.warn('Could not fetch customer details', e);
-                }
-            }
-
-            setOrder(convertedOrder);
-
             // Populate route info from saved data if available
             if (convertedOrder.routeDistance && convertedOrder.routeDuration) {
                 setRouteInfo({
@@ -95,70 +81,60 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                 });
             }
 
+            // Parallel fetch for additional data that's not included in order response
+            const fetchPromises = [];
 
-            if (orderData.yardId) {
-                try {
-                    const yardResponse = await scrapYardsApi.getScrapYard(orderData.yardId);
-                    setYard(yardResponse);
-                } catch (e) {
-                    console.warn('Could not fetch yard details', e);
-                }
-            } else {
-                setYard(null);
-            }
-
-            if (orderData.crewId) {
-                try {
-                    const crewResponse = await crewsApi.getCrew(orderData.crewId);
-                    setCrew(crewResponse.data.crew);
-                } catch (e) {
-                    console.warn('Could not fetch crew details', e);
-                }
-            } else {
-                setCrew(null);
+            // Fetch customer email if missing
+            if (!orderData.customerEmail && orderData.customerId) {
+                fetchPromises.push(
+                    customersApi.getCustomer(orderData.customerId)
+                        .then(customerResponse => {
+                            if (customerResponse.data?.email) {
+                                convertedOrder.customerEmail = customerResponse.data.email;
+                            }
+                        })
+                        .catch(e => console.warn('Could not fetch customer details', e))
+                );
             }
 
             // Fetch scrap details if present
             if (orderData.vehicleDetails?.scrapCategoryId || orderData.vehicleDetails?.scrapNameId) {
-                try {
-                    const scrapInfo: { category?: string; name?: string } = {};
-                    const promises = [];
+                const scrapInfo: { category?: string; name?: string } = {};
 
-                    if (orderData.vehicleDetails.scrapCategoryId) {
-                        promises.push(
-                            scrapApi.getScrapCategory(orderData.vehicleDetails.scrapCategoryId)
-                                .then(res => { scrapInfo.category = res.data.name; })
-                        );
-                    }
+                if (orderData.vehicleDetails.scrapCategoryId) {
+                    fetchPromises.push(
+                        scrapApi.getScrapCategory(orderData.vehicleDetails.scrapCategoryId)
+                            .then(res => { scrapInfo.category = res.data.name; })
+                            .catch(e => console.warn('Could not fetch scrap category', e))
+                    );
+                }
 
-                    if (orderData.vehicleDetails.scrapNameId) {
-                        promises.push(
-                            scrapApi.getScrapName(orderData.vehicleDetails.scrapNameId)
-                                .then(res => { scrapInfo.name = res.data.name; })
-                        );
-                    }
+                if (orderData.vehicleDetails.scrapNameId) {
+                    fetchPromises.push(
+                        scrapApi.getScrapName(orderData.vehicleDetails.scrapNameId)
+                            .then(res => { scrapInfo.name = res.data.name; })
+                            .catch(e => console.warn('Could not fetch scrap name', e))
+                    );
+                }
 
-                    if (promises.length > 0) {
-                        await Promise.all(promises);
-                        setResolvedScrapInfo(scrapInfo);
-                    }
-                } catch (e) {
-                    console.warn('Could not fetch scrap details', e);
+                // Wait for scrap info to be fetched before setting
+                if (fetchPromises.length > 0) {
+                    await Promise.all(fetchPromises);
+                    setResolvedScrapInfo(scrapInfo);
                 }
             }
 
-            // Check for photos in lead if missing in order (though they should be synced)
-            if ((!orderData.photos || orderData.photos.length === 0) && orderData.leadId) {
-                try {
-                    const leadResponse = await leadsApi.getLead(orderData.leadId);
-                    if (leadResponse.data?.photos && leadResponse.data.photos.length > 0) {
-                        convertedOrder.photos = leadResponse.data.photos;
-                        setOrder({ ...convertedOrder });
-                    }
-                } catch (e) {
-                    console.warn('Could not fetch lead photos', e);
-                }
+            // Set order data (yard and crew are already included in the response)
+            setOrder(convertedOrder);
+
+            if (orderData.yard) {
+                setYard(orderData.yard);
             }
+
+            if (orderData.crew) {
+                setCrew(orderData.crew);
+            }
+
         } catch (error) {
             console.error('Error fetching order:', error);
             toast.error('Failed to load order details');
