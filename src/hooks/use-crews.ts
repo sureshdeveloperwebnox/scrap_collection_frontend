@@ -5,11 +5,19 @@ import { queryKeys } from '@/lib/query-client';
 import { Crew } from '@/types';
 
 // Get all crews
-export const useCrews = () => {
+export const useCrews = (params?: {
+    isActive?: boolean;
+    page?: number;
+    limit?: number;
+}) => {
     return useQuery({
-        queryKey: queryKeys.crews.lists(),
+        queryKey: queryKeys.crews.list(params),
         queryFn: () => crewsApi.getCrews(),
-        placeholderData: (previousData) => previousData,
+        placeholderData: (previousData: any) => previousData,
+        staleTime: 30 * 1000, // 30 seconds
+        gcTime: 10 * 60 * 1000, // 10 minutes
+        refetchOnWindowFocus: false,
+        refetchOnMount: false, // Explicit invalidation when forms open
     });
 };
 

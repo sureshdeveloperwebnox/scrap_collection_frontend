@@ -27,9 +27,11 @@ export const useVehicleTypes = (params?: {
   return useQuery({
     queryKey: queryKeys.vehicleTypes.list({ ...params, organizationId }),
     queryFn: () => vehicleTypesApi.getVehicleTypes(apiParams),
-    placeholderData: (previousData) => previousData, // Keep previous data while fetching new data
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    placeholderData: (previousData: any) => previousData, // Keep previous data while fetching new data
+    staleTime: 30 * 1000, // 30 seconds - shorter for responsive updates
     gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false, // We invalidate explicitly when forms open
     enabled: !!organizationId,
   });
 };

@@ -16,7 +16,11 @@ export const useEmployees = (params?: {
   return useQuery({
     queryKey: queryKeys.employees.list(params),
     queryFn: () => employeesApi.getEmployees(params),
-    placeholderData: (previousData) => previousData,
+    placeholderData: (previousData: any) => previousData,
+    staleTime: 30 * 1000, // 30 seconds - shorter for responsive updates
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false, // We invalidate explicitly when forms open
   });
 };
 

@@ -24,7 +24,7 @@ export default function RootLayout({
           {children}
           <GlobalLoader />
         </Providers>
-        <Toaster 
+        <Toaster
           position="top-right"
           richColors
           closeButton
