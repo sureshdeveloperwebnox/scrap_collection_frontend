@@ -394,14 +394,13 @@ export default function VehicleNamesPage() {
                       <TableHead>Year</TableHead>
 
                       <TableHead>Status</TableHead>
-                      {/* <TableHead>Created</TableHead> */}
                       <TableHead className="w-12">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {vehicleNames.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6}><NoDataAnimation /></TableCell>
+                        <TableCell colSpan={8}><NoDataAnimation /></TableCell>
                       </TableRow>
                     ) : (
                       vehicleNames.map((vehicleName) => (
@@ -436,7 +435,6 @@ export default function VehicleNamesPage() {
                               </span>
                             </div>
                           </TableCell>
-                          {/* <TableCell className="text-gray-500">{new Date(vehicleName.createdAt).toLocaleDateString()}</TableCell> */}
                           <TableCell>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -494,14 +492,10 @@ export default function VehicleNamesPage() {
                           <span className="text-gray-500">Year:</span>
                           <span>{vehicleName.year || '-'}</span>
                         </div>
-
                       </div>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground border-t pt-2">
-                        <span>{new Date(vehicleName.createdAt).toLocaleDateString()}</span>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(vehicleName)}><Edit2 className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(vehicleName.id)} className="text-red-500"><Trash2 className="h-4 w-4" /></Button>
-                        </div>
+                      <div className="flex gap-2 ml-auto">
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(vehicleName)}><Edit2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(vehicleName.id)} className="text-red-500"><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -588,7 +582,7 @@ export default function VehicleNamesPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   );
 }
 
@@ -768,5 +762,3 @@ function VehicleNameForm({
     </form>
   );
 }
-
-

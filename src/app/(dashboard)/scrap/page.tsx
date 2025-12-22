@@ -728,13 +728,11 @@ export default function ScrapManagementPage() {
                       <>
                         <TableHead>Description</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Created Date</TableHead>
                       </>
                     ) : (
                       <>
                         <TableHead>Category</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Created Date</TableHead>
                       </>
                     )}
                     <TableHead className="w-12">Action</TableHead>
@@ -784,15 +782,6 @@ export default function ScrapManagementPage() {
                                 {category.isActive ? 'Active' : 'Inactive'}
                               </span>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-gray-600">
-                              {new Date(category.createdAt).toLocaleDateString('en-US', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                              })}
-                            </span>
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -871,15 +860,6 @@ export default function ScrapManagementPage() {
                                 {name.isActive ? 'Active' : 'Inactive'}
                               </span>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-gray-600">
-                              {new Date(name.createdAt).toLocaleDateString('en-US', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                              })}
-                            </span>
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>

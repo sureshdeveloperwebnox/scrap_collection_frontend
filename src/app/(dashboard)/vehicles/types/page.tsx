@@ -437,22 +437,13 @@ export default function VehicleTypesPage() {
                           onSort={toggleSort}
                         />
                       </TableHead>
-                      <TableHead className="w-[200px]">
-                        <SortableHeader
-                          label="Created Date"
-                          sortKey="createdAt"
-                          currentSortKey={filters.sortBy}
-                          currentSortDir={filters.sortOrder}
-                          onSort={toggleSort}
-                        />
-                      </TableHead>
                       <TableHead className="w-12">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {vehicleTypes.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5}><NoDataAnimation /></TableCell>
+                        <TableCell colSpan={4}><NoDataAnimation /></TableCell>
                       </TableRow>
                     ) : (
                       vehicleTypes.map((vehicleType: VehicleType) => (
@@ -481,7 +472,6 @@ export default function VehicleTypesPage() {
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-gray-500">{new Date(vehicleType.createdAt).toLocaleDateString()}</TableCell>
                           <TableCell>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -517,12 +507,9 @@ export default function VehicleTypesPage() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground mt-2">
-                        <span>{new Date(vehicleType.createdAt).toLocaleDateString()}</span>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(vehicleType)}><Edit2 className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(vehicleType.id.toString())} className="text-red-500"><Trash2 className="h-4 w-4" /></Button>
-                        </div>
+                      <div className="flex justify-end gap-2 mt-2">
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(vehicleType)}><Edit2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(vehicleType.id.toString())} className="text-red-500"><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </CardContent>
                   </Card>
