@@ -509,7 +509,14 @@ export default function VehicleNamesPage() {
               </div>
 
               <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <RowsPerPage value={filters.limit} onChange={(v) => { setLimit(v); setPage(1); }} options={[5, 10, 20, 50]} />
+                <div className="flex items-center gap-4">
+                  <RowsPerPage value={filters.limit} onChange={(v) => { setLimit(v); setPage(1); }} options={[5, 10, 20, 50]} />
+                  <div className="text-xs text-gray-500 font-medium">
+                    Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
+                    {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
+                    {pagination.total} vehicle names
+                  </div>
+                </div>
                 <Pagination
                   currentPage={pagination.page}
                   totalPages={pagination.totalPages}

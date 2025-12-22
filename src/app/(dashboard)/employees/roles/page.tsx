@@ -324,7 +324,7 @@ export default function RolesPage() {
                           <ArrowUpDown className="h-3.5 w-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </button>
                       </TableHead>
-                      <TableHead className="font-semibold text-gray-900 text-sm py-4">Operational Permission</TableHead>
+
                       <TableHead className="font-semibold text-gray-900 text-sm py-4">Users Linked</TableHead>
                       <TableHead className="font-semibold text-gray-900 text-sm py-4">System Status</TableHead>
                       <TableHead className="text-right pr-6 font-semibold text-gray-900 text-sm py-4">Actions</TableHead>
@@ -343,9 +343,7 @@ export default function RolesPage() {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="p-4 text-sm text-gray-500 font-medium italic">
-                          {role.description || 'Global administrative access'}
-                        </TableCell>
+
                         <TableCell className="p-4">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-lg bg-cyan-100/50 flex items-center justify-center">
@@ -401,8 +399,8 @@ export default function RolesPage() {
               </div>
               <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/50">
                 <RowsPerPage value={limit} onChange={setLimit} />
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none">
-                  Lvl {pagination.page} Profile — Syncing {roles.length} Access Groups
+                <div className="text-xs text-gray-500 font-medium">
+                  Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} roles
                 </div>
                 <Pagination
                   currentPage={pagination.page}
@@ -480,18 +478,7 @@ export default function RolesPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description" className="text-sm font-medium text-gray-700">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Role description..."
-                  rows={4}
-                  disabled={formLoading}
-                  className="rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all resize-none p-4"
-                />
-              </div>
+
 
               {editingRole && (
                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-4">

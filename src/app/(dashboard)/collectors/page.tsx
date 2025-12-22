@@ -692,7 +692,6 @@ export default function CollectorAssignmentPage() {
                                   <span className="font-semibold text-gray-900 group-hover:text-cyan-700 transition-colors text-sm">
                                     {collector.fullName}
                                   </span>
-                                  <span className="text-[11px] text-gray-400 font-medium">COL-ID: {collector.id.slice(0, 8)}</span>
                                 </div>
                               </div>
                             </TableCell>
@@ -781,8 +780,8 @@ export default function CollectorAssignmentPage() {
                       onChange={(val) => { setLimit(val); setCollectorPage(1); }}
                       options={[5, 10, 20, 50]}
                     />
-                    <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                      SHOWING {((collectorsPagination.page - 1) * collectorsPagination.limit) + 1} - {Math.min(collectorsPagination.page * collectorsPagination.limit, collectorsPagination.total)} OF {collectorsPagination.total}
+                    <div className="text-xs text-gray-500 font-medium">
+                      Showing {((collectorsPagination.page - 1) * collectorsPagination.limit) + 1} to {Math.min(collectorsPagination.page * collectorsPagination.limit, collectorsPagination.total)} of {collectorsPagination.total} collectors
                     </div>
                     <Pagination
                       currentPage={collectorsPagination.page}
@@ -943,8 +942,8 @@ export default function CollectorAssignmentPage() {
                       onChange={(val) => { setLimit(val); setAssignmentPage(1); }}
                       options={[5, 10, 20, 50]}
                     />
-                    <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                      INDEX {((assignmentsPagination.page - 1) * assignmentsPagination.limit) + 1} - {Math.min(assignmentsPagination.page * assignmentsPagination.limit, assignmentsPagination.total)} TOTAL {assignmentsPagination.total}
+                    <div className="text-xs text-gray-500 font-medium">
+                      Showing {((assignmentsPagination.page - 1) * assignmentsPagination.limit) + 1} to {Math.min(assignmentsPagination.page * assignmentsPagination.limit, assignmentsPagination.total)} of {assignmentsPagination.total} assignments
                     </div>
                     <Pagination
                       currentPage={assignmentsPagination.page}
@@ -1074,8 +1073,8 @@ export default function CollectorAssignmentPage() {
                       onChange={(val) => { setLimit(val); setCrewPage(1); }}
                       options={[5, 10, 20, 50]}
                     />
-                    <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                      SHOWING {((crewPage - 1) * limit) + 1} - {Math.min(crewPage * limit, filteredCrews.length)} OF {filteredCrews.length}
+                    <div className="text-xs text-gray-500 font-medium">
+                      Showing {((crewPage - 1) * limit) + 1} to {Math.min(crewPage * limit, filteredCrews.length)} of {filteredCrews.length} crews
                     </div>
                     <Pagination
                       currentPage={crewPage}

@@ -140,7 +140,7 @@ export default function VehicleTypesPage() {
     if (filters.sortBy !== key) {
       return <ArrowUpDown className="ml-2 h-4 w-4" />;
     }
-    return filters.sortOrder === 'asc' 
+    return filters.sortOrder === 'asc'
       ? <ArrowUp className="ml-2 h-4 w-4" />
       : <ArrowDown className="ml-2 h-4 w-4" />;
   };
@@ -238,7 +238,6 @@ export default function VehicleTypesPage() {
                           Name {getSortIcon('name')}
                         </button>
                       </th>
-                      <th className="text-left p-4">Icon</th>
                       <th className="text-left p-4">
                         <button
                           onClick={() => handleSort('isActive')}
@@ -262,13 +261,6 @@ export default function VehicleTypesPage() {
                     {vehicleTypes.map((vehicleType) => (
                       <tr key={vehicleType.id} className="border-b hover:bg-muted/50">
                         <td className="p-4 font-medium">{vehicleType.name}</td>
-                        <td className="p-4">
-                          {vehicleType.icon ? (
-                            <span className="text-sm text-gray-500">{vehicleType.icon}</span>
-                          ) : (
-                            <span className="text-sm text-gray-400">—</span>
-                          )}
-                        </td>
                         <td className="p-4">
                           <Badge variant={vehicleType.isActive ? 'default' : 'secondary'}>
                             {vehicleType.isActive ? 'Active' : 'Inactive'}
@@ -319,7 +311,7 @@ export default function VehicleTypesPage() {
                   onChange={(value) => setLimit(value)}
                   options={[5, 10, 20, 50]}
                 />
-                <div className="text-sm text-gray-600">
+                <div className="text-xs text-gray-500 font-medium">
                   Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
                   {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
                   {pagination.total} vehicle types

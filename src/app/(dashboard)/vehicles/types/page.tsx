@@ -232,7 +232,7 @@ export default function VehicleTypesPage() {
   const updateVehicleTypeMutation = useUpdateVehicleType();
 
   // Extract data
-  const apiResponse = vehicleTypesData as unknown as ApiResponse<any>; // Cast to match API
+  const apiResponse = vehicleTypesData as unknown as ApiResponse; // Fixed non-generic usage
   const vehicleTypes = useMemo(() => apiResponse?.data?.vehicleTypes || [], [apiResponse]);
   const pagination = useMemo(() => apiResponse?.data?.pagination || {
     page: 1, limit: 10, total: 0, totalPages: 0, hasNextPage: false, hasPreviousPage: false
@@ -295,7 +295,7 @@ export default function VehicleTypesPage() {
   // Selection
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedTypes(new Set(vehicleTypes.map(v => v.id.toString())));
+      setSelectedTypes(new Set(vehicleTypes.map((v: VehicleType) => v.id.toString())));
     } else {
       setSelectedTypes(new Set());
     }
@@ -455,7 +455,7 @@ export default function VehicleTypesPage() {
                         <TableCell colSpan={5}><NoDataAnimation /></TableCell>
                       </TableRow>
                     ) : (
-                      vehicleTypes.map((vehicleType) => (
+                      vehicleTypes.map((vehicleType: VehicleType) => (
                         <TableRow key={vehicleType.id} className="cursor-pointer hover:bg-gray-50">
                           <TableCell>
                             <Checkbox
@@ -508,7 +508,7 @@ export default function VehicleTypesPage() {
 
               {/* Mobile View - Cards */}
               <div className="sm:hidden grid gap-4">
-                {vehicleTypes.map((vehicleType) => (
+                {vehicleTypes.map((vehicleType: VehicleType) => (
                   <Card key={vehicleType.id}>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                       <div className="font-semibold">{vehicleType.name}</div>
@@ -530,7 +530,14 @@ export default function VehicleTypesPage() {
               </div>
 
               <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <RowsPerPage value={filters.limit} onChange={setLimit} options={[5, 10, 20, 50]} />
+                <div className="flex items-center gap-4">
+                  <RowsPerPage value={filters.limit} onChange={setLimit} options={[5, 10, 20, 50]} />
+                  <div className="text-xs text-gray-500 font-medium">
+                    Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
+                    {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
+                    {pagination.total} vehicle types
+                  </div>
+                </div>
                 <Pagination
                   currentPage={pagination.page}
                   totalPages={pagination.totalPages}

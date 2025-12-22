@@ -1059,7 +1059,7 @@ export default function CustomersPage() {
                 }}
                 options={[5, 10, 20, 50, 100]}
               />
-              <div className="text-sm text-gray-600">
+              <div className="text-xs text-gray-500 font-medium">
                 Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalCustomers)} of {totalCustomers} customers
               </div>
             </div>

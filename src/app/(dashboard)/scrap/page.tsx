@@ -393,7 +393,7 @@ export default function ScrapManagementPage() {
                     : 'text-gray-600 hover:text-gray-900'
                     }`}
                 >
-                  Scrap Names
+                  Scrap
                   <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${activeTab === 'names'
                     ? 'bg-cyan-100 text-cyan-700'
                     : 'bg-gray-200 text-gray-600'
@@ -936,7 +936,7 @@ export default function ScrapManagementPage() {
                 }}
                 options={[5, 10, 20, 50]}
               />
-              <div className="text-sm text-gray-600">
+              <div className="text-xs text-gray-500 font-medium">
                 {activeTab === 'categories' ? (
                   <>
                     Showing {((categoryPagination.page - 1) * categoryPagination.limit) + 1} to{' '}
@@ -969,71 +969,160 @@ export default function ScrapManagementPage() {
 
       {/* Category Form Dialog */}
       <Dialog open={isCategoryFormOpen} onOpenChange={setIsCategoryFormOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingCategory ? 'Edit Category' : 'Add Category'}
-            </DialogTitle>
+        <DialogContent
+          className="max-w-md sm:max-w-[600px] bg-white border-0 shadow-2xl rounded-2xl p-0 flex flex-col [&>button]:hidden"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader className="px-8 pt-8 pb-6 border-b border-gray-200 flex-shrink-0">
+            <div className="flex items-start justify-between">
+              <div>
+                <DialogTitle className="text-2xl font-bold text-gray-900">
+                  {editingCategory ? 'Edit Category' : 'Add Category'}
+                </DialogTitle>
+                <p className="text-sm text-gray-600 mt-1">
+                  {editingCategory ? 'Update category details' : 'Create a new scrap category'}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsCategoryFormOpen(false);
+                    setEditingCategory(undefined);
+                  }}
+                  disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}
+                  className="h-10 px-4 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  form="category-form"
+                  disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}
+                  variant="outline"
+                  className="relative overflow-hidden group h-10 px-6 rounded-xl border-2 border-purple-500 text-purple-600 hover:bg-white hover:text-purple-700 hover:border-purple-400 font-bold shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:shadow-[0_0_25px_rgba(168,85,247,0.5)] transition-all transform hover:scale-105 active:scale-95 bg-white backdrop-blur-sm"
+                >
+                  <span className="absolute inset-0 w-full h-full -translate-x-full group-hover:animate-shimmer bg-gradient-to-r from-transparent via-purple-300/50 to-transparent z-0 skew-x-12" />
+                  <span className="relative z-10 flex items-center gap-2">
+                    {createCategoryMutation.isPending || updateCategoryMutation.isPending ? (
+                      <>
+                        <div className="mr-2 h-4 w-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      editingCategory ? 'Update' : 'Create'
+                    )}
+                  </span>
+                </Button>
+              </div>
+            </div>
           </DialogHeader>
-          <ScrapCategoryForm
-            category={editingCategory}
-            onSubmit={async (data) => {
-              try {
-                if (editingCategory) {
-                  await updateCategoryMutation.mutateAsync({ id: editingCategory.id, data });
-                  toast.success('Category updated successfully');
-                } else {
-                  await createCategoryMutation.mutateAsync(data);
-                  toast.success('Category created successfully');
+          <div className="px-8 py-8">
+            <ScrapCategoryForm
+              category={editingCategory}
+              onSubmit={async (data) => {
+                try {
+                  if (editingCategory) {
+                    await updateCategoryMutation.mutateAsync({ id: editingCategory.id, data });
+                    toast.success('Category updated successfully');
+                  } else {
+                    await createCategoryMutation.mutateAsync(data);
+                    toast.success('Category created successfully');
+                  }
+                  setIsCategoryFormOpen(false);
+                  setEditingCategory(undefined);
+                } catch (error: any) {
+                  toast.error(error?.response?.data?.message || 'Failed to save category');
                 }
+              }}
+              onCancel={() => {
                 setIsCategoryFormOpen(false);
                 setEditingCategory(undefined);
-              } catch (error: any) {
-                toast.error(error?.response?.data?.message || 'Failed to save category');
-              }
-            }}
-            onCancel={() => {
-              setIsCategoryFormOpen(false);
-              setEditingCategory(undefined);
-            }}
-            isLoading={createCategoryMutation.isPending || updateCategoryMutation.isPending}
-          />
+              }}
+              isLoading={createCategoryMutation.isPending || updateCategoryMutation.isPending}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Scrap Name Form Dialog */}
       <Dialog open={isNameFormOpen} onOpenChange={setIsNameFormOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingName ? 'Edit Scrap Name' : 'Add Scrap Name'}</DialogTitle>
+        <DialogContent
+          className="max-w-md sm:max-w-[600px] bg-white border-0 shadow-2xl rounded-2xl p-0 flex flex-col [&>button]:hidden"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader className="px-8 pt-8 pb-6 border-b border-gray-200 flex-shrink-0">
+            <div className="flex items-start justify-between">
+              <div>
+                <DialogTitle className="text-2xl font-bold text-gray-900">
+                  {editingName ? 'Edit Scrap Name' : 'Add Scrap'}
+                </DialogTitle>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsNameFormOpen(false);
+                    setEditingName(undefined);
+                  }}
+                  disabled={createNameMutation.isPending || updateNameMutation.isPending}
+                  className="h-10 px-4 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  form="name-form"
+                  disabled={createNameMutation.isPending || updateNameMutation.isPending}
+                  variant="outline"
+                  className="relative overflow-hidden group h-10 px-6 rounded-xl border-2 border-cyan-500 text-cyan-600 hover:bg-white hover:text-cyan-700 hover:border-cyan-400 font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 active:scale-95 bg-white backdrop-blur-sm"
+                >
+                  <span className="absolute inset-0 w-full h-full -translate-x-full group-hover:animate-shimmer bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent z-0 skew-x-12" />
+                  <span className="relative z-10 flex items-center gap-2">
+                    {createNameMutation.isPending || updateNameMutation.isPending ? (
+                      <>
+                        <div className="mr-2 h-4 w-4 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      editingName ? 'Update' : 'Create'
+                    )}
+                  </span>
+                </Button>
+              </div>
+            </div>
           </DialogHeader>
-          <ScrapNameForm
-            scrapName={editingName}
-            categories={categories}
-            onSubmit={async (data) => {
-              try {
-                if (editingName) {
-                  await updateNameMutation.mutateAsync({
-                    id: editingName.id,
-                    data,
-                  });
-                  toast.success('Scrap name updated successfully');
-                } else {
-                  await createNameMutation.mutateAsync(data);
-                  toast.success('Scrap name created successfully');
+          <div className="px-8 py-8">
+            <ScrapNameForm
+              scrapName={editingName}
+              categories={categories}
+              onSubmit={async (data) => {
+                try {
+                  if (editingName) {
+                    await updateNameMutation.mutateAsync({
+                      id: editingName.id,
+                      data,
+                    });
+                    toast.success('Scrap name updated successfully');
+                  } else {
+                    await createNameMutation.mutateAsync(data);
+                    toast.success('Scrap name created successfully');
+                  }
+                  setIsNameFormOpen(false);
+                  setEditingName(undefined);
+                } catch (error: any) {
+                  toast.error(error?.response?.data?.message || 'Failed to save scrap name');
                 }
+              }}
+              onCancel={() => {
                 setIsNameFormOpen(false);
                 setEditingName(undefined);
-              } catch (error: any) {
-                toast.error(error?.response?.data?.message || 'Failed to save scrap name');
-              }
-            }}
-            onCancel={() => {
-              setIsNameFormOpen(false);
-              setEditingName(undefined);
-            }}
-            isLoading={createNameMutation.isPending || updateNameMutation.isPending}
-          />
+              }}
+              isLoading={createNameMutation.isPending || updateNameMutation.isPending}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>
@@ -1061,9 +1150,8 @@ function ScrapCategoryForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form id="category-form" onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-5">
-        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Category Information</h3>
         <div className="grid grid-cols-1 gap-5">
           <div className="space-y-2">
             <Label htmlFor="category-name" className="text-sm font-medium text-gray-700">
@@ -1113,35 +1201,6 @@ function ScrapCategoryForm({
           </div>
         </div>
       </div>
-      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isLoading}
-          className="h-12 px-6 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          variant="outline"
-          className="relative overflow-hidden group h-12 px-8 rounded-xl border-2 border-purple-500 text-purple-600 hover:bg-white hover:text-purple-700 hover:border-purple-400 font-bold shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:shadow-[0_0_25px_rgba(168,85,247,0.5)] transition-all transform hover:scale-105 active:scale-95 bg-white backdrop-blur-sm"
-        >
-          <span className="absolute inset-0 w-full h-full -translate-x-full group-hover:animate-shimmer bg-gradient-to-r from-transparent via-purple-300/50 to-transparent z-0 skew-x-12" />
-          <span className="relative z-10 flex items-center gap-2">
-            {isLoading ? (
-              <>
-                <div className="mr-2 h-5 w-5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-                Saving...
-              </>
-            ) : (
-              category ? 'Update Category' : 'Create Category'
-            )}
-          </span>
-        </Button>
-      </div>
     </form>
   );
 }
@@ -1170,9 +1229,8 @@ function ScrapNameForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form id="name-form" onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-5">
-        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Scrap Name Information</h3>
         <div className="grid grid-cols-1 gap-5">
           <div className="space-y-2">
             <Label htmlFor="scrap-name" className="text-sm font-medium text-gray-700">
@@ -1243,35 +1301,6 @@ function ScrapNameForm({
             </div>
           </div>
         </div>
-      </div>
-      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isLoading}
-          className="h-12 px-6 rounded-xl border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-red-600 font-medium transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          variant="outline"
-          className="relative overflow-hidden group h-12 px-8 rounded-xl border-2 border-cyan-500 text-cyan-600 hover:bg-white hover:text-cyan-700 hover:border-cyan-400 font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 active:scale-95 bg-white backdrop-blur-sm"
-        >
-          <span className="absolute inset-0 w-full h-full -translate-x-full group-hover:animate-shimmer bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent z-0 skew-x-12" />
-          <span className="relative z-10 flex items-center gap-2">
-            {isLoading ? (
-              <>
-                <div className="mr-2 h-5 w-5 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin" />
-                Saving...
-              </>
-            ) : (
-              scrapName ? 'Update Scrap Name' : 'Create Scrap Name'
-            )}
-          </span>
-        </Button>
       </div>
     </form>
   );
