@@ -124,6 +124,13 @@ interface ApiOrder {
   quotedPrice?: number;
   actualPrice?: number;
   yardId?: string;
+  yard?: {
+    id: string;
+    yardName: string;
+    address: string;
+    latitude?: number;
+    longitude?: number;
+  };
   routeDistance?: string;
   routeDuration?: string;
   customerNotes?: string;
@@ -248,107 +255,270 @@ function CollectorInfoDialog({
   if (!order) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-gray-900">Assignment Details</DialogTitle>
-          <p className="text-sm text-gray-600 mt-1">Order #{order.id}</p>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      // Only allow closing via the Close button, not by clicking outside or pressing Escape
+      if (!open) return;
+    }}>
+      <DialogContent
+        className="sm:max-w-[900px] max-h-[85vh] overflow-y-auto"
+        onInteractOutside={(e) => {
+          // Prevent closing when clicking outside
+          e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          // Prevent closing with Escape key
+          e.preventDefault();
+        }}
+        hideClose={true}
+      >
+        <DialogHeader className="border-b pb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="text-2xl font-bold text-gray-900 tracking-tight">
+                Assignment Details
+              </DialogTitle>
+              <p className="text-sm text-gray-500 mt-1 font-medium">
+                Order #{order.orderNumber || order.id}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <OrderStatusBadge status={order.orderStatus} />
+              <PaymentStatusBadge status={order.paymentStatus} />
+            </div>
+          </div>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-3">
-            {order.crewId ? (
-              <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg border border-emerald-200">
-                <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
-                  <Users className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Assigned Crew</p>
-                  <p className="text-base font-semibold text-gray-900 mt-1">
-                    {order.crew?.name || 'Loading Crew...'}
-                  </p>
-                  {order.crew?.members && order.crew.members.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-emerald-100">
-                      {order.crew.members.map((member: any) => (
-                        <div
-                          key={member.id}
-                          className="flex items-center gap-1.5 bg-white/60 px-2 py-1 rounded-md border border-emerald-100 cursor-pointer hover:bg-white hover:border-emerald-300 transition-all active:scale-95 shadow-sm hover:shadow"
-                          onClick={() => {
-                            onClose();
-                            router.push(`/employees?view=${member.id}&returnTo=/orders`);
-                          }}
-                        >
-                          <div className="h-4 w-4 rounded-full bg-emerald-500 flex items-center justify-center text-[8px] text-white font-bold">
-                            {member.fullName.charAt(0).toUpperCase()}
-                          </div>
-                          <span className="text-[10px] font-medium text-gray-700">{member.fullName}</span>
-                        </div>
-                      ))}
+
+        <div className="py-6">
+          {/* Main Grid Layout - 2 columns for landscape */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Left Column */}
+            <div className="space-y-4">
+              {/* Crew or Collector Assignment */}
+              {order.crewId ? (
+                <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 p-5 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                  <div className="relative flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 shadow-lg">
+                      <Users className="h-6 w-6 text-white" />
                     </div>
-                  )}
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-emerald-100 uppercase tracking-wider mb-1">
+                        Assigned Crew
+                      </p>
+                      <p className="text-lg font-bold text-white mb-3">
+                        {order.crew?.name || 'Loading Crew...'}
+                      </p>
+                      {order.crew?.members && order.crew.members.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {order.crew.members.map((member: any) => (
+                            <div
+                              key={member.id}
+                              className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg cursor-pointer hover:bg-white hover:scale-105 transition-all shadow-md"
+                              onClick={() => {
+                                onClose();
+                                router.push(`/employees?view=${member.id}&returnTo=/orders`);
+                              }}
+                            >
+                              <div className="h-5 w-5 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-[10px] text-white font-bold shadow-sm">
+                                {member.fullName.charAt(0).toUpperCase()}
+                              </div>
+                              <span className="text-xs font-semibold text-gray-700">{member.fullName}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg border border-cyan-200">
-                <div className="w-10 h-10 rounded-full bg-cyan-500 flex items-center justify-center flex-shrink-0">
-                  <User className="h-5 w-5 text-white" />
+              ) : (
+                <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 p-5 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                  <div className="relative flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 shadow-lg">
+                      <User className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-cyan-100 uppercase tracking-wider mb-1">
+                        Assigned Collector
+                      </p>
+                      <p
+                        className="text-lg font-bold text-white cursor-pointer hover:text-cyan-100 transition-colors mb-1"
+                        onClick={() => {
+                          onClose();
+                          router.push(`/employees?view=${order.assignedCollectorId}&returnTo=/orders`);
+                        }}
+                      >
+                        {order.assignedCollector?.fullName || order.assignedCollectorId || 'Not assigned'}
+                      </p>
+                      {order.assignedCollector?.email && (
+                        <p className="text-xs text-cyan-100/80 font-medium">{order.assignedCollector.email}</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Assigned Collector</p>
-                  <p
-                    className="text-base font-semibold text-gray-900 mt-1 cursor-pointer hover:text-cyan-600 transition-colors"
-                    onClick={() => {
-                      onClose();
-                      router.push(`/employees?view=${order.assignedCollectorId}&returnTo=/orders`);
-                    }}
-                  >
-                    {order.assignedCollector?.fullName || order.assignedCollectorId || 'Not assigned'}
-                  </p>
-                </div>
-              </div>
-            )}
+              )}
 
-            {order.yardId && (
-              <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                  <MapPin className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Scrap Yard</p>
-                  <p className="text-base font-semibold text-gray-900 mt-1">{order.yardId}</p>
+              {/* Vehicle Details */}
+              <div className="rounded-xl bg-card border-2 border-indigo-100 p-5 shadow-md hover:shadow-lg transition-all duration-300">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                    <Package className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-3">
+                      Vehicle Details
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {order.vehicleDetails?.make && (
+                        <div className="bg-indigo-50 rounded-lg p-2">
+                          <span className="text-[10px] font-semibold text-indigo-500 uppercase block mb-0.5">Make</span>
+                          <span className="text-sm font-bold text-gray-900">{order.vehicleDetails.make}</span>
+                        </div>
+                      )}
+                      {order.vehicleDetails?.model && (
+                        <div className="bg-indigo-50 rounded-lg p-2">
+                          <span className="text-[10px] font-semibold text-indigo-500 uppercase block mb-0.5">Model</span>
+                          <span className="text-sm font-bold text-gray-900">{order.vehicleDetails.model}</span>
+                        </div>
+                      )}
+                      {order.vehicleDetails?.year && (
+                        <div className="bg-indigo-50 rounded-lg p-2">
+                          <span className="text-[10px] font-semibold text-indigo-500 uppercase block mb-0.5">Year</span>
+                          <span className="text-sm font-bold text-gray-900">{order.vehicleDetails.year}</span>
+                        </div>
+                      )}
+                      {order.vehicleDetails?.condition && (
+                        <div className="bg-indigo-50 rounded-lg p-2">
+                          <span className="text-[10px] font-semibold text-indigo-500 uppercase block mb-0.5">Condition</span>
+                          <span className="text-sm font-bold text-gray-900 capitalize">
+                            {order.vehicleDetails.condition.toLowerCase().replace('_', ' ')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {!order.vehicleDetails?.make && !order.vehicleDetails?.model && (
+                      <p className="text-sm text-gray-400 italic">No vehicle details available</p>
+                    )}
+                  </div>
                 </div>
               </div>
-            )}
 
-            {order.pickupTime && (
-              <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-purple-50 to-violet-50 rounded-lg border border-purple-200">
-                <div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0">
-                  <Calendar className="h-5 w-5 text-white" />
+              {/* Route Information */}
+              {(order.routeDistance || order.routeDuration) && (
+                <div className="rounded-xl bg-card border-2 border-pink-100 p-5 shadow-md hover:shadow-lg transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                      <MapIcon className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-pink-600 uppercase tracking-wider mb-3">
+                        Route Information
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {order.routeDistance && (
+                          <div className="bg-pink-50 rounded-lg p-3">
+                            <span className="text-[10px] font-semibold text-pink-500 uppercase block mb-1">Distance</span>
+                            <p className="text-lg font-bold text-gray-900">{order.routeDistance}</p>
+                          </div>
+                        )}
+                        {order.routeDuration && (
+                          <div className="bg-pink-50 rounded-lg p-3">
+                            <span className="text-[10px] font-semibold text-pink-500 uppercase block mb-1">Duration</span>
+                            <p className="text-lg font-bold text-gray-900">{order.routeDuration}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Pickup Time</p>
-                  <p className="text-base font-semibold text-gray-900 mt-1">
-                    {new Date(order.pickupTime).toLocaleString('en-US', {
-                      dateStyle: 'medium',
-                      timeStyle: 'short'
-                    })}
-                  </p>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
 
-            <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg border border-orange-200">
-              <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0">
-                <MapPin className="h-5 w-5 text-white" />
+            {/* Right Column */}
+            <div className="space-y-4">
+              {/* Scrap Yard */}
+              {order.yardId && (
+                <div className="rounded-xl bg-card border-2 border-green-100 p-5 shadow-md hover:shadow-lg transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                      <MapPin className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-2">
+                        Scrap Yard
+                      </p>
+                      <p className="text-base font-bold text-gray-900">
+                        {order.yard?.yardName || order.yardId}
+                      </p>
+                      {order.yard?.address && (
+                        <p className="text-sm text-gray-600 mt-1">{order.yard.address}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Pickup Time */}
+              {order.pickupTime && (
+                <div className="rounded-xl bg-card border-2 border-purple-100 p-5 shadow-md hover:shadow-lg transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                      <Calendar className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-2">
+                        Pickup Time
+                      </p>
+                      <p className="text-base font-bold text-gray-900">
+                        {new Date(order.pickupTime).toLocaleString('en-US', {
+                          dateStyle: 'medium',
+                          timeStyle: 'short'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Collection Address */}
+              <div className="rounded-xl bg-card border-2 border-orange-100 p-5 shadow-md hover:shadow-lg transition-all duration-300">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                    <MapPin className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-2">
+                      Collection Address
+                    </p>
+                    <p className="text-base font-bold text-gray-900 leading-relaxed">{order.address}</p>
+                  </div>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600">Collection Address</p>
-                <p className="text-base font-semibold text-gray-900 mt-1">{order.address}</p>
+
+              {/* Customer Info */}
+              <div className="rounded-xl bg-card border-2 border-blue-100 p-5 shadow-md hover:shadow-lg transition-all duration-300">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                    <User className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
+                      Customer
+                    </p>
+                    <p className="text-base font-bold text-gray-900">{order.customerName}</p>
+                    <p className="text-sm text-gray-600 mt-1">{order.customerPhone}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button onClick={onClose} className="bg-cyan-500 hover:bg-cyan-600">
+
+        <div className="flex justify-end gap-3 pt-4 border-t">
+          <Button
+            onClick={onClose}
+            className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-300"
+          >
             Close
           </Button>
         </div>
