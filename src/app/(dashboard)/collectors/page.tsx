@@ -509,46 +509,67 @@ export default function CollectorAssignmentPage() {
               <p className="text-sm text-gray-500 mt-1">Manage collectors, crews and work assignments</p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsSearchOpen(!isSearchOpen)}
-                  className={cn(
-                    "h-9 px-3 rounded-lg transition-all",
-                    isSearchOpen ? "bg-white text-cyan-600 shadow-sm" : "text-gray-500 hover:text-gray-900"
-                  )}
-                >
-                  <Search className="h-4 w-4 mr-2" />
-                  <span className="text-sm font-medium">Search</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsFilterOpen(!isFilterOpen)}
-                  className={cn(
-                    "h-9 px-3 rounded-lg transition-all",
-                    isFilterOpen || statusFilter !== 'ALL' ? "bg-white text-cyan-600 shadow-sm" : "text-gray-500 hover:text-gray-900"
-                  )}
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  <span className="text-sm font-medium">Filter</span>
-                  {statusFilter !== 'ALL' && (
-                    <span className="ml-1.5 w-2 h-2 rounded-full bg-cyan-500" />
-                  )}
-                </Button>
-              </div>
+            <div className="flex items-center gap-3">
+              {/* Standardized Search Bar */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                className="border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 h-9 w-9 p-0"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
 
+              {isSearchOpen && (
+                <div className="relative">
+                  <Input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onBlur={() => {
+                      if (!searchTerm) setIsSearchOpen(false);
+                    }}
+                    autoFocus
+                    className="w-64 pl-10 pr-10 rounded-lg border-gray-200 focus:border-cyan-500 focus:ring-cyan-500"
+                  />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  {searchTerm && (
+                    <button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setIsSearchOpen(false);
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Standardized Filter Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className={cn(
+                  "border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 h-9 w-9 p-0 transition-all",
+                  (isFilterOpen || statusFilter !== 'ALL') && "border-cyan-500 bg-cyan-50 text-cyan-700 shadow-sm"
+                )}
+                title={isFilterOpen ? 'Hide filters' : 'Show filters'}
+              >
+                <Filter className="h-4 w-4" />
+              </Button>
+
+              {/* Standardized Add Button */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button className="bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white shadow-lg shadow-cyan-200 border-0 h-10 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-95">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add New
-                    <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
+                  <Button className="bg-cyan-500 hover:bg-cyan-600 text-white h-9 w-9 p-0 shadow-lg shadow-cyan-200 border-0 transition-all transform hover:scale-[1.02] active:scale-95">
+                    <Plus className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 p-2 rounded-xl shadow-xl border-gray-100">
+                <DropdownMenuContent align="end" className="w-56 p-2 rounded-xl shadow-xl border-gray-100 bg-white">
                   <DropdownMenuItem onClick={handleCreateCollector} className="rounded-lg py-2.5 cursor-pointer">
                     <UserPlus className="mr-2 h-4 w-4 text-cyan-500" />
                     <span>Create Collector</span>
@@ -574,49 +595,60 @@ export default function CollectorAssignmentPage() {
             </div>
           </div>
 
-          {(isSearchOpen || isFilterOpen) && (
+          {isFilterOpen && (
             <div className="mt-4 flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-50 animate-in slide-in-from-top-2 duration-200">
-              {isSearchOpen && (
-                <div className="relative flex-1">
-                  <Input
-                    placeholder="Search by name, email or phone..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 h-11 bg-gray-50 border-gray-100 rounded-xl focus:bg-white transition-all shadow-inner"
-                    autoFocus
-                  />
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 h-4.5 w-4.5" />
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm('')}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">Status:</Label>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(v: any) => {
+                    setStatusFilter(v);
+                    if (activeTab === 'collectors') setCollectorPage(1);
+                    else if (activeTab === 'crews') setCrewPage(1);
+                    else setAssignmentPage(1);
+                  }}
+                >
+                  <SelectTrigger className={cn(
+                    "w-[160px] bg-white border-gray-200 hover:border-gray-300 transition-all",
+                    statusFilter !== 'ALL' && "border-cyan-500 ring-2 ring-cyan-200"
+                  )}>
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl shadow-xl border-gray-100 p-1 bg-white">
+                    <SelectItem value="ALL" className="rounded-lg">All Statuses</SelectItem>
+                    <SelectItem value="ACTIVE" className="rounded-lg">Active Only</SelectItem>
+                    <SelectItem value="INACTIVE" className="rounded-lg">Inactive Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {statusFilter !== 'ALL' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setStatusFilter('ALL');
+                    if (activeTab === 'collectors') setCollectorPage(1);
+                    else if (activeTab === 'crews') setCrewPage(1);
+                    else setAssignmentPage(1);
+                  }}
+                  className="h-8 px-2 text-gray-500 hover:text-gray-700"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
               )}
 
-              {isFilterOpen && activeTab === 'collectors' && (
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={statusFilter}
-                    onValueChange={(v: any) => {
-                      setStatusFilter(v);
-                      setCollectorPage(1);
-                    }}
-                  >
-                    <SelectTrigger className="h-11 w-[160px] bg-gray-50 border-gray-100 rounded-xl focus:bg-white shadow-inner">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl shadow-xl border-gray-100 p-1">
-                      <SelectItem value="ALL" className="rounded-lg">All Statuses</SelectItem>
-                      <SelectItem value="ACTIVE" className="rounded-lg">Active Only</SelectItem>
-                      <SelectItem value="INACTIVE" className="rounded-lg">Inactive Only</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+              <div className="flex-1" />
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsFilterOpen(false)}
+                className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           )}
         </CardHeader>
