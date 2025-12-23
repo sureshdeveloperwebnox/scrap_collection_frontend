@@ -92,18 +92,183 @@ function NoDataAnimation({ message = 'No data found', description }: { message?:
   );
 }
 
-// Employee Avatar Component
+// Employee Avatar Component - Minimalistic
 function EmployeeAvatar({ name, className = '' }: { name: string; className?: string }) {
   const firstLetter = (name || 'U').charAt(0).toUpperCase();
   return (
     <div className={cn(
-      "w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-300",
+      "w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0 shadow-sm hover:shadow-md transition-all",
       className
     )}>
-      <span className="text-white font-semibold leading-none text-sm">
+      <span className="text-primary-foreground font-semibold leading-none text-sm">
         {firstLetter}
       </span>
     </div>
+  );
+}
+
+// Employee Profile View Dialog Component - Customer Profile Inspired
+function EmployeeProfileDialog({
+  employee,
+  isOpen,
+  onClose,
+  returnTo
+}: {
+  employee: Employee | null;
+  isOpen: boolean;
+  onClose: () => void;
+  returnTo?: string;
+}) {
+  const router = useRouter();
+
+  if (!employee) return null;
+
+  const handleClose = () => {
+    onClose();
+    if (returnTo) {
+      router.push(returnTo);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) handleClose();
+    }}>
+      <DialogContent
+        className="sm:max-w-[900px] max-h-[90vh] overflow-hidden flex flex-col p-0"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        hideClose={true}
+      >
+        {/* Header - Minimal White */}
+        <div className="px-8 py-6 border-b border-border bg-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-foreground">Employee Profile</h2>
+              <p className="text-sm text-muted-foreground mt-1">View employee details and information</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area - Form Style */}
+        <div className="flex-1 overflow-y-auto px-8 py-6 bg-white">
+          <div className="space-y-6">
+            {/* Personal Information Section */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <User className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">Personal Information</h3>
+              </div>
+
+              <div className="space-y-4">
+                {/* Full Name */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-2">
+                    Full Name *
+                  </label>
+                  <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-lg border border-border">
+                    <User className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-foreground">{employee.fullName}</span>
+                  </div>
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-2">
+                    Phone *
+                  </label>
+                  <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-lg border border-border">
+                    <Phone className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-foreground">{employee.phone || 'Not provided'}</span>
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-2">
+                    Email *
+                  </label>
+                  <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-lg border border-border">
+                    <Mail className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-foreground">{employee.email}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Role & Security Section */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Shield className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">Role & Security</h3>
+              </div>
+
+              <div className="space-y-4">
+                {/* Role */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-2">
+                    Role *
+                  </label>
+                  <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-lg border border-border">
+                    <Shield className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-foreground">
+                      {(employee as any).role?.name || employee.role || 'No role assigned'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Status */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-2">
+                    Status
+                  </label>
+                  <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-lg border border-border">
+                    {employee.isActive ? (
+                      <UserCheck className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <UserX className="h-4 w-4 text-gray-500" />
+                    )}
+                    <span className={cn(
+                      "text-sm font-medium",
+                      employee.isActive ? "text-green-600" : "text-gray-500"
+                    )}>
+                      {employee.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Joined Date */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-2">
+                    Joined Date
+                  </label>
+                  <div className="flex items-center gap-2 px-4 py-3 bg-muted rounded-lg border border-border">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-foreground">
+                      {new Date(employee.createdAt).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer - Simple */}
+        <div className="flex justify-end items-center px-8 py-4 border-t border-border bg-white">
+          <Button
+            onClick={handleClose}
+            className="bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+          >
+            {returnTo ? 'Back to Orders' : 'Close'}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -126,6 +291,9 @@ type MainTabKey = 'employees' | 'roles';
 type StatusTabKey = 'all' | 'active' | 'inactive';
 
 export default function EmployeesPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   const [activeTab, setActiveTab] = useState<MainTabKey>('employees');
 
   // Employees state
@@ -156,9 +324,43 @@ export default function EmployeesPage() {
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
   const [mounted, setMounted] = useState(false);
 
+  // Employee Profile View State
+  const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
+  const [isProfileViewOpen, setIsProfileViewOpen] = useState(false);
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Handle view parameter from URL
+  useEffect(() => {
+    const viewId = searchParams.get('view');
+    const returnTo = searchParams.get('returnTo');
+
+    if (viewId) {
+      const fetchAndViewEmployee = async () => {
+        try {
+          const response = await employeesApi.getEmployee(viewId);
+          if (response.data) {
+            setViewingEmployee(response.data);
+            setIsProfileViewOpen(true);
+
+            // Clean up URL after opening dialog
+            const newSearchParams = new URLSearchParams(searchParams.toString());
+            newSearchParams.delete('view');
+            const newUrl = newSearchParams.toString()
+              ? `${window.location.pathname}?${newSearchParams.toString()}`
+              : window.location.pathname;
+            router.replace(newUrl);
+          }
+        } catch (e) {
+          console.error('Failed to fetch employee for viewing', e);
+          toast.error('Failed to load employee profile');
+        }
+      };
+      fetchAndViewEmployee();
+    }
+  }, [searchParams, router]);
 
   // Debounce searches
   useEffect(() => {
@@ -700,6 +902,17 @@ export default function EmployeesPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Employee Profile View Dialog */}
+      <EmployeeProfileDialog
+        employee={viewingEmployee}
+        isOpen={isProfileViewOpen}
+        onClose={() => {
+          setIsProfileViewOpen(false);
+          setViewingEmployee(null);
+        }}
+        returnTo={searchParams.get('returnTo') || undefined}
+      />
     </div>
   );
 }

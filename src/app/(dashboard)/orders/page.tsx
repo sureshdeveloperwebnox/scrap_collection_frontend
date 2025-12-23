@@ -241,7 +241,7 @@ function OrderAvatar({
 
 
 
-// Collector Info Dialog Component
+// Enhanced Personnel Profile Dialog Component - Inspired by Customer Profile View
 function CollectorInfoDialog({
   order,
   isOpen,
@@ -252,261 +252,89 @@ function CollectorInfoDialog({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+
   if (!order) return null;
+
+  // Determine if this is a crew assignment or individual collector
+  const isCrew = !!order.crewId;
+  const personnelData = isCrew ? order.crew : order.assignedCollector;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
-      // Only allow closing via the Close button, not by clicking outside or pressing Escape
       if (!open) return;
     }}>
       <DialogContent
-        className="sm:max-w-[900px] max-h-[85vh] overflow-y-auto"
-        onInteractOutside={(e) => {
-          // Prevent closing when clicking outside
-          e.preventDefault();
-        }}
-        onEscapeKeyDown={(e) => {
-          // Prevent closing with Escape key
-          e.preventDefault();
-        }}
+        className="sm:max-w-[1000px] max-h-[90vh] overflow-hidden flex flex-col"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
         hideClose={true}
       >
-        <DialogHeader className="border-b pb-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="text-2xl font-bold text-gray-900 tracking-tight">
-                Assignment Details
-              </DialogTitle>
-              <p className="text-sm text-gray-500 mt-1 font-medium">
-                Order #{order.orderNumber || order.id}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <OrderStatusBadge status={order.orderStatus} />
-              <PaymentStatusBadge status={order.paymentStatus} />
-            </div>
-          </div>
-        </DialogHeader>
+        {/* Header Section - Customer Profile Inspired */}
+        <div className="relative bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-600 -m-6 mb-0 px-6 py-8">
+          <div className="absolute inset-0 bg-black/10"></div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
 
-        <div className="py-6">
-          {/* Main Grid Layout - 2 columns for landscape */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Left Column */}
-            <div className="space-y-4">
-              {/* Crew or Collector Assignment */}
-              {order.crewId ? (
-                <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 p-5 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                  <div className="relative flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 shadow-lg">
-                      <Users className="h-6 w-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-semibold text-emerald-100 uppercase tracking-wider mb-1">
-                        Assigned Crew
-                      </p>
-                      <p className="text-lg font-bold text-white mb-3">
-                        {order.crew?.name || 'Loading Crew...'}
-                      </p>
-                      {order.crew?.members && order.crew.members.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {order.crew.members.map((member: any) => (
-                            <div
-                              key={member.id}
-                              className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg cursor-pointer hover:bg-white hover:scale-105 transition-all shadow-md"
-                              onClick={() => {
-                                onClose();
-                                router.push(`/employees?view=${member.id}&returnTo=/orders`);
-                              }}
-                            >
-                              <div className="h-5 w-5 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-[10px] text-white font-bold shadow-sm">
-                                {member.fullName.charAt(0).toUpperCase()}
-                              </div>
-                              <span className="text-xs font-semibold text-gray-700">{member.fullName}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+          <div className="relative z-10">
+            <div className="flex items-start justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-2xl border-4 border-white/30">
+                  {isCrew ? (
+                    <Users className="h-10 w-10 text-white" />
+                  ) : (
+                    <User className="h-10 w-10 text-white" />
+                  )}
                 </div>
-              ) : (
-                <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 p-5 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                  <div className="relative flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 shadow-lg">
-                      <User className="h-6 w-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-semibold text-cyan-100 uppercase tracking-wider mb-1">
-                        Assigned Collector
-                      </p>
-                      <p
-                        className="text-lg font-bold text-white cursor-pointer hover:text-cyan-100 transition-colors mb-1"
-                        onClick={() => {
-                          onClose();
-                          router.push(`/employees?view=${order.assignedCollectorId}&returnTo=/orders`);
-                        }}
-                      >
-                        {order.assignedCollector?.fullName || order.assignedCollectorId || 'Not assigned'}
-                      </p>
-                      {order.assignedCollector?.email && (
-                        <p className="text-xs text-cyan-100/80 font-medium">{order.assignedCollector.email}</p>
-                      )}
-                    </div>
-                  </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-white mb-1 tracking-tight">
+                    {isCrew ? order.crew?.name : order.assignedCollector?.fullName || 'Personnel Details'}
+                  </h2>
+                  <p className="text-cyan-100 text-sm font-medium">
+                    {isCrew ? 'Crew Assignment' : 'Individual Collector'} • Order #{order.orderNumber || order.id}
+                  </p>
                 </div>
-              )}
+              </div>
+              <div className="flex items-center gap-2">
+                <OrderStatusBadge status={order.orderStatus} />
+                <PaymentStatusBadge status={order.paymentStatus} />
+              </div>
+            </div>
 
-              {/* Vehicle Details */}
-              <div className="rounded-xl bg-card border-2 border-indigo-100 p-5 shadow-md hover:shadow-lg transition-all duration-300">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                    <Package className="h-6 w-6 text-white" />
+            {/* Quick Stats Bar */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                    <Calendar className="h-5 w-5 text-white" />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-3">
-                      Vehicle Details
+                  <div>
+                    <p className="text-xs text-cyan-100 font-medium">Pickup Date</p>
+                    <p className="text-sm font-bold text-white">
+                      {order.pickupTime ? new Date(order.pickupTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Not scheduled'}
                     </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {order.vehicleDetails?.make && (
-                        <div className="bg-indigo-50 rounded-lg p-2">
-                          <span className="text-[10px] font-semibold text-indigo-500 uppercase block mb-0.5">Make</span>
-                          <span className="text-sm font-bold text-gray-900">{order.vehicleDetails.make}</span>
-                        </div>
-                      )}
-                      {order.vehicleDetails?.model && (
-                        <div className="bg-indigo-50 rounded-lg p-2">
-                          <span className="text-[10px] font-semibold text-indigo-500 uppercase block mb-0.5">Model</span>
-                          <span className="text-sm font-bold text-gray-900">{order.vehicleDetails.model}</span>
-                        </div>
-                      )}
-                      {order.vehicleDetails?.year && (
-                        <div className="bg-indigo-50 rounded-lg p-2">
-                          <span className="text-[10px] font-semibold text-indigo-500 uppercase block mb-0.5">Year</span>
-                          <span className="text-sm font-bold text-gray-900">{order.vehicleDetails.year}</span>
-                        </div>
-                      )}
-                      {order.vehicleDetails?.condition && (
-                        <div className="bg-indigo-50 rounded-lg p-2">
-                          <span className="text-[10px] font-semibold text-indigo-500 uppercase block mb-0.5">Condition</span>
-                          <span className="text-sm font-bold text-gray-900 capitalize">
-                            {order.vehicleDetails.condition.toLowerCase().replace('_', ' ')}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    {!order.vehicleDetails?.make && !order.vehicleDetails?.model && (
-                      <p className="text-sm text-gray-400 italic">No vehicle details available</p>
-                    )}
                   </div>
                 </div>
               </div>
-
-              {/* Route Information */}
-              {(order.routeDistance || order.routeDuration) && (
-                <div className="rounded-xl bg-card border-2 border-pink-100 p-5 shadow-md hover:shadow-lg transition-all duration-300">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                      <MapIcon className="h-6 w-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-bold text-pink-600 uppercase tracking-wider mb-3">
-                        Route Information
-                      </p>
-                      <div className="grid grid-cols-2 gap-3">
-                        {order.routeDistance && (
-                          <div className="bg-pink-50 rounded-lg p-3">
-                            <span className="text-[10px] font-semibold text-pink-500 uppercase block mb-1">Distance</span>
-                            <p className="text-lg font-bold text-gray-900">{order.routeDistance}</p>
-                          </div>
-                        )}
-                        {order.routeDuration && (
-                          <div className="bg-pink-50 rounded-lg p-3">
-                            <span className="text-[10px] font-semibold text-pink-500 uppercase block mb-1">Duration</span>
-                            <p className="text-lg font-bold text-gray-900">{order.routeDuration}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+              <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                    <MapIcon className="h-5 w-5 text-white" />
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right Column */}
-            <div className="space-y-4">
-              {/* Scrap Yard */}
-              {order.yardId && (
-                <div className="rounded-xl bg-card border-2 border-green-100 p-5 shadow-md hover:shadow-lg transition-all duration-300">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                      <MapPin className="h-6 w-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-2">
-                        Scrap Yard
-                      </p>
-                      <p className="text-base font-bold text-gray-900">
-                        {order.yard?.yardName || order.yardId}
-                      </p>
-                      {order.yard?.address && (
-                        <p className="text-sm text-gray-600 mt-1">{order.yard.address}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Pickup Time */}
-              {order.pickupTime && (
-                <div className="rounded-xl bg-card border-2 border-purple-100 p-5 shadow-md hover:shadow-lg transition-all duration-300">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                      <Calendar className="h-6 w-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-2">
-                        Pickup Time
-                      </p>
-                      <p className="text-base font-bold text-gray-900">
-                        {new Date(order.pickupTime).toLocaleString('en-US', {
-                          dateStyle: 'medium',
-                          timeStyle: 'short'
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Collection Address */}
-              <div className="rounded-xl bg-card border-2 border-orange-100 p-5 shadow-md hover:shadow-lg transition-all duration-300">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                    <MapPin className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-2">
-                      Collection Address
-                    </p>
-                    <p className="text-base font-bold text-gray-900 leading-relaxed">{order.address}</p>
+                  <div>
+                    <p className="text-xs text-cyan-100 font-medium">Distance</p>
+                    <p className="text-sm font-bold text-white">{order.routeDistance || 'N/A'}</p>
                   </div>
                 </div>
               </div>
-
-              {/* Customer Info */}
-              <div className="rounded-xl bg-card border-2 border-blue-100 p-5 shadow-md hover:shadow-lg transition-all duration-300">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                    <User className="h-6 w-6 text-white" />
+              <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-white" />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
-                      Customer
-                    </p>
-                    <p className="text-base font-bold text-gray-900">{order.customerName}</p>
-                    <p className="text-sm text-gray-600 mt-1">{order.customerPhone}</p>
+                  <div>
+                    <p className="text-xs text-cyan-100 font-medium">Duration</p>
+                    <p className="text-sm font-bold text-white">{order.routeDuration || 'N/A'}</p>
                   </div>
                 </div>
               </div>
@@ -514,10 +342,201 @@ function CollectorInfoDialog({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t">
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto px-6 py-6">
+          {/* Crew Members Section - Only for Crew Assignments */}
+          {isCrew && order.crew?.members && order.crew.members.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Users className="h-5 w-5 text-cyan-600" />
+                Crew Members ({order.crew.members.length})
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {order.crew.members.map((member: any) => (
+                  <div
+                    key={member.id}
+                    className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-white to-gray-50 border-2 border-gray-100 p-4 hover:border-cyan-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                    onClick={() => {
+                      onClose();
+                      router.push(`/employees?view=${member.id}&returnTo=/orders`);
+                    }}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                        <span className="text-white font-bold text-lg">
+                          {member.fullName.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 text-base truncate group-hover:text-cyan-600 transition-colors">
+                          {member.fullName}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <Mail className="h-3 w-3 text-gray-400" />
+                          <p className="text-xs text-gray-600 truncate">{member.email}</p>
+                        </div>
+                      </div>
+                      <Eye className="h-5 w-5 text-gray-400 group-hover:text-cyan-600 transition-colors" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Individual Collector Details - Only for Single Collector */}
+          {!isCrew && order.assignedCollector && (
+            <div className="mb-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <User className="h-5 w-5 text-cyan-600" />
+                Collector Information
+              </h3>
+              <div
+                className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-white to-cyan-50 border-2 border-cyan-100 p-6 hover:border-cyan-300 hover:shadow-xl transition-all duration-300 cursor-pointer"
+                onClick={() => {
+                  onClose();
+                  router.push(`/employees?view=${order.assignedCollectorId}&returnTo=/orders`);
+                }}
+              >
+                <div className="flex items-start gap-6">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <span className="text-white font-bold text-2xl">
+                      {order.assignedCollector.fullName.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-2xl font-bold text-gray-900 group-hover:text-cyan-600 transition-colors">
+                        {order.assignedCollector.fullName}
+                      </h4>
+                      <Eye className="h-6 w-6 text-gray-400 group-hover:text-cyan-600 transition-colors" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-cyan-600" />
+                        <span className="text-sm text-gray-700 font-medium">{order.assignedCollector.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-cyan-600" />
+                        <span className="text-sm text-gray-700 font-medium">ID: {order.assignedCollectorId}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Order Details Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Vehicle Details */}
+            <div className="rounded-xl bg-white border-2 border-indigo-100 p-5 shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                  <Package className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-3">
+                    Vehicle Details
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {order.vehicleDetails?.make && (
+                      <div className="bg-indigo-50 rounded-lg p-2">
+                        <span className="text-[10px] font-semibold text-indigo-500 uppercase block mb-0.5">Make</span>
+                        <span className="text-sm font-bold text-gray-900">{order.vehicleDetails.make}</span>
+                      </div>
+                    )}
+                    {order.vehicleDetails?.model && (
+                      <div className="bg-indigo-50 rounded-lg p-2">
+                        <span className="text-[10px] font-semibold text-indigo-500 uppercase block mb-0.5">Model</span>
+                        <span className="text-sm font-bold text-gray-900">{order.vehicleDetails.model}</span>
+                      </div>
+                    )}
+                    {order.vehicleDetails?.year && (
+                      <div className="bg-indigo-50 rounded-lg p-2">
+                        <span className="text-[10px] font-semibold text-indigo-500 uppercase block mb-0.5">Year</span>
+                        <span className="text-sm font-bold text-gray-900">{order.vehicleDetails.year}</span>
+                      </div>
+                    )}
+                    {order.vehicleDetails?.condition && (
+                      <div className="bg-indigo-50 rounded-lg p-2">
+                        <span className="text-[10px] font-semibold text-indigo-500 uppercase block mb-0.5">Condition</span>
+                        <span className="text-sm font-bold text-gray-900 capitalize">
+                          {order.vehicleDetails.condition.toLowerCase().replace('_', ' ')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {!order.vehicleDetails?.make && !order.vehicleDetails?.model && (
+                    <p className="text-sm text-gray-400 italic">No vehicle details available</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Scrap Yard */}
+            {order.yardId && (
+              <div className="rounded-xl bg-white border-2 border-green-100 p-5 shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                    <MapPin className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-2">
+                      Scrap Yard
+                    </p>
+                    <p className="text-base font-bold text-gray-900">
+                      {order.yard?.yardName || order.yardId}
+                    </p>
+                    {order.yard?.address && (
+                      <p className="text-sm text-gray-600 mt-1">{order.yard.address}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Collection Address */}
+            <div className="rounded-xl bg-white border-2 border-orange-100 p-5 shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                  <MapPin className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-2">
+                    Collection Address
+                  </p>
+                  <p className="text-base font-bold text-gray-900 leading-relaxed">{order.address}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Customer Info */}
+            <div className="rounded-xl bg-white border-2 border-blue-100 p-5 shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                  <User className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
+                    Customer
+                  </p>
+                  <p className="text-base font-bold text-gray-900">{order.customerName}</p>
+                  <p className="text-sm text-gray-600 mt-1">{order.customerPhone}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="flex justify-between items-center gap-3 px-6 py-4 border-t bg-gray-50 -mx-6 -mb-6 mt-auto">
+          <p className="text-xs text-gray-500">
+            Click on any personnel card to view their complete profile
+          </p>
           <Button
             onClick={onClose}
-            className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-300"
+            className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold px-8 py-2.5 shadow-lg hover:shadow-xl transition-all duration-300"
           >
             Close
           </Button>

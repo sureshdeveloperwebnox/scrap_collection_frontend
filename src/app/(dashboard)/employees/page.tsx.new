@@ -1,0 +1,16 @@
+      </Dialog>
+
+      {/* Employee Details Dialog */}
+      <EmployeeDetailsDialog
+        employeeId={employeeDetailsId}
+        isOpen={!!employeeDetailsId}
+        onClose={() => setEmployeeDetailsId(null)}
+        showEditButton={true}
+        onEdit={(employee) => {
+          setEditingEmployee(employee);
+          setIsEmployeeFormOpen(true);
+        }}
+      />
+    </div>
+  );
+}
