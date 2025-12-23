@@ -632,10 +632,10 @@ export default function EmployeesPage() {
               <Table>
                 <TableHeader className="bg-white">
                   {/* Status Tabs Row */}
-                  <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50">
-                    <TableHead colSpan={activeTab === 'employees' ? 7 : 4} className="p-0 bg-transparent">
+                  <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50/50">
+                    <TableHead colSpan={activeTab === 'employees' ? 7 : 4} className="p-0 bg-transparent h-auto">
                       <div className="w-full overflow-x-auto">
-                        <div className="inline-flex items-center gap-1 px-2 py-2">
+                        <div className="inline-flex items-center gap-1 px-6 py-3">
                           {(['all', 'active', 'inactive'] as StatusTabKey[]).map((status) => {
                             const isCurrentStatus = activeTab === 'employees' ? employeeStatusFilter === status : roleStatusFilter === status;
                             let count = 0;
@@ -715,7 +715,7 @@ export default function EmployeesPage() {
                         <TableHead className="font-semibold text-gray-900 text-sm py-4">System Status</TableHead>
                       </>
                     )}
-                    <TableHead className="text-right pr-6 font-semibold text-gray-900 text-sm py-4">Action</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
 
@@ -767,7 +767,7 @@ export default function EmployeesPage() {
                               </SelectContent>
                             </Select>
                           </TableCell>
-                          <TableCell className="text-right pr-6">
+                          <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
@@ -813,7 +813,7 @@ export default function EmployeesPage() {
                               <StatusBadge status={role.isActive ? 'AUTHORIZED' : 'DEACTIVATED'} />
                             </div>
                           </TableCell>
-                          <TableCell className="text-right pr-6">
+                          <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>

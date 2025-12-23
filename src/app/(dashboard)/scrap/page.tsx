@@ -557,7 +557,7 @@ export default function ScrapManagementPage() {
           )}
         </CardHeader>
 
-        <CardContent className="p-6">
+        <CardContent className="p-0">
           {!mounted ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -569,10 +569,10 @@ export default function ScrapManagementPage() {
                 <TableHeader className="bg-white">
                   {/* Status Tabs Row - For both Categories and Names */}
                   {activeTab === 'categories' ? (
-                    <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50">
-                      <TableHead colSpan={6} className="p-0 bg-transparent">
+                    <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50/50">
+                      <TableHead colSpan={6} className="p-0 bg-transparent h-auto">
                         <div className="w-full overflow-x-auto">
-                          <div className="inline-flex items-center gap-1 px-2 py-2">
+                          <div className="inline-flex items-center gap-1 px-6 py-3">
                             {(['all', 'active', 'inactive'] as const).map((status) => {
                               const isActive = categoryStatusFilter === status;
                               let count = 0;
@@ -643,10 +643,10 @@ export default function ScrapManagementPage() {
                       </TableHead>
                     </TableRow>
                   ) : (
-                    <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50">
-                      <TableHead colSpan={6} className="p-0 bg-transparent">
+                    <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50/50">
+                      <TableHead colSpan={6} className="p-0 bg-transparent h-auto">
                         <div className="w-full overflow-x-auto">
-                          <div className="inline-flex items-center gap-1 px-2 py-2">
+                          <div className="inline-flex items-center gap-1 px-6 py-3">
                             {(['all', 'active', 'inactive'] as const).map((status) => {
                               const isActive = statusFilter === status;
                               let count = 0;
@@ -735,7 +735,7 @@ export default function ScrapManagementPage() {
                         <TableHead>Status</TableHead>
                       </>
                     )}
-                    <TableHead className="w-12">Action</TableHead>
+                    <TableHead className="w-12 text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
 
@@ -783,7 +783,7 @@ export default function ScrapManagementPage() {
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -861,7 +861,7 @@ export default function ScrapManagementPage() {
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8">

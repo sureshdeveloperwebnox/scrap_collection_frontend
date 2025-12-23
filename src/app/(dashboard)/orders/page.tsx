@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { OrderForm } from '@/components/order-form';
 import { OrderAssignmentStepper } from '@/components/order-assignment-stepper';
 import { Order, OrderStatus, PaymentStatusEnum } from '@/types';
-import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal, Download, Filter, Check, X, Package, MapPin, User, Users, DollarSign, Calendar, Map as MapIcon, Share2, Printer } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal, Download, Filter, Check, X, Package, MapPin, User, Users, DollarSign, Calendar, Map as MapIcon, Share2, Printer, Mail, Phone } from 'lucide-react';
 import { useOrders, useDeleteOrder, useUpdateOrder, useUpdateOrderStatus, useAssignCollector } from '@/hooks/use-orders';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -185,6 +185,16 @@ function formatDateDDMMYYYY(dateStr: string): string {
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const year = date.getFullYear();
   return `${day}/${month}/${year}`;
+}
+
+function formatTime(dateStr: string | null | undefined): string {
+  if (!dateStr) return 'N/A';
+  const date = new Date(dateStr);
+  const hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  return `${displayHours}:${minutes} ${ampm}`;
 }
 
 
@@ -1114,7 +1124,7 @@ export default function OrdersPage() {
             </div>
           )}
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-0">
           {isLoading || !mounted ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -1127,10 +1137,10 @@ export default function OrdersPage() {
                 <Table>
                   <TableHeader className="bg-white">
                     {/* Status Tabs Row */}
-                    <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50">
-                      <TableHead colSpan={7} className="p-0 bg-transparent">
+                    <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50/50">
+                      <TableHead colSpan={9} className="p-0 bg-transparent h-auto">
                         <div className="w-full overflow-x-auto">
-                          <div className="inline-flex items-center gap-1 px-2 py-2">
+                          <div className="inline-flex items-center gap-1 px-6 py-3">
                             {(['All', 'Pending', 'Assigned', 'In Progress', 'Completed', 'Cancelled'] as const).map((tab) => {
                               const style = getTabStyle(tab);
                               const isActive = activeTab === tab;
@@ -1176,6 +1186,7 @@ export default function OrdersPage() {
                         </button>
                       </TableHead>
                       <TableHead>Order</TableHead>
+                      <TableHead>Time</TableHead>
                       <TableHead>Address</TableHead>
                       <TableHead>Collector</TableHead>
                       <TableHead>
@@ -1196,7 +1207,7 @@ export default function OrdersPage() {
                   <TableBody>
                     {orders.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-12">
+                        <TableCell colSpan={9} className="text-center py-12">
                           <NoDataAnimation />
                         </TableCell>
                       </TableRow>
@@ -1237,6 +1248,18 @@ export default function OrdersPage() {
                               <div className="flex flex-col">
                                 <span className="text-sm font-semibold text-cyan-600">{order.orderNumber || 'N/A'}</span>
                                 <span className="text-xs text-gray-500">{formatDateDDMMYYYY(order.createdAt)}</span>
+                              </div>
+                            </TableCell>
+
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                                <div className="flex flex-col">
+                                  <span className="text-sm text-gray-700">{formatTime(order.pickupTime || order.createdAt)}</span>
+                                  {order.pickupTime && (
+                                    <span className="text-xs text-gray-500">Pickup</span>
+                                  )}
+                                </div>
                               </div>
                             </TableCell>
 

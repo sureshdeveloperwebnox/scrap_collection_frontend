@@ -35,7 +35,7 @@ export default function PaymentsPage() {
 
   const handleRefund = async () => {
     if (!refundDialog.payment) return;
-    
+
     try {
       await refundMutation.mutateAsync({
         paymentId: refundDialog.payment.id,
@@ -82,11 +82,11 @@ export default function PaymentsPage() {
   const totalRevenue = payments
     .filter(p => p.status === 'PAID')
     .reduce((sum, p) => sum + p.amount, 0);
-  
+
   const unpaidAmount = payments
     .filter(p => p.status === 'UNPAID')
     .reduce((sum, p) => sum + p.amount, 0);
-  
+
   const refundedAmount = payments
     .filter(p => p.status === 'REFUNDED')
     .reduce((sum, p) => sum + p.amount, 0);
@@ -159,7 +159,7 @@ export default function PaymentsPage() {
             </Select>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -178,14 +178,14 @@ export default function PaymentsPage() {
                   <TableHead>Method</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPayments.map((payment) => {
                   const StatusIcon = getStatusIcon(payment.status);
                   const MethodIcon = getMethodIcon(payment.paymentType);
-                  
+
                   return (
                     <TableRow key={payment.id}>
                       <TableCell className="font-medium">#{payment.id.slice(0, 8)}</TableCell>
@@ -214,11 +214,11 @@ export default function PaymentsPage() {
                         </div>
                       </TableCell>
                       <TableCell>{new Date(payment.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end space-x-2">
                           {payment.status === 'PAID' && (
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              variant="outline"
                               size="sm"
                               onClick={() => setRefundDialog({ open: true, payment })}
                             >
@@ -278,7 +278,7 @@ export default function PaymentsPage() {
             <Button variant="outline" onClick={() => setRefundDialog({ open: false, payment: null })}>
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleRefund}
               disabled={refundMutation.isPending || !refundAmount}
             >

@@ -8,70 +8,96 @@ export default function DashboardPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Welcome back, !</h1>
-                     <p className="text-gray-600">Here&apos;s what&apos;s happening with your scrap collection service today.</p>
+          <p className="text-gray-600">Here&apos;s what&apos;s happening with your scrap collection service today.</p>
         </div>
       </div>
-      
       <DashboardStats />
-      
-      {/* Quick Actions */}
-      <div className="p-6 bg-white rounded-lg shadow">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">Quick Actions</h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="p-4 rounded-lg border border-gray-200 transition-shadow cursor-pointer hover:shadow-md">
-            <div className="flex items-center space-x-3">
-              <div className="flex justify-center items-center w-10 h-10 bg-primary/10 rounded-lg">
-                <span className="text-primary">📄</span>
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-900">New Order</h3>
-                <p className="text-sm text-gray-500">Create a new collection order</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-4 rounded-lg border border-gray-200 transition-shadow cursor-pointer hover:shadow-md">
-            <div className="flex items-center space-x-3">
-              <div className="flex justify-center items-center w-10 h-10 bg-green-100 rounded-lg">
-                <span className="text-green-600">👥</span>
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-900">Add Lead</h3>
-                <p className="text-sm text-gray-500">Add a new potential customer</p>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Quick Actions */}
+        <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-8 shadow-sm">
+          <h2 className="text-xl font-extrabold text-gray-900 mb-6 tracking-tight">Quick Actions</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="group p-5 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-white hover:shadow-xl transition-all duration-300 cursor-pointer">
+              <div className="flex items-center space-x-4">
+                <div className="flex justify-center items-center w-12 h-12 bg-white rounded-xl shadow-sm group-hover:bg-indigo-50 transition-colors">
+                  <span className="text-xl">📄</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">New Order</h3>
+                  <p className="text-sm text-gray-500 font-medium">Create a collection order</p>
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div className="p-4 rounded-lg border border-gray-200 transition-shadow cursor-pointer hover:shadow-md">
-            <div className="flex items-center space-x-3">
-              <div className="flex justify-center items-center w-10 h-10 bg-yellow-100 rounded-lg">
-                <span className="text-yellow-600">🚛</span>
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-900">Manage Collectors</h3>
-                <p className="text-sm text-gray-500">View and manage collectors</p>
+
+            <div className="group p-5 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-white hover:shadow-xl transition-all duration-300 cursor-pointer">
+              <div className="flex items-center space-x-4">
+                <div className="flex justify-center items-center w-12 h-12 bg-white rounded-xl shadow-sm group-hover:bg-emerald-50 transition-colors">
+                  <span className="text-xl">👥</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Add Lead</h3>
+                  <p className="text-sm text-gray-500 font-medium">New potential customer</p>
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div className="p-4 rounded-lg border border-gray-200 transition-shadow cursor-pointer hover:shadow-md">
-            <div className="flex items-center space-x-3">
-              <div className="flex justify-center items-center w-10 h-10 bg-cyan-100 rounded-lg">
-                <span className="text-cyan-600">📊</span>
+
+            <div className="group p-5 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-white hover:shadow-xl transition-all duration-300 cursor-pointer">
+              <div className="flex items-center space-x-4">
+                <div className="flex justify-center items-center w-12 h-12 bg-white rounded-xl shadow-sm group-hover:bg-amber-50 transition-colors">
+                  <span className="text-xl">🚛</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Collectors</h3>
+                  <p className="text-sm text-gray-500 font-medium">View and manage fleet</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-medium text-gray-900">View Reports</h3>
-                <p className="text-sm text-gray-500">Generate business reports</p>
+            </div>
+
+            <div className="group p-5 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-white hover:shadow-xl transition-all duration-300 cursor-pointer">
+              <div className="flex items-center space-x-4">
+                <div className="flex justify-center items-center w-12 h-12 bg-white rounded-xl shadow-sm group-hover:bg-cyan-50 transition-colors">
+                  <span className="text-xl">📊</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Reports</h3>
+                  <p className="text-sm text-gray-500 font-medium">Business analytics</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      
-      {/* Recent Activity */}
-      <div className="p-6 bg-white rounded-lg shadow">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">Recent Activity</h2>
-        {/* Add recent activity content here */}
+
+        {/* Recent Activity */}
+        <div className="bg-white rounded-[2.5rem] p-8 shadow-sm">
+          <h2 className="text-xl font-extrabold text-gray-900 mb-6 tracking-tight">Activity</h2>
+          <div className="space-y-6">
+            <div className="flex items-start gap-4">
+              <div className="w-2 h-2 rounded-full bg-cyan-500 mt-2 ring-4 ring-cyan-50" />
+              <div>
+                <p className="text-sm font-bold text-gray-900 leading-none">New lead registered</p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">12h ago</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-2 h-2 rounded-full bg-indigo-500 mt-2 ring-4 ring-indigo-50" />
+              <div>
+                <p className="text-sm font-bold text-gray-900 leading-none">Order #4421 shipped</p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">15h ago</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-2 h-2 rounded-full bg-rose-500 mt-2 ring-4 ring-rose-50" />
+              <div>
+                <p className="text-sm font-bold text-gray-900 leading-none">Payment received</p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">1d ago</p>
+              </div>
+            </div>
+          </div>
+          <button className="w-full mt-8 py-3 bg-gray-50 text-gray-600 rounded-2xl font-bold text-sm hover:bg-indigo-600 hover:text-white transition-all">
+            View All Activity
+          </button>
+        </div>
       </div>
     </div>
   );

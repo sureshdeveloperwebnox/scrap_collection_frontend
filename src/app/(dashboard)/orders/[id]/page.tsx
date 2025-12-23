@@ -4,10 +4,7 @@ import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     ChevronLeft,
-    Printer,
-    Share2,
     Edit2,
-    MoreVertical,
     MapPin,
     User,
     Package,
@@ -206,23 +203,12 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => window.print()} className="h-9 hover:bg-gray-50 border-gray-200 text-gray-600 font-medium px-4">
-                        <Printer className="h-4 w-4 mr-2" />
-                        Print
-                    </Button>
-                    <Button variant="outline" size="sm" className="h-9 hover:bg-gray-50 border-gray-200 text-gray-600 font-medium px-4">
-                        <Share2 className="h-4 w-4 mr-2" />
-                        Share
-                    </Button>
                     <Button
                         onClick={() => router.push(`/orders?edit=${order.id}`)}
                         className="h-9 bg-cyan-500 hover:bg-cyan-600 text-white shadow-sm font-semibold px-5"
                     >
                         <Edit2 className="h-4 w-4 mr-2" />
                         Edit Order
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-9 w-9">
-                        <MoreVertical className="h-5 w-5 text-gray-400" />
                     </Button>
                 </div>
             </div>
@@ -530,34 +516,6 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                     </Card>
 
                     <Card className="border-none shadow-sm bg-white overflow-hidden">
-                        <div className="h-1 bg-emerald-500" />
-                        <CardHeader className="pb-3 border-b border-gray-50 flex-row items-center justify-between space-y-0 px-6 pt-5">
-                            <CardTitle className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                                <DollarSign className="h-4 w-4 text-emerald-500" />
-                                Settlement Info
-                            </CardTitle>
-                            <PaymentStatusBadge status={order.paymentStatus} />
-                        </CardHeader>
-                        <CardContent className="p-5 space-y-4">
-                            <div className="flex justify-between items-center bg-gray-50/50 p-3 rounded-lg border border-gray-100">
-                                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Initial Quote</span>
-                                <span className="text-sm font-bold text-gray-700">${order.quotedPrice?.toFixed(2) || '0.00'}</span>
-                            </div>
-                            <div className="flex justify-between items-center bg-emerald-50/30 p-4 rounded-xl border border-emerald-100/50 relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-emerald-100/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <div className="flex flex-col relative z-10">
-                                    <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Final Total</span>
-                                    <span className="text-[9px] text-emerald-600/70 font-bold">AUD CURRENCY</span>
-                                </div>
-                                <span className="font-bold text-emerald-600 text-xl relative z-10">${(order.actualPrice || 0).toFixed(2)}</span>
-                            </div>
-                            <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-10 rounded-lg text-[10px] tracking-widest uppercase shadow-sm transition-all hover:shadow-md active:scale-[0.98]">
-                                FINALIZE SETTLEMENT
-                            </Button>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="border-none shadow-sm bg-white overflow-hidden">
                         <CardHeader className="pb-3 border-b border-gray-50 px-6 pt-5">
                             <CardTitle className="text-sm font-semibold text-gray-800 flex items-center gap-2">
                                 <FileText className="h-4 w-4 text-cyan-500" />
@@ -620,7 +578,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                     fetchOrder();
                 }}
             />
-        </div>
+        </div >
     );
 }
 

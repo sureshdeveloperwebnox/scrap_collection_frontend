@@ -1,35 +1,43 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { authApi } from '@/lib/api/auth';
 
 interface AuthProviderProps {
   children: React.ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const initializeFromStorage = useAuthStore((state) => state.initializeFromStorage);
+  const { login, logout, setHydrated, setLoading } = useAuthStore();
+  const hasInitialized = useRef(false);
 
-  // Initialize authentication state from localStorage
   useEffect(() => {
-    // Quick initialization without blocking
-    const initAuth = () => {
+    // Only run once on mount
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
+    const checkSession = async () => {
+      // Don't set global loading here to avoid flicker if session is already there
+      // We rely on the initial state being false
       try {
-        initializeFromStorage();
+        const response = await authApi.getMe();
+        if (response?.data?.user) {
+          login(response.data.user);
+        } else {
+          logout();
+        }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        // Only logout if it's a 401, otherwise might be a network issue
+        logout();
+      } finally {
+        setHydrated(true);
       }
     };
 
-    // Use requestIdleCallback for non-blocking initialization
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(initAuth);
-    } else {
-      // Fallback for browsers without requestIdleCallback
-      setTimeout(initAuth, 0);
-    }
-  }, [initializeFromStorage]);
+    checkSession();
+  }, [login, logout, setHydrated, setLoading]);
 
-  // Render children immediately without any loading state
+  // Render children immediately
   return <>{children}</>;
-} 
+}
