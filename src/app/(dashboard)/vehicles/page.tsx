@@ -158,8 +158,8 @@ export default function VehiclesPage() {
         isActive: typeStatusFilter === 'all' ? undefined : typeStatusFilter === 'active',
     } as any);
 
-    // Fetch ALL types for select dropdown in name form
-    const { data: allTypesData } = useVehicleTypes({ page: 1, limit: 1000 } as any);
+    // Fetch ALL types for select dropdown in name form (max limit is 100)
+    const { data: allTypesData } = useVehicleTypes({ page: 1, limit: 100 } as any);
 
     const { data: typeStats } = useVehicleTypeStats();
 

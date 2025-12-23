@@ -16,14 +16,30 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { useSidebarStore } from '@/lib/store/sidebar-store';
 
 interface HeaderProps {
-  onToggleSidebar: () => void;
-  isSidebarOpen: boolean;
+  onToggleSidebar?: () => void;
 }
 
-export function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
+export function Header({ onToggleSidebar }: HeaderProps) {
   const { user } = useAuthStore();
+  const { isCollapsed, toggleCollapsed, toggleMobileOpen } = useSidebarStore();
+
+  const handleToggle = () => {
+    // If a prop is passed, use it, otherwise use store directly
+    if (onToggleSidebar) {
+      onToggleSidebar();
+    } else {
+      // Direct store toggle logic (default fallback)
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        toggleMobileOpen();
+      } else {
+        toggleCollapsed();
+      }
+    }
+  };
+
   const [appsDropdownOpen, setAppsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -82,9 +98,9 @@ export function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
       <div className="flex items-center space-x-6">
         {/* Hamburger Menu Button */}
         <button
-          onClick={onToggleSidebar}
+          onClick={handleToggle}
           className="flex items-center justify-center w-10 h-10 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 flex-shrink-0"
-          title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+          title={isCollapsed ? "Open sidebar" : "Close sidebar"}
         >
           <Menu className="w-6 h-6" />
         </button>

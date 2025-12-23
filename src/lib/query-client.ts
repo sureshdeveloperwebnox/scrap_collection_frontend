@@ -3,28 +3,32 @@ import { QueryClient } from '@tanstack/react-query';
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Data will be considered stale after 3 minutes (optimized for faster updates)
-      staleTime: 3 * 60 * 1000,
-      // Cache will be garbage collected after 10 minutes of inactivity
-      gcTime: 10 * 60 * 1000,
-      // Retry failed requests 2 times
-      retry: 2,
-      // Retry delay that increases exponentially
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      // Data will be considered stale after 5 minutes (optimized for smoother performance)
+      staleTime: 5 * 60 * 1000,
+      // Cache will be garbage collected after 15 minutes of inactivity
+      gcTime: 15 * 60 * 1000,
+      // Retry failed requests only once for faster failure recovery
+      retry: 1,
+      // Shorter retry delay for better perceived performance
+      retryDelay: (attemptIndex) => Math.min(500 * 2 ** attemptIndex, 5000),
       // Don't refetch on window focus for better performance
       refetchOnWindowFocus: false,
-      // Refetch on reconnect
-      refetchOnReconnect: true,
+      // Don't refetch on reconnect to reduce network load
+      refetchOnReconnect: false,
       // Don't refetch on mount if data is fresh
       refetchOnMount: false,
+      // Network mode for better offline handling
+      networkMode: 'online',
     },
     mutations: {
-      // Retry failed mutations once
-      retry: 1,
-      // Show error notifications for failed mutations
+      // Don't retry mutations to prevent duplicate operations
+      retry: 0,
+      // Suppress mutation errors in console for cleaner logs
       onError: (error: any) => {
-        console.error('Mutation error:', error);
-        // You can integrate with a toast notification system here
+        // Only log in development
+        if (process.env.NODE_ENV === 'development') {
+          console.debug('Mutation error:', error?.message || error);
+        }
       },
     },
   },

@@ -751,31 +751,25 @@ export default function LeadsPage() {
                     </TableRow>
                     {/* Column Headers Row */}
                     <TableRow className="hover:bg-transparent border-b bg-white">
-                      <TableHead className="w-12">
-                        <Checkbox
-                          checked={isAllSelected}
-                          onCheckedChange={handleSelectAll}
-                          className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
-                        />
-                      </TableHead>
-                      <TableHead>
+                      <TableHead style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>S.NO</TableHead>
+                      <TableHead style={{ width: '280px', minWidth: '250px', maxWidth: '300px' }}>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('fullName')}>
-                          Lead
+                          LEAD
                         </button>
                       </TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Scrap Details</TableHead>
-                      <TableHead>
+                      <TableHead style={{ width: '160px', minWidth: '140px', maxWidth: '180px' }}>PHONE</TableHead>
+                      <TableHead style={{ width: '180px', minWidth: '160px' }}>SCRAP DETAILS</TableHead>
+                      <TableHead style={{ width: '140px', minWidth: '120px' }}>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('status')}>
-                          Status
+                          STATUS
                         </button>
                       </TableHead>
-                      <TableHead>
+                      <TableHead style={{ width: '140px', minWidth: '120px' }}>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('createdAt')}>
-                          Lead Date
+                          LEAD DATE
                         </button>
                       </TableHead>
-                      <TableHead className="w-12 text-right">Action</TableHead>
+                      <TableHead style={{ width: '100px', minWidth: '80px' }} className="text-right">ACTION</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -786,7 +780,7 @@ export default function LeadsPage() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      leads.map((lead) => {
+                      leads.map((lead, index) => {
                         const leadPhotos = lead.photos || [];
                         const firstPhoto = leadPhotos.length > 0 ? getImageUrl(leadPhotos[0]) : null;
                         const convertedLead: Lead = {
@@ -817,13 +811,8 @@ export default function LeadsPage() {
                             key={lead.id}
                             className="border-b hover:bg-gray-50 transition-colors bg-white"
                           >
-                            <TableCell>
-                              <Checkbox
-                                checked={selectedLeads.has(lead.id)}
-                                onCheckedChange={(checked) => handleSelectLead(lead.id, checked as boolean)}
-                                onClick={(e) => e.stopPropagation()}
-                                className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
-                              />
+                            <TableCell className="text-gray-600 font-medium">
+                              {(currentPage - 1) * rowsPerPage + index + 1}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-3">
