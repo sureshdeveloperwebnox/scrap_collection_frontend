@@ -18,8 +18,8 @@ export const useCustomerStats = () => {
     queryKey: queryKeys.customers.stats(organizationId),
     queryFn: () => customersApi.getCustomerStats(organizationId!),
     enabled: !!organizationId,
-    staleTime: 3 * 60 * 1000, // 3 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
@@ -36,15 +36,15 @@ export const useCustomerStats = () => {
         vip: stats.vip || 0,
         blocked: stats.blocked || 0,
       };
-      
+
       // Only update if stats have actually changed
       const currentStats = useCustomerStatsStore.getState().stats;
-      if (!currentStats || 
-          currentStats.total !== newStats.total ||
-          currentStats.active !== newStats.active ||
-          currentStats.inactive !== newStats.inactive ||
-          currentStats.vip !== newStats.vip ||
-          currentStats.blocked !== newStats.blocked) {
+      if (!currentStats ||
+        currentStats.total !== newStats.total ||
+        currentStats.active !== newStats.active ||
+        currentStats.inactive !== newStats.inactive ||
+        currentStats.vip !== newStats.vip ||
+        currentStats.blocked !== newStats.blocked) {
         setStats(newStats);
       }
     }

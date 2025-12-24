@@ -1,6 +1,14 @@
 // Minimalistic Employee Profile Dialog - No Gradients, Clean Design
 // Uses global design system with flat colors only
 
+import { useRouter } from 'next/navigation';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { User, UserCheck, UserX, Phone, Mail, Shield, MapPin, Calendar } from 'lucide-react';
+import { Employee } from '@/types';
+import { cn } from '@/lib/utils';
+
+
 function EmployeeProfileDialog({
     employee,
     isOpen,
@@ -188,3 +196,5 @@ function EmployeeProfileDialog({
         </Dialog>
     );
 }
+
+export default EmployeeProfileDialog;

@@ -26,6 +26,7 @@ import dynamic from 'next/dynamic';
 import { Loader2 } from 'lucide-react';
 import { Pagination } from '@/components/ui/pagination';
 import { RowsPerPage } from '@/components/ui/rows-per-page';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { isValidPhoneNumber, parsePhoneNumber, CountryCode } from 'libphonenumber-js';
@@ -682,9 +683,8 @@ export default function CollectorAssignmentPage() {
           {activeTab === 'collectors' && (
             <div className="animate-in fade-in slide-in-from-left-2 duration-300">
               {isLoadingCollectors ? (
-                <div className="flex flex-col items-center justify-center py-20">
-                  <Loader2 className="h-10 w-10 animate-spin text-cyan-500" />
-                  <p className="mt-4 text-gray-500 font-medium">Loading collectors...</p>
+                <div className="p-4">
+                  <TableSkeleton columnCount={5} rowCount={limit} />
                 </div>
               ) : filteredCollectors.length === 0 ? (
                 <NoDataAnimation text="No collectors found" subtext="Start by adding your first field collector" />
@@ -829,9 +829,8 @@ export default function CollectorAssignmentPage() {
           {activeTab === 'assignments' && (
             <div className="animate-in fade-in slide-in-from-right-2 duration-300">
               {isLoadingAssignments ? (
-                <div className="flex flex-col items-center justify-center py-20">
-                  <Loader2 className="h-10 w-10 animate-spin text-cyan-500" />
-                  <p className="mt-4 text-gray-500 font-medium">Fetching assignments...</p>
+                <div className="p-4">
+                  <TableSkeleton columnCount={5} rowCount={limit} />
                 </div>
               ) : assignments.length === 0 ? (
                 <NoDataAnimation text="No current assignments" subtext="Assign vehicles and scrap yards to collectors" />
@@ -991,9 +990,8 @@ export default function CollectorAssignmentPage() {
           {activeTab === 'crews' && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
               {isLoadingCrews ? (
-                <div className="flex flex-col items-center justify-center py-20">
-                  <Loader2 className="h-10 w-10 animate-spin text-purple-500" />
-                  <p className="mt-4 text-gray-500 font-medium">Assembling crews...</p>
+                <div className="p-4">
+                  <TableSkeleton columnCount={5} rowCount={limit} />
                 </div>
               ) : filteredCrews.length === 0 ? (
                 <NoDataAnimation text="No crews formed" subtext="Create a crew by combining multiple collectors" />

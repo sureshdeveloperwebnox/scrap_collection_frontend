@@ -24,9 +24,9 @@ export const useLeadStats = () => {
       return response.data;
     },
     enabled: !!organizationId,
-    staleTime: 1 * 60 * 1000, // 1 minute - stats change frequently
-    gcTime: 2 * 60 * 1000, // 2 minutes
-    refetchOnWindowFocus: true, // Refetch when user returns to tab
+    staleTime: 5 * 60 * 1000, // 5 minutes - stats are stale after 5 mins
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch on window focus for better performance
   });
 
   // Sync query data to Zustand store

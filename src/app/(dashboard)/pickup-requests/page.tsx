@@ -11,6 +11,7 @@ import { usePickupRequests, useDeletePickupRequest, useAssignPickupRequest } fro
 import { useEmployees } from '@/hooks/use-employees';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
 
 export default function PickupRequestsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -159,8 +160,8 @@ export default function PickupRequestsPage() {
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            <div className="p-4">
+              <TableSkeleton columnCount={7} rowCount={10} />
             </div>
           ) : filteredRequests.length === 0 ? (
             <div className="text-center py-8 text-gray-600">No pickup requests found.</div>

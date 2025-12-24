@@ -6,42 +6,7 @@ import { useEffect } from 'react';
  */
 export const usePerformanceOptimization = () => {
     useEffect(() => {
-        // Enable CSS containment for better rendering performance
-        if (typeof document !== 'undefined') {
-            const style = document.createElement('style');
-            style.textContent = `
-        /* Performance optimizations */
-        * {
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-        }
-        
-        /* Optimize scrolling */
-        * {
-          scroll-behavior: smooth;
-        }
-        
-        /* GPU acceleration for animations */
-        [class*="transition"],
-        [class*="animate"],
-        [class*="motion"] {
-          will-change: transform, opacity;
-          transform: translateZ(0);
-          backface-visibility: hidden;
-        }
-        
-        /* Optimize images */
-        img {
-          image-rendering: -webkit-optimize-contrast;
-          image-rendering: crisp-edges;
-        }
-      `;
-            document.head.appendChild(style);
-
-            return () => {
-                document.head.removeChild(style);
-            };
-        }
+        // Performance styles are now in globals.css for better FCP
     }, []);
 
     useEffect(() => {

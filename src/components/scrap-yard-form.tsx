@@ -166,7 +166,7 @@ export function ScrapYardForm({ scrapYard, isOpen, onClose, onSubmit }: ScrapYar
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="w-[95vw] sm:max-w-[1100px] max-h-[95vh] bg-white border-0 shadow-2xl rounded-2xl p-0 flex flex-col [&>button]:hidden"
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] sm:max-w-[1100px] max-h-[95vh] bg-white border-0 shadow-2xl rounded-2xl p-0 flex flex-col [&>button]:hidden text-left"
         onInteractOutside={(e) => {
           e.preventDefault();
         }}

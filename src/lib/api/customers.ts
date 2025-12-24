@@ -17,14 +17,14 @@ export const customersApi = {
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: { customers: Customer[], pagination: any } }> => {
     // Map 'status' to 'accountStatus' for backend compatibility
-    const apiParams = params ? {
+    const apiParams: any = params ? {
       ...params,
       accountStatus: params.status,
       status: undefined
     } : {};
     // Remove undefined status to avoid sending it
     if (apiParams.status === undefined) {
-      delete (apiParams as any).status;
+      delete apiParams.status;
     }
     const response = await apiClient.get('/customers', { params: apiParams });
     return response.data;
@@ -84,10 +84,10 @@ export const customersApi = {
   // Get single customer statistics
   getCustomerDetailStats: async (customerId: string): Promise<{
     data: {
-    totalOrders: number;
-    totalSpent: number;
-    lastOrderDate?: string;
-    averageOrderValue: number;
+      totalOrders: number;
+      totalSpent: number;
+      lastOrderDate?: string;
+      averageOrderValue: number;
     };
   }> => {
     const response = await apiClient.get(`/customers/${customerId}/stats`);

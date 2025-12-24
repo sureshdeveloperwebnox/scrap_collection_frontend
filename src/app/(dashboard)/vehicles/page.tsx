@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Pagination } from '@/components/ui/pagination';
@@ -380,7 +381,19 @@ export default function VehiclesPage() {
                                 </TableHeader>
                                 <TableBody>
                                     {activeMainTab === 'names' ? (
-                                        namesLoading ? <TableRow><TableCell colSpan={6} className="text-center py-12"><Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" /></TableCell></TableRow> :
+                                        namesLoading ? (
+                                            Array.from({ length: nameLimit }).map((_, i) => (
+                                                <TableRow key={i}>
+                                                    <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                                                    <TableCell className="text-right"><Skeleton className="h-4 w-8 ml-auto" /></TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) :
                                             names.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-12"><NoDataAnimation message="No vehicles found" /></TableCell></TableRow> :
                                                 names.map((v: VehicleName) => (
                                                     <TableRow key={v.id} className="hover:bg-gray-50">
@@ -407,7 +420,16 @@ export default function VehiclesPage() {
                                                     </TableRow>
                                                 ))
                                     ) : (
-                                        typesLoading ? <TableRow><TableCell colSpan={4} className="text-center py-12"><Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" /></TableCell></TableRow> :
+                                        typesLoading ? (
+                                            Array.from({ length: typeLimit }).map((_, i) => (
+                                                <TableRow key={i}>
+                                                    <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                                                    <TableCell className="text-right"><Skeleton className="h-4 w-8 ml-auto" /></TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) :
                                             types.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center py-12"><NoDataAnimation message="No vehicle types found" /></TableCell></TableRow> :
                                                 types.map((t: VehicleType) => (
                                                     <TableRow key={t.id} className="hover:bg-gray-50">

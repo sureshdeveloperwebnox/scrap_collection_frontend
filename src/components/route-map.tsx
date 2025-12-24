@@ -344,7 +344,7 @@ export function RouteMap({
 
             {/* Distance and Duration Info */}
             {routeInfo && !isLoading && (
-                <div className="absolute top-4 left-4 z-[1000] bg-white rounded-lg shadow-2xl p-4 min-w-[250px] max-w-[350px] border-2 border-cyan-500">
+                <div className="absolute top-auto bottom-4 left-4 right-4 lg:top-4 lg:bottom-auto lg:left-4 lg:right-auto z-[1000] bg-white rounded-lg shadow-2xl p-4 min-w-0 lg:min-w-[250px] max-w-full lg:max-w-[350px] border-2 border-cyan-500 mx-auto">
                     <h4 className="font-semibold text-gray-900 mb-3 text-sm">Route Information</h4>
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Search, Edit2, Trash2, Loader2, X, Filter, Tag, Tags } from 'lucide-react';
 import {
   useScrapCategories,
@@ -360,7 +361,7 @@ export default function ScrapManagementPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <CardTitle className="text-xl font-bold text-gray-900">Scrap Management</CardTitle>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               {/* Tab Switcher Buttons */}
               <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
                 <button
@@ -742,12 +743,15 @@ export default function ScrapManagementPage() {
                 <TableBody>
                   {activeTab === 'categories' ? (
                     categoriesLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-12">
-                          <Loader2 className="h-8 w-8 animate-spin text-gray-400 mx-auto" />
-                          <span className="ml-2 text-gray-600">Loading categories...</span>
-                        </TableCell>
-                      </TableRow>
+                      Array.from({ length: categoryLimit }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[250px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                          <TableCell className="text-right"><Skeleton className="h-4 w-8 ml-auto" /></TableCell>
+                        </TableRow>
+                      ))
                     ) : categories.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center py-12">
@@ -818,12 +822,15 @@ export default function ScrapManagementPage() {
                     )
                   ) : (
                     namesLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-12">
-                          <Loader2 className="h-8 w-8 animate-spin text-gray-400 mx-auto" />
-                          <span className="ml-2 text-gray-600">Loading scrap names...</span>
-                        </TableCell>
-                      </TableRow>
+                      Array.from({ length: nameLimit }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                          <TableCell className="text-right"><Skeleton className="h-4 w-8 ml-auto" /></TableCell>
+                        </TableRow>
+                      ))
                     ) : names.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-12">

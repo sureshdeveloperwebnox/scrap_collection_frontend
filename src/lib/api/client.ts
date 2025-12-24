@@ -1,13 +1,34 @@
-import axios from 'axios';
+import axios, { InternalAxiosRequestConfig } from 'axios';
+import { useLoadingStore } from '@/lib/store/loading-store';
+
+// Extend axios config to include custom properties
+interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
+  showLoader?: boolean;
+}
 
 // Create axios instance with base configuration
 export const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9645/api/v1',
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Important: Send cookies with requests
+  withCredentials: true,
+});
+
+// Request interceptor to handle global loader
+apiClient.interceptors.request.use((config: CustomAxiosRequestConfig) => {
+  // By default, show global loader for mutations (POST, PUT, DELETE)
+  // GET requests are usually handled by skeletons, so skip them unless explicitly requested
+  const isMutation = ['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '');
+
+  if (config.showLoader !== false && (isMutation || config.showLoader === true)) {
+    useLoadingStore.getState().incrementApiLoading();
+  }
+
+  return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 // Flag to prevent multiple refresh attempts
@@ -26,10 +47,25 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Response interceptor for error handling and token refresh
+// Response interceptor for loading state, error handling and token refresh
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const config = response.config as CustomAxiosRequestConfig;
+    const isMutation = ['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '');
+
+    if (config.showLoader !== false && (isMutation || config.showLoader === true)) {
+      useLoadingStore.getState().decrementApiLoading();
+    }
+    return response;
+  },
   async (error) => {
+    const config = error.config as CustomAxiosRequestConfig;
+    const isMutation = ['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '');
+
+    if (config?.showLoader !== false && (isMutation || config?.showLoader === true)) {
+      useLoadingStore.getState().decrementApiLoading();
+    }
+
     const originalRequest = error.config;
 
     // Skip auto-refresh for /me and /refresh endpoints to prevent infinite loops
@@ -39,7 +75,6 @@ apiClient.interceptors.response.use(
     // Handle 401 errors (Unauthorized)
     if (error.response?.status === 401 && !originalRequest._retry && !shouldSkipRefresh) {
       if (isRefreshing) {
-        // If already refreshing, queue this request
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then(() => {
@@ -53,28 +88,20 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Attempt to refresh the token
         await apiClient.post('/auth/refresh');
-
-        // Token refreshed successfully, retry the original request
         processQueue(null);
         isRefreshing = false;
         return apiClient(originalRequest);
       } catch (refreshError) {
-        // Refresh failed, clear auth and redirect to login
         processQueue(refreshError, null);
         isRefreshing = false;
-
-        // Redirect to login page (only if not already on auth pages)
         if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth/')) {
           window.location.href = '/auth/signin';
         }
-
         return Promise.reject(refreshError);
       }
     }
 
-    // Extract error message for better UX
     const message = error.response?.data?.message || error.message || 'An error occurred';
 
     return Promise.reject({
@@ -85,10 +112,6 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Function to get authenticated API client (kept for backward compatibility)
-// Now it just returns the main client since auth is handled via cookies
-export const getAuthenticatedClient = () => {
-  return apiClient;
-};
+export const getAuthenticatedClient = () => apiClient;
 
 export default apiClient;

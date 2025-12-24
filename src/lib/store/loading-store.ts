@@ -1,36 +1,69 @@
 import { create } from 'zustand';
 
 interface LoadingState {
-  isLoading: boolean;
+  isAuthLoading: boolean;
+  isApiLoading: boolean;
+  isHydrating: boolean;
+  isLoading: boolean; // Computed aggregate
+
+  setAuthLoading: (loading: boolean) => void;
+  setApiLoading: (loading: boolean) => void;
+  setHydrating: (loading: boolean) => void;
+
+  // For API Interceptors
   loadingCount: number;
-  setLoading: (loading: boolean) => void;
-  incrementLoading: () => void;
-  decrementLoading: () => void;
-  resetLoading: () => void;
+  incrementApiLoading: () => void;
+  decrementApiLoading: () => void;
 }
 
 export const useLoadingStore = create<LoadingState>((set) => ({
-  isLoading: false,
+  isAuthLoading: false,
+  isApiLoading: false,
+  isHydrating: true, // Start as true
+  isLoading: true,
   loadingCount: 0,
-  setLoading: (loading: boolean) => {
-    set({ isLoading: loading, loadingCount: loading ? 1 : 0 });
-  },
-  incrementLoading: () => {
+
+  setAuthLoading: (loading: boolean) => {
     set((state) => ({
-      loadingCount: state.loadingCount + 1,
-      isLoading: true,
+      isAuthLoading: loading,
+      isLoading: loading || state.isApiLoading || state.isHydrating
     }));
   },
-  decrementLoading: () => {
+
+  setApiLoading: (loading: boolean) => {
+    set((state) => ({
+      isApiLoading: loading,
+      isLoading: state.isAuthLoading || loading || state.isHydrating
+    }));
+  },
+
+  setHydrating: (loading: boolean) => {
+    set((state) => ({
+      isHydrating: loading,
+      isLoading: state.isAuthLoading || state.isApiLoading || loading
+    }));
+  },
+
+  incrementApiLoading: () => {
     set((state) => {
-      const newCount = Math.max(0, state.loadingCount - 1);
+      const newCount = state.loadingCount + 1;
       return {
         loadingCount: newCount,
-        isLoading: newCount > 0,
+        isApiLoading: true,
+        isLoading: true
       };
     });
   },
-  resetLoading: () => {
-    set({ isLoading: false, loadingCount: 0 });
-  },
+
+  decrementApiLoading: () => {
+    set((state) => {
+      const newCount = Math.max(0, state.loadingCount - 1);
+      const isApiLoading = newCount > 0;
+      return {
+        loadingCount: newCount,
+        isApiLoading,
+        isLoading: state.isAuthLoading || isApiLoading || state.isHydrating
+      };
+    });
+  }
 }));

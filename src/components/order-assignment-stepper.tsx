@@ -221,11 +221,11 @@ export function OrderAssignmentStepper({
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent
-                className="w-[95vw] sm:max-w-[1400px] max-h-[95vh] bg-white border-0 shadow-2xl rounded-2xl p-0 flex flex-col [&>button]:hidden"
+                className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] sm:max-w-[1400px] max-h-[95vh] bg-white border-0 shadow-2xl rounded-2xl p-0 flex flex-col [&>button]:hidden text-left"
                 onInteractOutside={(e) => e.preventDefault()}
                 onPointerDownOutside={(e) => e.preventDefault()}
             >
-                <DialogHeader className="px-8 pt-8 pb-6 border-b border-gray-200 flex-shrink-0">
+                <DialogHeader className="px-4 sm:px-6 lg:px-8 pt-8 pb-6 border-b border-gray-200 flex-shrink-0">
                     <div className="flex items-start justify-between">
                         <div>
                             <DialogTitle className="text-3xl font-bold text-gray-900">
@@ -289,7 +289,7 @@ export function OrderAssignmentStepper({
                     </div>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto min-h-0 px-8 py-6">
+                <div className="flex-1 overflow-y-auto min-h-0 px-4 sm:px-6 lg:px-8 py-6">
                     {isLoading ? (
                         <div className="flex items-center justify-center h-full">
                             <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
@@ -609,7 +609,7 @@ export function OrderAssignmentStepper({
                 </div>
 
                 {/* Footer Actions */}
-                <div className="px-8 py-6 border-t border-gray-200 flex items-center justify-between flex-shrink-0">
+                <div className="px-4 sm:px-6 lg:px-8 py-6 border-t border-gray-200 flex items-center justify-between flex-shrink-0">
                     <Button
                         type="button"
                         variant="outline"

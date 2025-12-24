@@ -60,6 +60,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
   }
 
   /* Apply font to all elements */
@@ -147,9 +148,31 @@
   }
 
   /* Firefox support */
+  /* Performance optimizations */
   * {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeSpeed;
+  }
+
+  /* Optimize scrolling */
+  * {
+    scroll-behavior: smooth;
+  }
+
+  /* GPU acceleration for animations */
+  [class*="transition"],
+  [class*="animate"],
+  [class*="motion"] {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Optimize images */
+  img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
   }
 }
 
@@ -187,6 +210,20 @@
         transparent 100%);
     background-size: 200% 100%;
     animation: shine-sweep 3s ease-in-out infinite;
+  }
+
+  /* Sidebar performance optimizations */
+  .sidebar-wrapper {
+    contain: layout style;
+    transition: width 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: width;
+    transform: translateZ(0);
+  }
+
+  .main-content-wrapper {
+    transition: padding 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: padding;
+    transform: translateZ(0);
   }
 }
 

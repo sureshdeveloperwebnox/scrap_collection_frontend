@@ -92,7 +92,7 @@ export function VehicleTypeForm({ vehicleType, isOpen, onClose, onSubmit }: Vehi
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="w-[95vw] sm:max-w-[600px] max-h-[95vh] bg-white border-0 shadow-2xl rounded-2xl p-0 flex flex-col [&>button]:hidden"
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] sm:max-w-[600px] max-h-[95vh] bg-white border-0 shadow-2xl rounded-2xl p-0 flex flex-col [&>button]:hidden text-left"
         onInteractOutside={(e) => {
           e.preventDefault();
         }}
@@ -100,7 +100,7 @@ export function VehicleTypeForm({ vehicleType, isOpen, onClose, onSubmit }: Vehi
           e.preventDefault();
         }}
       >
-        <DialogHeader className="px-8 pt-8 pb-6 border-b border-gray-200 flex-shrink-0">
+        <DialogHeader className="px-4 sm:px-6 lg:px-8 pt-8 pb-6 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-start justify-between">
             <div>
               <DialogTitle className="text-2xl font-bold text-gray-900">
@@ -140,7 +140,7 @@ export function VehicleTypeForm({ vehicleType, isOpen, onClose, onSubmit }: Vehi
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto min-h-0">
-          <form id="vehicle-type-form" onSubmit={handleSubmit} className="px-8 pb-8 space-y-6 pt-6">
+          <form id="vehicle-type-form" onSubmit={handleSubmit} className="px-4 sm:px-6 lg:px-8 pb-8 space-y-6 pt-6">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-medium text-gray-700">Name *</Label>
               <Input

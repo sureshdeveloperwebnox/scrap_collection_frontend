@@ -13,8 +13,59 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: 'Scrap Collection Admin',
-  description: 'Admin dashboard for scrap collection service',
+  title: {
+    default: 'Scrap Collection Admin - Manage Your Scrap Collection Business',
+    template: '%s | Scrap Collection Admin'
+  },
+  description: 'Comprehensive admin dashboard for scrap collection service. Manage leads, customers, orders, and track your business performance in real-time.',
+  keywords: ['scrap collection', 'admin dashboard', 'business management', 'scrap management', 'recycling'],
+  authors: [{ name: 'Scrap Collection Team' }],
+  creator: 'Scrap Collection',
+  publisher: 'Scrap Collection',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'Scrap Collection Admin - Manage Your Scrap Collection Business',
+    description: 'Comprehensive admin dashboard for scrap collection service. Manage leads, customers, orders, and track your business performance in real-time.',
+    url: '/',
+    siteName: 'Scrap Collection Admin',
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Scrap Collection Admin',
+    description: 'Comprehensive admin dashboard for scrap collection service',
+    creator: '@scrapcollection',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' }
+  ],
 }
 
 export default function RootLayout({

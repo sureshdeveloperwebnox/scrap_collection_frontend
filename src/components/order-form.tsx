@@ -377,7 +377,7 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent
-          className="w-[95vw] sm:max-w-[1400px] max-h-[95vh] bg-white border-0 shadow-2xl rounded-2xl p-0 flex flex-col [&>button]:hidden"
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] sm:max-w-[1400px] max-h-[95vh] bg-white border-0 shadow-2xl rounded-2xl p-0 flex flex-col [&>button]:hidden text-left"
           onInteractOutside={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
         >
@@ -405,10 +405,10 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
                     <div className="flex flex-col items-center flex-1">
                       <div
                         className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${isCompleted
-                            ? 'bg-green-500 text-white'
-                            : isActive
-                              ? 'bg-cyan-500 text-white'
-                              : 'bg-gray-200 text-gray-500'
+                          ? 'bg-green-500 text-white'
+                          : isActive
+                            ? 'bg-cyan-500 text-white'
+                            : 'bg-gray-200 text-gray-500'
                           }`}
                       >
                         {isCompleted ? (

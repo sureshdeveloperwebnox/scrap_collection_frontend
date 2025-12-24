@@ -1,6 +1,16 @@
 // Minimalistic Personnel Profile Dialog - No Gradients, Clean Design
 // Uses global design system with flat colors only
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Users, User, Eye, Package, MapPin } from 'lucide-react';
+import { Order } from '@/types';
+import { OrderStatusBadge, PaymentStatusBadge } from '@/components/status-badges';
+
+type ApiOrder = Order;
+
 function CollectorInfoDialog({
     order,
     isOpen,
@@ -244,3 +254,5 @@ function CollectorInfoDialog({
         </Dialog>
     );
 }
+
+export default CollectorInfoDialog;

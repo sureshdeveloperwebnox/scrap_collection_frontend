@@ -2,6 +2,18 @@
 // This component uses CSS variables and Tailwind design tokens from your global styles
 // Primary color: cyan-500 (rgb(45, 186, 237)) - Your brand color
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Users, User, Eye, Package, MapPin, Calendar, Clock, Mail } from 'lucide-react';
+import { MapIcon } from 'lucide-react';
+import { Order } from '@/types';
+import { OrderStatusBadge, PaymentStatusBadge } from '@/components/status-badges';
+
+type ApiOrder = Order;
+
+
 function CollectorInfoDialog({
     order,
     isOpen,
@@ -309,3 +321,5 @@ function CollectorInfoDialog({
         </Dialog>
     );
 }
+
+export default CollectorInfoDialog;
