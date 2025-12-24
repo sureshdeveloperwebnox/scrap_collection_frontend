@@ -16,10 +16,12 @@ import {
   collectorsApi,
   scrapYardsApi,
   paymentsApi,
-  dashboardApi
+  dashboardApi,
+  employeesApi,
+  apiClient
 } from '@/lib/api';
 import { useSidebarStore } from '@/lib/store/sidebar-store';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
   BarChart3,
@@ -51,8 +53,40 @@ type NavigationItem = {
  * Defines how to warm up the cache for each module.
  */
 const PREFETCH_CONFIG = {
-  // Dashboard endpoint removed for now to prevent 404s until backend logic is implemented
-  dashboard: null,
+  dashboard: (client: any, orgId: number) => {
+    if (!orgId) return;
+    client.prefetchQuery({
+      queryKey: ['dashboard', 'combined', orgId],
+      queryFn: async () => {
+        const [leadsResponse, customersResponse, ordersResponse] = await Promise.all([
+          leadsApi.getLeads({ organizationId: orgId }).catch(() => ({ data: { leads: [], pagination: {} } })),
+          customersApi.getCustomers({ organizationId: orgId }).catch(() => ({ data: { customers: [], pagination: {} } })),
+          ordersApi.getOrders({ organizationId: orgId }).catch(() => ({ data: { orders: [], pagination: {} } }))
+        ]);
+        const leads = Array.isArray(leadsResponse?.data?.leads) ? leadsResponse.data.leads : [];
+        const customers = Array.isArray(customersResponse?.data?.customers) ? customersResponse.data.customers : [];
+        const orders = Array.isArray(ordersResponse?.data?.orders) ? ordersResponse.data.orders : [];
+        const totalRevenue = orders.reduce((sum: number, order: any) => sum + (parseFloat(order.totalAmount) || 0), 0);
+        const completedOrders = orders.filter((order: any) => order.status === 'completed' || order.status === 'COMPLETED').length;
+        return {
+          stats: {
+            leads: { total: leads.length, new: leads.length, converted: 0, trend: 0 },
+            customers: { total: customers.length, active: customers.length, inactive: 0, trend: 0 },
+            orders: { total: orders.length, pending: orders.length - completedOrders, completed: completedOrders, revenue: totalRevenue, trend: 0 }
+          },
+          analytics: {
+            totalRevenue,
+            totalOrders: orders.length,
+            revenueGrowth: 0,
+            ordersGrowth: 0,
+            revenueChart: [1543, 1650, 1720, 1580, 1890, 1750, 2100, 1950, 2200, 2543],
+            ordersChart: [45, 52, 48, 58, 65, 62, 70],
+            collectorsChart: [2.5, 3.2, 2.8, 3.5, 4.1, 3.8, 4.5]
+          }
+        };
+      }
+    });
+  },
   leads: (client: any, orgId: number) => {
     if (!orgId) return;
     client.prefetchQuery({
@@ -79,10 +113,6 @@ const PREFETCH_CONFIG = {
       queryKey: ['scrap-categories', { page: 1, limit: 10, organizationId: orgId }],
       queryFn: () => scrapApi.getScrapCategories({ page: 1, limit: 10, organizationId: orgId })
     });
-    client.prefetchQuery({
-      queryKey: ['scrap-names', { page: 1, limit: 10, organizationId: orgId }],
-      queryFn: () => scrapApi.getScrapNames({ page: 1, limit: 10, organizationId: orgId })
-    });
   },
   scrapYards: (client: any, _orgId: number) => {
     client.prefetchQuery({
@@ -102,6 +132,24 @@ const PREFETCH_CONFIG = {
       queryFn: () => paymentsApi.getPayments({ page: 1, limit: 10 })
     });
   },
+  employees: (client: any, _orgId: number) => {
+    client.prefetchQuery({
+      queryKey: queryKeys.employees.list({ page: 1, limit: 10 }),
+      queryFn: () => employeesApi.getEmployees({ page: 1, limit: 10 })
+    });
+  },
+  vehicles: (client: any, _orgId: number) => {
+    client.prefetchQuery({
+      queryKey: ['vehicles', { page: 1, limit: 10 }],
+      queryFn: () => apiClient.get('/vehicles', { params: { page: 1, limit: 10 } })
+    });
+  },
+  pickupRequests: (client: any, _orgId: number) => {
+    client.prefetchQuery({
+      queryKey: ['pickup-requests', { page: 1, limit: 10 }],
+      queryFn: () => apiClient.get('/pickup-requests', { params: { page: 1, limit: 10 } })
+    });
+  },
 };
 
 // Navigation menu configuration
@@ -111,11 +159,11 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
   { name: 'Customers', href: '/customers', icon: CircleUserRound, prefetchKey: 'customers' },
   { name: 'Orders', href: '/orders', icon: ShoppingCart, prefetchKey: 'orders' },
   { name: 'Scrap Management', href: '/scrap', icon: Truck, prefetchKey: 'scrap' },
-  { name: 'Vehicles', href: '/vehicles', icon: Car },
-  { name: 'Pickup Requests', href: '/pickup-requests', icon: ClipboardList },
+  { name: 'Vehicles', href: '/vehicles', icon: Car, prefetchKey: 'vehicles' },
+  { name: 'Pickup Requests', href: '/pickup-requests', icon: ClipboardList, prefetchKey: 'pickupRequests' },
   { name: 'Scrap Yards', href: '/scrap-yards', icon: Building2, prefetchKey: 'scrapYards' },
   { name: 'Payments', href: '/payments', icon: CreditCard, prefetchKey: 'payments' },
-  { name: 'Employees', href: '/employees', icon: UserCheck },
+  { name: 'Employees', href: '/employees', icon: UserCheck, prefetchKey: 'employees' },
   { name: 'Collectors', href: '/collectors', icon: Truck, prefetchKey: 'collectors' },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Settings', href: '/settings', icon: Settings },
@@ -150,49 +198,54 @@ const NavItem = memo(({
       }}
       aria-current={isActive ? 'page' : undefined}
       className={cn(
-        'group flex items-center gap-3 px-6 py-3',
-        'text-sm font-medium relative transition-all duration-200',
-        'rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white/20',
+        'group flex items-center relative transition-all duration-200 ease-in-out',
+        'text-sm font-medium rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white/20',
+        'py-3 h-12',
         isActive ? 'text-cyan-700' : 'text-white/80 hover:text-white',
-        isCollapsed && 'lg:justify-center lg:px-0'
+        isCollapsed ? 'px-0 justify-center' : 'px-6 gap-3'
       )}
       title={isCollapsed ? item.name : undefined}
     >
       {/* Active Indicator Background */}
       {isActive && (
-        <motion.div
+        <m.div
           layoutId="sidebar-active-pill"
           className="absolute inset-0 bg-white shadow-lg shadow-cyan-900/10 rounded-full"
           initial={false}
           transition={{
             type: "spring",
-            stiffness: 500,
-            damping: 35,
-            mass: 1,
+            stiffness: 400,
+            damping: 30,
           }}
         />
       )}
 
-      {/* Item Icon */}
-      <item.icon className={cn(
-        "w-5 h-5 flex-shrink-0 relative z-10 transition-colors duration-200",
-        isActive ? "text-cyan-600" : "text-white/80 group-hover:text-white"
-      )} />
+      {/* Item Icon Wrapper - Fixed width prevents jump */}
+      <div className={cn(
+        "flex items-center justify-center flex-shrink-0 relative z-10 transition-transform duration-200 transform-gpu",
+        isCollapsed ? "w-12" : "w-5"
+      )}>
+        <item.icon className={cn(
+          "w-5 h-5 transition-colors duration-200",
+          isActive ? "text-cyan-600" : "text-white/80 group-hover:text-white"
+        )} />
+      </div>
 
       {/* Item Label */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence initial={false}>
         {!isCollapsed && (
-          <motion.span
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
+          <m.span
+            initial={{ opacity: 0, width: 0, x: -10 }}
+            animate={{ opacity: 1, width: 'auto', x: 0 }}
+            exit={{ opacity: 0, width: 0, x: -10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             className={cn(
-              "truncate relative z-10 font-bold tracking-tight text-[0.9rem]",
+              "truncate relative z-10 font-bold tracking-tight text-[0.9rem] whitespace-nowrap",
               isActive ? "text-cyan-700" : "text-white/80"
             )}
           >
             {item.name}
-          </motion.span>
+          </m.span>
         )}
       </AnimatePresence>
     </Link>
@@ -252,7 +305,7 @@ export function Sidebar() {
       {/* Mobile Overlay with optimized transitions */}
       <AnimatePresence>
         {isMobileOpen && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -263,23 +316,21 @@ export function Sidebar() {
       </AnimatePresence>
 
       {/* Sidebar Main Container */}
-      <div
+      <aside
         className={cn(
-          "fixed left-0 top-0 flex flex-col z-50 h-[100dvh]",
-          "transition-[width,transform] duration-300 ease-in-out will-change-[width,transform]",
-          "bg-gradient-to-b from-cyan-600 via-cyan-700 to-cyan-800",
-          "shadow-2xl shadow-cyan-900/40",
+          "fixed left-0 top-0 flex flex-col z-50 h-[100dvh] sidebar-wrapper",
+          "bg-gradient-to-b from-cyan-600 via-cyan-700 to-cyan-800 shadow-2xl shadow-cyan-900/40",
           isCollapsed ? "lg:w-20" : "w-[260px]",
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        {/* Brand Section */}
+        {/* Brand Section - Unified structure to prevent snapping */}
         <div className={cn(
-          "flex items-center px-6 py-8 flex-shrink-0",
-          isCollapsed && "lg:justify-center lg:px-3"
+          "flex items-center px-6 py-8 flex-shrink-0 transition-all duration-200",
+          isCollapsed ? "lg:px-3 lg:justify-center" : "gap-3"
         )}>
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl border border-white/20 transition-all duration-300 hover:scale-105 active:scale-95 flex-shrink-0">
+          <div className="flex items-center">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl border border-white/20 transition-all duration-200 hover:scale-105 active:scale-95 flex-shrink-0">
               <Image
                 src="/images/logo/scraplogo.png"
                 alt="AussieScrapX"
@@ -289,20 +340,27 @@ export function Sidebar() {
                 priority
               />
             </div>
-            {!isCollapsed && (
-              <motion.span
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="text-white font-black text-xl tracking-tighter"
-              >
-                SCRAP<span className="text-cyan-200">X</span>
-              </motion.span>
-            )}
+            <AnimatePresence>
+              {!isCollapsed && (
+                <m.div
+                  initial={{ opacity: 0, width: 0, x: -10 }}
+                  animate={{ opacity: 1, width: 'auto', x: 0 }}
+                  exit={{ opacity: 0, width: 0, x: -10 }}
+                  className="flex items-center ml-3 overflow-hidden"
+                >
+                  <span className="text-white font-black text-xl tracking-tighter whitespace-nowrap">
+                    SCRAP<span className="text-cyan-200">X</span>
+                  </span>
+                </m.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <button
             onClick={toggleMobileOpen}
             className="lg:hidden absolute top-8 right-4 text-white/80 hover:text-white transition-colors"
+            aria-label="Close sidebar"
+            title="Close sidebar"
           >
             <X className="w-6 h-6" />
           </button>
@@ -313,55 +371,64 @@ export function Sidebar() {
           {renderedItems}
         </nav>
 
-        {/* User Account Section */}
+        {/* User Account Section - Unified structure for smooth transition */}
         <div className="p-4 mt-auto border-t border-white/10 bg-black/5">
-          {!isCollapsed ? (
-            <div className="space-y-4">
-              {/* Account Card */}
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 border border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-lg flex-shrink-0">
-                    <span className="text-cyan-700 font-black text-sm">
-                      {user?.name?.charAt(0).toUpperCase() || 'U'}
-                    </span>
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="text-white font-bold text-xs truncate">
-                      {user?.name || 'Administrator'}
-                    </div>
-                    <div className="text-cyan-100/50 text-[10px] uppercase font-bold tracking-widest">
-                      {user?.role || 'Admin'}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => useAuthStore.getState().logout()}
-                    className="p-2 text-white/40 hover:text-red-300 hover:bg-white/10 rounded-lg transition-all"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-lg transition-transform hover:scale-105 active:scale-95">
+          <div className={cn(
+            "bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 transition-all duration-200",
+            isCollapsed ? "p-2 flex flex-col items-center gap-4 border-transparent bg-transparent" : "p-3"
+          )}>
+            <div className="flex items-center gap-3 w-full">
+              <div className={cn(
+                "rounded-xl bg-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 flex-shrink-0",
+                isCollapsed ? "w-10 h-10" : "w-10 h-10"
+              )}>
                 <span className="text-cyan-700 font-black text-sm">
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </span>
               </div>
+
+              <AnimatePresence>
+                {!isCollapsed && (
+                  <m.div
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
+                    className="flex-1 min-w-0 flex items-center justify-between"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="text-white font-bold text-xs truncate">
+                        {user?.name || 'Administrator'}
+                      </div>
+                      <div className="text-cyan-100/50 text-[10px] uppercase font-bold tracking-widest">
+                        {user?.role || 'Admin'}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => useAuthStore.getState().logout()}
+                      className="p-2 text-white/40 hover:text-red-300 hover:bg-white/10 rounded-lg transition-all ml-2"
+                      aria-label="Logout"
+                      title="Logout"
+                    >
+                      <LogOut className="w-4 h-4" />
+                    </button>
+                  </m.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {isCollapsed && (
               <button
                 onClick={() => useAuthStore.getState().logout()}
                 className="p-2 text-white/40 hover:text-red-300 transition-colors"
                 title="Logout"
+                aria-label="Logout"
               >
                 <LogOut className="w-4 h-4" />
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      </aside>
     </>
   );
 }

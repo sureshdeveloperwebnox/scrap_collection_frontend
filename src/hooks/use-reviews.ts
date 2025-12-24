@@ -13,7 +13,7 @@ export const useReviews = (params?: {
   organizationId?: number;
 }) => {
   return useQuery({
-    queryKey: queryKeys.reviews?.list(params) || ['reviews', params],
+    queryKey: ['reviews', params],
     queryFn: () => reviewsApi.getReviews(params),
     placeholderData: (previousData) => previousData,
   });
@@ -22,7 +22,7 @@ export const useReviews = (params?: {
 // Get single review
 export const useReview = (id: string) => {
   return useQuery({
-    queryKey: queryKeys.reviews?.detail(id) || ['reviews', id],
+    queryKey: ['reviews', id],
     queryFn: () => reviewsApi.getReview(id),
     enabled: !!id,
   });
@@ -42,14 +42,16 @@ export const useCreateReview = () => {
       organizationId: number;
     }) => reviewsApi.createReview(reviewData),
     onSuccess: (newReview) => {
+      const review = (newReview as { data: Review })?.data || (newReview as unknown as Review);
+
       // Invalidate reviews list
       queryClient.invalidateQueries({ queryKey: ['reviews'] });
-      
+
       // Add new review to cache
-      queryClient.setQueryData(['reviews', newReview.id], newReview);
-      
+      queryClient.setQueryData(['reviews', review.id], review);
+
       // Update collector rating
-      queryClient.invalidateQueries({ queryKey: ['employees', newReview.collectorId] });
+      queryClient.invalidateQueries({ queryKey: ['employees', review.collectorId] });
     },
   });
 };
@@ -59,17 +61,19 @@ export const useUpdateReview = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Review> }) => 
+    mutationFn: ({ id, data }: { id: string; data: Partial<Review> }) =>
       reviewsApi.updateReview(id, data),
     onSuccess: (updatedReview) => {
+      const review = (updatedReview as { data: Review })?.data || (updatedReview as unknown as Review);
+
       // Update review in cache
-      queryClient.setQueryData(['reviews', updatedReview.id], updatedReview);
-      
+      queryClient.setQueryData(['reviews', review.id], review);
+
       // Invalidate lists
       queryClient.invalidateQueries({ queryKey: ['reviews'] });
-      
+
       // Update collector rating
-      queryClient.invalidateQueries({ queryKey: ['employees', updatedReview.collectorId] });
+      queryClient.invalidateQueries({ queryKey: ['employees', review.collectorId] });
     },
   });
 };

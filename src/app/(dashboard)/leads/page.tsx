@@ -28,6 +28,7 @@ import { leadsApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
 
 // Dynamically import Lottie for better performance
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -581,7 +582,7 @@ export default function LeadsPage() {
             <CardTitle className="text-xl font-bold text-gray-900">Leads</CardTitle>
 
             {/* Action Buttons on Right */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {/* Search Toggle Button */}
               <Button
                 variant="outline"
@@ -705,9 +706,8 @@ export default function LeadsPage() {
         </CardHeader>
         <CardContent className="p-0">
           {isLoading || !mounted ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-              <span className="ml-2 text-gray-600">Loading leads...</span>
+            <div className="p-4">
+              <TableSkeleton columnCount={7} rowCount={rowsPerPage} />
             </div>
           ) : (
             <>

@@ -46,10 +46,12 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
     }
 
     const loadAnimation = async () => {
+      console.log('GlobalLoader: Loading animation...');
       try {
         const response = await fetch('/animation/loader.json');
-        if (!response.ok) throw new Error('Failed to load animation');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
+        console.log('GlobalLoader: Animation loaded successfully');
         // Cache the animation data
         (window as any).__lottieLoaderCache = data;
         if (mounted) {
@@ -57,7 +59,7 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
           setIsAnimationLoading(false);
         }
       } catch (error) {
-        console.error('Failed to load loader animation:', error);
+        console.error('GlobalLoader: Failed to load loader animation:', error);
         if (mounted) {
           setIsAnimationLoading(false);
         }
@@ -71,43 +73,35 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
     };
   }, []);
 
-  // Detect route changes (optimized)
-  useEffect(() => {
-    if (prevPathnameRef.current !== null && prevPathnameRef.current !== pathname) {
-      setIsRouteChanging(true);
-      const timer = setTimeout(() => setIsRouteChanging(false), 400);
-      return () => clearTimeout(timer);
-    }
-    prevPathnameRef.current = pathname;
-  }, [pathname]);
-
   // Determine if we should show loader
-  const shouldShowLoader = isLoading || isRouteChanging;
+  const shouldShowLoader = isLoading;
 
   // Handle loader visibility with minimum delay to prevent flickering (optimized)
   useEffect(() => {
-    // Clear any existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
 
     if (shouldShowLoader) {
-      if (!showLoader) {
-        loaderStartTimeRef.current = Date.now();
-        setShowLoader(true);
-      }
+      // Threshold to avoid flashing on near-instant operations
+      timeoutRef.current = setTimeout(() => {
+        if (!showLoader) {
+          loaderStartTimeRef.current = Date.now();
+          setShowLoader(true);
+        }
+      }, 50);
     } else {
       if (showLoader && loaderStartTimeRef.current) {
         const elapsed = Date.now() - loaderStartTimeRef.current;
-        const remainingDelay = Math.max(0, minDelay - elapsed);
+        const remainingDelay = Math.max(0, 150 - elapsed);
 
         timeoutRef.current = setTimeout(() => {
           setShowLoader(false);
           loaderStartTimeRef.current = null;
           timeoutRef.current = null;
         }, remainingDelay);
-      } else if (!shouldShowLoader) {
+      } else {
         setShowLoader(false);
         loaderStartTimeRef.current = null;
       }
@@ -116,10 +110,9 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
       }
     };
-  }, [shouldShowLoader, showLoader, minDelay]);
+  }, [shouldShowLoader, showLoader]);
 
   // Don't render anything if loader shouldn't be shown
   if (!showLoader || isAnimationLoading) {
@@ -132,7 +125,6 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80 backdrop-blur-sm">
         <div className="flex flex-col items-center gap-3">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-gray-600">Loading...</p>
         </div>
       </div>
     );
@@ -140,13 +132,16 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/90 backdrop-blur-sm transition-opacity duration-300"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80 backdrop-blur-xl transition-all duration-500"
       aria-label="Loading"
       role="status"
       aria-live="polite"
     >
-      <div className="flex flex-col items-center justify-center">
-        <div className="w-32 h-32 md:w-40 md:h-40 flex items-center justify-center">
+      <div className="flex flex-col items-center justify-center scale-110">
+        <div className="relative w-48 h-48 md:w-56 md:h-56 flex items-center justify-center">
+          {/* Subtle Glow Effect */}
+          <div className="absolute inset-0 bg-cyan-400/10 rounded-full blur-3xl animate-pulse" />
+
           <Lottie
             animationData={animationData}
             loop={true}
@@ -154,11 +149,21 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
             style={{
               width: '100%',
               height: '100%',
-              maxWidth: '160px',
-              maxHeight: '160px',
+              maxWidth: '240px',
+              maxHeight: '240px',
             }}
-            className="lottie-loader"
+            className="lottie-loader relative z-10"
           />
+        </div>
+
+        {/* Progress Text */}
+        <div className="mt-4 flex flex-col items-center gap-1.5 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-300">
+          <p className="text-cyan-700 font-bold tracking-widest uppercase text-[10px]">
+            Please wait
+          </p>
+          <p className="text-gray-400 text-sm font-medium">
+            Loading your dashboard...
+          </p>
         </div>
       </div>
     </div>

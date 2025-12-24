@@ -12,63 +12,26 @@ export const useLeads = (params?: {
   page?: number;
   limit?: number;
   search?: string;
-  status?: string;
+  status?: import('@/types').LeadStatus;
   vehicleType?: string;
   vehicleCondition?: string;
   sortBy?: 'fullName' | 'phone' | 'email' | 'status' | 'createdAt' | 'updatedAt';
   sortOrder?: 'asc' | 'desc';
-  }) => {
+}) => {
   const { user } = useAuthStore();
   const organizationId = user?.organizationId;
-  const { getCachedData, setCachedData } = useLeadsCacheStore();
-  
+
   // Generate query key for cache lookup
   const queryParams = useMemo(() => ({ ...params, organizationId }), [params, organizationId]);
-  const cacheKey = useMemo(() => {
-    const sortedParams = Object.keys(queryParams)
-      .sort()
-      .reduce((acc, key) => {
-        if (queryParams[key as keyof typeof queryParams] !== undefined && queryParams[key as keyof typeof queryParams] !== null) {
-          acc[key] = queryParams[key as keyof typeof queryParams];
-        }
-        return acc;
-      }, {} as Record<string, any>);
-    return JSON.stringify(sortedParams);
-  }, [queryParams]);
 
   return useQuery({
     queryKey: queryKeys.leads.list(queryParams),
-    queryFn: async () => {
-      // Check Zustand cache first
-      const cached = getCachedData(cacheKey);
-      if (cached) {
-        // Return cached data immediately, but still fetch in background
-        return { data: { leads: cached.leads, pagination: cached.pagination } };
-      }
-      
-      // Fetch from API
-      const response = await leadsApi.getLeads(queryParams);
-      
-      // Store in Zustand cache
-      if (response?.data?.leads && response?.data?.pagination) {
-        setCachedData(cacheKey, response.data.leads, response.data.pagination);
-      }
-      
-      return response;
-    },
-    placeholderData: (previousData) => {
-      // First check Zustand cache
-      const cached = getCachedData(cacheKey);
-      if (cached) {
-        return { data: { leads: cached.leads, pagination: cached.pagination } };
-      }
-      // Fallback to previous query data
-      return previousData;
-    },
-    staleTime: 3 * 60 * 1000, // 3 minutes - data is fresh for 3 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache for 10 minutes
-    refetchOnWindowFocus: false, // Don't refetch on window focus for better performance
-    refetchOnMount: false, // Use cached data if available
+    queryFn: () => leadsApi.getLeads(queryParams),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    placeholderData: (previousData: any) => previousData,
   });
 };
 
@@ -90,27 +53,27 @@ export const useCreateLead = () => {
   const { invalidateCache } = useLeadsCacheStore();
 
   return useMutation({
-    mutationFn: (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>) => 
-      leadsApi.createLead({ ...leadData, organizationId }),
+    mutationFn: (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>) =>
+      leadsApi.createLead({ ...leadData, organizationId: organizationId! }),
     onSuccess: (newLead) => {
       // Update Zustand store - increment NEW status count
       incrementStatus('NEW');
-      
+
       // Invalidate Zustand cache to force fresh fetch
       invalidateCache();
-      
+
       // Invalidate all leads list queries (all pages and filters)
       queryClient.invalidateQueries({ queryKey: queryKeys.leads.lists() });
-      
+
       // Invalidate stats query
       queryClient.invalidateQueries({ queryKey: queryKeys.leads.stats(organizationId) });
-      
+
       // Optionally add the new lead to the cache
       const leadData = (newLead as { data: Lead })?.data || newLead;
       if (leadData?.id) {
         queryClient.setQueryData(queryKeys.leads.detail(leadData.id), { data: leadData });
       }
-      
+
       // Invalidate dashboard stats as they might be affected
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats() });
     },
@@ -126,18 +89,18 @@ export const useUpdateLead = () => {
   const { updateLeadInCache } = useLeadsCacheStore();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Lead> }) => 
+    mutationFn: ({ id, data }: { id: string; data: Partial<Lead> }) =>
       leadsApi.updateLead(id, data),
     onMutate: async (variables) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: queryKeys.leads.lists() });
-      
+
       // Snapshot the previous value for rollback
       const previousQueries = queryClient.getQueriesData({ queryKey: queryKeys.leads.lists() });
-      
+
       // Optimistically update Zustand cache
       updateLeadInCache(variables.id, variables.data);
-      
+
       return { previousQueries };
     },
     onError: (err, variables, context) => {
@@ -151,7 +114,7 @@ export const useUpdateLead = () => {
     onSuccess: (response, variables) => {
       // Extract the lead from the API response structure
       const updatedLead = (response as { data: Lead })?.data || response;
-      
+
       // If status changed, update Zustand store
       if (variables.data.status && updatedLead?.status) {
         // Get old status from cache if available
@@ -161,21 +124,21 @@ export const useUpdateLead = () => {
           incrementStatus(updatedLead.status as any);
         }
       }
-      
+
       // Update the lead in TanStack Query cache
       if (updatedLead && variables.id) {
         queryClient.setQueryData(queryKeys.leads.detail(variables.id), { data: updatedLead });
       }
-      
+
       // Update Zustand cache with final data
       updateLeadInCache(variables.id, updatedLead);
-      
+
       // Invalidate all leads list queries to ensure consistency
       queryClient.invalidateQueries({ queryKey: queryKeys.leads.lists() });
-      
+
       // Invalidate stats query
       queryClient.invalidateQueries({ queryKey: queryKeys.leads.stats(organizationId) });
-      
+
       // Update dashboard stats if needed
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats() });
     },
@@ -195,14 +158,14 @@ export const useDeleteLead = () => {
     onMutate: async (deletedId) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: queryKeys.leads.lists() });
-      
+
       // Snapshot the previous value
       const previousQueries = queryClient.getQueriesData({ queryKey: queryKeys.leads.lists() });
       const deletedLead = queryClient.getQueryData<{ data: Lead }>(queryKeys.leads.detail(deletedId));
-      
+
       // Optimistically remove from Zustand cache
       removeLeadFromCache(deletedId);
-      
+
       return { previousQueries, deletedLead };
     },
     onError: (err, deletedId, context) => {
@@ -219,16 +182,16 @@ export const useDeleteLead = () => {
       if (deletedLead?.data?.status) {
         decrementStatus(deletedLead.data.status as any);
       }
-      
+
       // Remove lead from TanStack Query cache
       queryClient.removeQueries({ queryKey: queryKeys.leads.detail(deletedId) });
-      
+
       // Invalidate leads list
       queryClient.invalidateQueries({ queryKey: queryKeys.leads.lists() });
-      
+
       // Invalidate stats query
       queryClient.invalidateQueries({ queryKey: queryKeys.leads.stats(organizationId) });
-      
+
       // Update dashboard stats
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats() });
     },
@@ -240,8 +203,10 @@ export const useBulkUpdateLeads = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ ids, updates }: { ids: string[]; updates: Partial<Lead> }) => 
-      leadsApi.bulkUpdateLeads(ids, updates),
+    mutationFn: ({ ids, updates }: { ids: string[]; updates: Partial<Lead> }) => {
+      // Since bulkUpdateLeads doesn't exist in API, update leads one by one
+      return Promise.all(ids.map(id => leadsApi.updateLead(id, updates)));
+    },
     onSuccess: () => {
       // Invalidate all leads queries to ensure consistency
       queryClient.invalidateQueries({ queryKey: queryKeys.leads.all });
@@ -258,7 +223,7 @@ export const useConvertLeadToOrder = () => {
   const { incrementStatus, decrementStatus } = useLeadStatsStore();
 
   return useMutation({
-    mutationFn: ({ leadId, data }: { leadId: string; data?: any }) => 
+    mutationFn: ({ leadId, data }: { leadId: string; data?: any }) =>
       leadsApi.convertToOrder(leadId, data || {}),
     onSuccess: (result, variables) => {
       const leadId = variables.leadId;
@@ -269,16 +234,16 @@ export const useConvertLeadToOrder = () => {
         // Status changes to CONVERTED when converted to order
         incrementStatus('CONVERTED');
       }
-      
+
       // Invalidate leads list
       queryClient.invalidateQueries({ queryKey: queryKeys.leads.lists() });
-      
+
       // Invalidate stats query
       queryClient.invalidateQueries({ queryKey: queryKeys.leads.stats(organizationId) });
-      
+
       // Invalidate orders list
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
-      
+
       // Update dashboard stats
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats() });
     },

@@ -183,10 +183,10 @@ export function EmployeeForm({ employee, isOpen, onClose, onSubmit }: EmployeeFo
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="w-[95vw] sm:max-w-[800px] max-h-[90vh] bg-white border-0 shadow-2xl rounded-2xl p-0 flex flex-col [&>button]:hidden"
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] sm:max-w-[800px] max-h-[90vh] bg-white border-0 shadow-2xl rounded-2xl p-0 flex flex-col [&>button]:hidden text-left"
         onInteractOutside={(e) => e.preventDefault()}
       >
-        <DialogHeader className="px-8 pt-8 pb-6 border-b border-gray-200 flex-shrink-0">
+        <DialogHeader className="px-4 sm:px-6 lg:px-8 pt-8 pb-6 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-start justify-between">
             <div>
               <DialogTitle className="text-3xl font-bold text-gray-900">
@@ -226,7 +226,7 @@ export function EmployeeForm({ employee, isOpen, onClose, onSubmit }: EmployeeFo
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto min-h-0">
-          <form id="employee-form" onSubmit={handleSubmit} className="px-8 pb-8 space-y-8 mt-6">
+          <form id="employee-form" onSubmit={handleSubmit} className="px-4 sm:px-6 lg:px-8 pb-8 space-y-8 mt-6">
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Left Column: Personal Info */}

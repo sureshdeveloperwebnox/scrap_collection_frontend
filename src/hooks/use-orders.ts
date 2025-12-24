@@ -23,68 +23,18 @@ export const useOrders = (params?: {
 }) => {
   const { user } = useAuthStore();
   const organizationId = user?.organizationId;
-  const { getCachedData, setCachedData } = useOrdersCacheStore();
-  
+
   // Generate query key for cache lookup
   const queryParams = useMemo(() => ({ ...params, organizationId }), [params, organizationId]);
-  const cacheKey = useMemo(() => {
-    const sortedParams = Object.keys(queryParams)
-      .sort()
-      .reduce((acc, key) => {
-        if (queryParams[key as keyof typeof queryParams] !== undefined && queryParams[key as keyof typeof queryParams] !== null) {
-          acc[key] = queryParams[key as keyof typeof queryParams];
-        }
-        return acc;
-      }, {} as Record<string, any>);
-    return JSON.stringify(sortedParams);
-  }, [queryParams]);
 
   return useQuery({
     queryKey: queryKeys.orders.list(queryParams),
-    queryFn: async () => {
-      // Check Zustand cache first for instant data
-      const cached = getCachedData(cacheKey);
-      if (cached) {
-        // Return cached data immediately, but still fetch in background for freshness
-        const backgroundFetch = ordersApi.getOrders(queryParams).then((response) => {
-          // Update cache with fresh data
-          if (response?.data?.orders && response?.data?.pagination) {
-            setCachedData(cacheKey, response.data.orders, response.data.pagination);
-          }
-          return response;
-        }).catch(() => {
-          // Silently fail background fetch, use cached data
-          return { data: { orders: cached.orders, pagination: cached.pagination } };
-        });
-        
-        // Return cached data immediately
-        return { data: { orders: cached.orders, pagination: cached.pagination } };
-      }
-      
-      // Fetch from API if no cache
-      const response = await ordersApi.getOrders(queryParams);
-      
-      // Store in Zustand cache
-      if (response?.data?.orders && response?.data?.pagination) {
-        setCachedData(cacheKey, response.data.orders, response.data.pagination);
-      }
-      
-      return response;
-    },
-    placeholderData: (previousData) => {
-      // First check Zustand cache for instant data
-      const cached = getCachedData(cacheKey);
-      if (cached) {
-        return { data: { orders: cached.orders, pagination: cached.pagination } };
-      }
-      // Fallback to previous query data
-      return previousData;
-    },
-    staleTime: 3 * 60 * 1000, // 3 minutes - data is fresh for 3 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache for 10 minutes
-    refetchOnWindowFocus: false, // Don't refetch on window focus for better performance
-    refetchOnMount: false, // Use cached data if available
-    refetchInterval: false, // Don't auto-refetch, rely on mutations for updates
+    queryFn: () => ordersApi.getOrders(queryParams),
+    staleTime: 5 * 60 * 1000, // 5 minutes - keep data fresh for longer
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false, // Don't refetch on mount if data is fresh
+    placeholderData: (previousData: any) => previousData, // Smooth transitions between pages
   });
 };
 
@@ -158,15 +108,15 @@ export const useCreateOrder = () => {
   const { invalidateCache, addOrderToCache } = useOrdersCacheStore();
 
   return useMutation({
-    mutationFn: (orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => 
+    mutationFn: (orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) =>
       ordersApi.createOrder({ ...orderData, organizationId } as any),
     onMutate: async (newOrderData) => {
       // Cancel outgoing refetches to avoid overwriting optimistic update
       await queryClient.cancelQueries({ queryKey: queryKeys.orders.lists() });
-      
+
       // Snapshot previous values for rollback
       const previousQueries = queryClient.getQueriesData({ queryKey: queryKeys.orders.lists() });
-      
+
       // Create optimistic order object
       const optimisticOrder: Order = {
         ...newOrderData,
@@ -174,10 +124,10 @@ export const useCreateOrder = () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      
+
       // Optimistically add to Zustand cache for instant visibility
       addOrderToCache(optimisticOrder);
-      
+
       // Optimistically update TanStack Query cache
       queryClient.setQueriesData(
         { queryKey: queryKeys.orders.lists() },
@@ -196,11 +146,11 @@ export const useCreateOrder = () => {
           };
         }
       );
-      
+
       // Optimistically update stats
       incrementStatus(newOrderData.orderStatus);
       incrementPaymentStatus(newOrderData.paymentStatus);
-      
+
       return { previousQueries, optimisticOrder };
     },
     onError: (err, newOrderData, context) => {
@@ -210,24 +160,24 @@ export const useCreateOrder = () => {
           queryClient.setQueryData(queryKey, data);
         });
       }
-      
+
       // Rollback Zustand cache
       invalidateCache();
-      
+
       // Rollback stats
       useOrderStatsStore.getState().decrementStatus(newOrderData.orderStatus);
       useOrderStatsStore.getState().decrementPaymentStatus(newOrderData.paymentStatus);
     },
     onSuccess: (newOrder, variables, context) => {
       // Extract the actual order from API response
-      const createdOrder = (newOrder as { data: Order })?.data || newOrder as Order;
-      
+      const createdOrder = (newOrder as { data: Order })?.data || (newOrder as unknown as Order);
+
       // Replace optimistic order with real one in Zustand cache
       if (context?.optimisticOrder) {
         invalidateCache(); // Clear optimistic entry
         addOrderToCache(createdOrder); // Add real order
       }
-      
+
       // Update TanStack Query cache with real order data
       queryClient.setQueriesData(
         { queryKey: queryKeys.orders.lists() },
@@ -246,21 +196,21 @@ export const useCreateOrder = () => {
           };
         }
       );
-      
+
       // Set detail query
       if (createdOrder?.id) {
         queryClient.setQueryData(queryKeys.orders.detail(createdOrder.id), { data: createdOrder });
       }
-      
+
       // Stats were already updated optimistically in onMutate
       // Just ensure they're correct by refetching in background (non-blocking)
       setTimeout(() => {
-        queryClient.invalidateQueries({ 
+        queryClient.invalidateQueries({
           queryKey: queryKeys.orders.stats(),
           refetchType: 'active' // Only refetch active queries, not all
         });
       }, 500);
-      
+
       // Invalidate dashboard stats
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats() });
     },
@@ -280,18 +230,18 @@ export const useUpdateOrder = () => {
   const { updateOrderInCache } = useOrdersCacheStore();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Order> }) => 
+    mutationFn: ({ id, data }: { id: string; data: Partial<Order> }) =>
       ordersApi.updateOrder(id, data),
     onMutate: async (variables) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: queryKeys.orders.lists() });
-      
+
       // Snapshot the previous value for rollback
       const previousQueries = queryClient.getQueriesData({ queryKey: queryKeys.orders.lists() });
-      
+
       // Optimistically update Zustand cache
       updateOrderInCache(variables.id, variables.data);
-      
+
       return { previousQueries };
     },
     onError: (err, variables, context) => {
@@ -305,7 +255,7 @@ export const useUpdateOrder = () => {
     onSuccess: (response, variables) => {
       // Extract the order from the API response structure
       const updatedOrder = (response as { data: Order })?.data || response;
-      
+
       // If status changed, update Zustand store
       if (variables.data.orderStatus && updatedOrder?.orderStatus) {
         // Get old status from cache if available
@@ -315,7 +265,7 @@ export const useUpdateOrder = () => {
           incrementStatus(updatedOrder.orderStatus);
         }
       }
-      
+
       // If payment status changed, update Zustand store
       if (variables.data.paymentStatus && updatedOrder?.paymentStatus) {
         const oldOrder = queryClient.getQueryData<{ data: Order }>(queryKeys.orders.detail(variables.id));
@@ -324,21 +274,21 @@ export const useUpdateOrder = () => {
           incrementPaymentStatus(updatedOrder.paymentStatus);
         }
       }
-      
+
       // Update the order in TanStack Query cache
       if (updatedOrder && variables.id) {
         queryClient.setQueryData(queryKeys.orders.detail(variables.id), { data: updatedOrder });
       }
-      
+
       // Update Zustand cache with final data
       updateOrderInCache(variables.id, updatedOrder);
-      
+
       // Invalidate all orders list queries to ensure consistency
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
-      
+
       // Invalidate stats query
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.stats() });
-      
+
       // Update dashboard stats if needed
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats() });
     },
@@ -358,14 +308,14 @@ export const useDeleteOrder = () => {
     onMutate: async (deletedId) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: queryKeys.orders.lists() });
-      
+
       // Snapshot the previous value
       const previousQueries = queryClient.getQueriesData({ queryKey: queryKeys.orders.lists() });
       const deletedOrder = queryClient.getQueryData<{ data: Order }>(queryKeys.orders.detail(deletedId));
-      
+
       // Optimistically remove from Zustand cache
       removeOrderFromCache(deletedId);
-      
+
       return { previousQueries, deletedOrder };
     },
     onError: (err, deletedId, context) => {
@@ -387,16 +337,16 @@ export const useDeleteOrder = () => {
           decrementPaymentStatus(deletedOrder.data.paymentStatus);
         }
       }
-      
+
       // Remove order from TanStack Query cache
       queryClient.removeQueries({ queryKey: queryKeys.orders.detail(deletedId) });
-      
+
       // Invalidate orders list
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
-      
+
       // Invalidate stats query
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.stats() });
-      
+
       // Update dashboard stats
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats() });
     },
@@ -409,15 +359,15 @@ export const useAssignCollector = () => {
   const { updateOrderInCache } = useOrdersCacheStore();
 
   return useMutation({
-    mutationFn: ({ orderId, collectorId }: { orderId: string; collectorId: string }) => 
+    mutationFn: ({ orderId, collectorId }: { orderId: string; collectorId: string }) =>
       ordersApi.assignCollector(orderId, collectorId),
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.orders.lists() });
       const previousQueries = queryClient.getQueriesData({ queryKey: queryKeys.orders.lists() });
-      
+
       // Optimistically update cache
       updateOrderInCache(variables.orderId, { assignedCollectorId: variables.collectorId, orderStatus: 'ASSIGNED' });
-      
+
       return { previousQueries };
     },
     onError: (err, variables, context) => {
@@ -428,16 +378,16 @@ export const useAssignCollector = () => {
       }
     },
     onSuccess: (updatedOrder) => {
-      const order = (updatedOrder as { data: Order })?.data || updatedOrder as Order;
-      
+      const order = (updatedOrder as { data: Order })?.data || (updatedOrder as unknown as Order);
+
       // Update order in cache
       queryClient.setQueryData(queryKeys.orders.detail(order.id), { data: order });
       updateOrderInCache(order.id, order);
-      
+
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.orders.byCollector(order.assignedCollectorId!) 
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.orders.byCollector(order.assignedCollectorId!)
       });
       queryClient.invalidateQueries({ queryKey: queryKeys.collectors.stats() });
     },
@@ -452,17 +402,17 @@ export const useAutoAssignCollector = () => {
   return useMutation({
     mutationFn: (orderId: string) => ordersApi.autoAssignCollector(orderId),
     onSuccess: (updatedOrder) => {
-      const order = (updatedOrder as { data: Order })?.data || updatedOrder as Order;
-      
+      const order = (updatedOrder as { data: Order })?.data || (updatedOrder as unknown as Order);
+
       // Update order in cache
       queryClient.setQueryData(queryKeys.orders.detail(order.id), { data: order });
       updateOrderInCache(order.id, order);
-      
+
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
       if (order.assignedCollectorId) {
-        queryClient.invalidateQueries({ 
-          queryKey: queryKeys.orders.byCollector(order.assignedCollectorId) 
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.orders.byCollector(order.assignedCollectorId)
         });
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.collectors.stats() });
@@ -477,27 +427,27 @@ export const useUpdateOrderStatus = () => {
   const { updateOrderInCache } = useOrdersCacheStore();
 
   return useMutation({
-    mutationFn: ({ orderId, status, notes }: { 
-      orderId: string; 
-      status: OrderStatus; 
-      notes?: string 
+    mutationFn: ({ orderId, status, notes }: {
+      orderId: string;
+      status: OrderStatus;
+      notes?: string
     }) => ordersApi.updateOrderStatus(orderId, status, notes),
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.orders.lists() });
       const previousQueries = queryClient.getQueriesData({ queryKey: queryKeys.orders.lists() });
-      
+
       // Get old order to track status change
       const oldOrder = queryClient.getQueryData<{ data: Order }>(queryKeys.orders.detail(variables.orderId));
-      
+
       // Optimistically update cache
       updateOrderInCache(variables.orderId, { orderStatus: variables.status, adminNotes: variables.notes });
-      
+
       // Optimistically update stats
       if (oldOrder?.data?.orderStatus && oldOrder.data.orderStatus !== variables.status) {
         decrementStatus(oldOrder.data.orderStatus);
         incrementStatus(variables.status);
       }
-      
+
       return { previousQueries, oldOrder };
     },
     onError: (err, variables, context) => {
@@ -516,20 +466,20 @@ export const useUpdateOrderStatus = () => {
       }
     },
     onSuccess: (updatedOrder) => {
-      const order = (updatedOrder as { data: Order })?.data || updatedOrder as Order;
-      
+      const order = (updatedOrder as { data: Order })?.data || (updatedOrder as unknown as Order);
+
       // Update order in cache
       queryClient.setQueryData(queryKeys.orders.detail(order.id), { data: order });
       updateOrderInCache(order.id, order);
-      
+
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.stats() });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats() });
-      
+
       if (order.assignedCollectorId) {
-        queryClient.invalidateQueries({ 
-          queryKey: queryKeys.orders.byCollector(order.assignedCollectorId) 
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.orders.byCollector(order.assignedCollectorId)
         });
       }
     },

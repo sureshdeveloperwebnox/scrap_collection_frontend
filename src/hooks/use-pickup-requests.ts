@@ -7,7 +7,7 @@ export const usePickupRequests = (params?: {
   page?: number;
   limit?: number;
   search?: string;
-  status?: string;
+  status?: import('@/types').PickupRequestStatus;
   assignedTo?: string;
   customerId?: string;
   organizationId?: number;
@@ -52,10 +52,11 @@ export const useUpdatePickupRequest = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<PickupRequest> }) => 
+    mutationFn: ({ id, data }: { id: string; data: Partial<PickupRequest> }) =>
       pickupRequestsApi.updatePickupRequest(id, data),
     onSuccess: (updatedRequest) => {
-      queryClient.setQueryData(['pickup-requests', updatedRequest.id], updatedRequest);
+      const request = (updatedRequest as { data: PickupRequest })?.data || (updatedRequest as unknown as PickupRequest);
+      queryClient.setQueryData(['pickup-requests', request.id], request);
       queryClient.invalidateQueries({ queryKey: ['pickup-requests'] });
     },
   });
@@ -79,10 +80,11 @@ export const useAssignPickupRequest = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ requestId, collectorId }: { requestId: string; collectorId: string }) => 
+    mutationFn: ({ requestId, collectorId }: { requestId: string; collectorId: string }) =>
       pickupRequestsApi.assignPickupRequest(requestId, collectorId),
     onSuccess: (updatedRequest) => {
-      queryClient.setQueryData(['pickup-requests', updatedRequest.id], updatedRequest);
+      const request = (updatedRequest as { data: PickupRequest })?.data || (updatedRequest as unknown as PickupRequest);
+      queryClient.setQueryData(['pickup-requests', request.id], request);
       queryClient.invalidateQueries({ queryKey: ['pickup-requests'] });
     },
   });

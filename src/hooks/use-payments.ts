@@ -8,8 +8,8 @@ export const usePayments = (params?: {
   page?: number;
   limit?: number;
   search?: string;
-  status?: string;
-  method?: string;
+  status?: import('@/types').PaymentStatusEnum;
+  method?: import('@/types').PaymentTypeEnum;
   customerId?: string;
   orderId?: string;
   dateFrom?: string;
@@ -63,25 +63,27 @@ export const useCreatePayment = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (paymentData: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>) => 
+    mutationFn: (paymentData: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>) =>
       paymentsApi.createPayment(paymentData),
     onSuccess: (newPayment) => {
+      const payment = (newPayment as { data: Payment })?.data || (newPayment as unknown as Payment);
+
       // Invalidate payments list
       queryClient.invalidateQueries({ queryKey: queryKeys.payments.lists() });
-      
+
       // Add new payment to cache
-      queryClient.setQueryData(queryKeys.payments.detail(newPayment.id), newPayment);
-      
+      queryClient.setQueryData(queryKeys.payments.detail(payment.id), payment);
+
       // Update stats
       queryClient.invalidateQueries({ queryKey: queryKeys.payments.stats() });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats() });
-      
+
       // Update customer and order specific data
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.payments.byCustomer(newPayment.customerId) 
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.payments.byCustomer(payment.customerId)
       });
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.payments.byOrder(newPayment.orderId) 
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.payments.byOrder(payment.orderId)
       });
     },
   });
@@ -92,26 +94,28 @@ export const useUpdatePaymentStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, status, notes }: { 
-      id: string; 
-      status: string; 
-      notes?: string 
+    mutationFn: ({ id, status, notes }: {
+      id: string;
+      status: string;
+      notes?: string
     }) => paymentsApi.updatePaymentStatus(id, status, notes),
     onSuccess: (updatedPayment) => {
+      const payment = (updatedPayment as { data: Payment })?.data || (updatedPayment as unknown as Payment);
+
       // Update payment in cache
-      queryClient.setQueryData(queryKeys.payments.detail(updatedPayment.id), updatedPayment);
-      
+      queryClient.setQueryData(queryKeys.payments.detail(payment.id), payment);
+
       // Invalidate lists and stats
       queryClient.invalidateQueries({ queryKey: queryKeys.payments.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.payments.stats() });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats() });
-      
+
       // Update related data
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.payments.byCustomer(updatedPayment.customerId) 
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.payments.byCustomer(payment.customerId)
       });
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.payments.byOrder(updatedPayment.orderId) 
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.payments.byOrder(payment.orderId)
       });
     },
   });
@@ -122,30 +126,32 @@ export const useProcessRefund = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ paymentId, amount, reason }: { 
-      paymentId: string; 
-      amount?: number; 
-      reason?: string 
+    mutationFn: ({ paymentId, amount, reason }: {
+      paymentId: string;
+      amount?: number;
+      reason?: string
     }) => paymentsApi.createRefund(paymentId, {
       amount: amount || 0,
       reason,
       processedByAdmin: 'system' // In real app, get from auth context
     }),
     onSuccess: (refundedPayment) => {
+      const payment = (refundedPayment as any)?.data || (refundedPayment as unknown as Payment);
+
       // Update payment in cache
-      queryClient.setQueryData(queryKeys.payments.detail(refundedPayment.id), refundedPayment);
-      
+      queryClient.setQueryData(queryKeys.payments.detail(payment.id), payment);
+
       // Invalidate lists and stats
       queryClient.invalidateQueries({ queryKey: queryKeys.payments.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.payments.stats() });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats() });
-      
+
       // Update related data
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.payments.byCustomer(refundedPayment.customerId) 
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.payments.byCustomer(payment.customerId)
       });
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.payments.byOrder(refundedPayment.orderId) 
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.payments.byOrder(payment.orderId)
       });
     },
   });
@@ -158,19 +164,21 @@ export const useRetryPayment = () => {
   return useMutation({
     mutationFn: (paymentId: string) => paymentsApi.retryPayment(paymentId),
     onSuccess: (retriedPayment) => {
+      const payment = (retriedPayment as { data: Payment })?.data || (retriedPayment as unknown as Payment);
+
       // Update payment in cache
-      queryClient.setQueryData(queryKeys.payments.detail(retriedPayment.id), retriedPayment);
-      
+      queryClient.setQueryData(queryKeys.payments.detail(payment.id), payment);
+
       // Invalidate lists and stats
       queryClient.invalidateQueries({ queryKey: queryKeys.payments.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.payments.stats() });
-      
+
       // Update related data
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.payments.byCustomer(retriedPayment.customerId) 
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.payments.byCustomer(payment.customerId)
       });
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.payments.byOrder(retriedPayment.orderId) 
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.payments.byOrder(payment.orderId)
       });
     },
   });

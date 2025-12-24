@@ -21,6 +21,7 @@ import { Pagination } from '@/components/ui/pagination';
 import { RowsPerPage } from '@/components/ui/rows-per-page';
 import { MapDialog } from '@/components/map-dialog';
 import { ScrapYardForm } from '@/components/scrap-yard-form';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 
@@ -263,7 +264,7 @@ export default function ScrapYardsPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <CardTitle className="text-xl font-bold text-gray-900">Scrap Yards</CardTitle>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Button
                 variant="outline"
                 size="sm"
@@ -319,9 +320,8 @@ export default function ScrapYardsPage() {
 
         <CardContent className="p-0">
           {isLoading || !mounted ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-              <span className="ml-2 text-gray-600 text-sm">Loading scrap yards...</span>
+            <div className="p-4">
+              <TableSkeleton columnCount={4} rowCount={limit} />
             </div>
           ) : (
             <>

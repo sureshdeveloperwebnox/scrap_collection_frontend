@@ -28,7 +28,6 @@ export interface PaginatedResponse<T> {
   status: string;
   message: string;
   data: {
-    [key: string]: T[];
     pagination: {
       page: number;
       limit: number;

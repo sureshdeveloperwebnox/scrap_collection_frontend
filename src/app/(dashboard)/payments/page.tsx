@@ -11,6 +11,7 @@ import { usePayments, useProcessRefund } from '@/hooks/use-payments';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
 
 export default function PaymentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -135,15 +136,15 @@ export default function PaymentsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-md">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="relative flex-1 max-w-full sm:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 type="text"
                 placeholder="Search payments..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 w-full"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -161,8 +162,8 @@ export default function PaymentsPage() {
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            <div className="p-4">
+              <TableSkeleton columnCount={9} rowCount={10} />
             </div>
           ) : filteredPayments.length === 0 ? (
             <div className="text-center py-8 text-gray-600">No payments found.</div>

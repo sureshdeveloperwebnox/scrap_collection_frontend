@@ -94,13 +94,14 @@ export function Header({ onToggleSidebar }: HeaderProps) {
   }, [appsDropdownOpen]);
 
   return (
-    <header className="h-20 flex items-center justify-between px-8 border-b border-gray-100 bg-white sticky top-0 z-30">
+    <header className="h-20 flex items-center justify-between px-4 sm:px-6 lg:px-8 border-b border-gray-100 bg-white sticky top-0 z-30">
       <div className="flex items-center space-x-6">
         {/* Hamburger Menu Button */}
         <button
           onClick={handleToggle}
           className="flex items-center justify-center w-10 h-10 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 flex-shrink-0"
-          title={isCollapsed ? "Open sidebar" : "Close sidebar"}
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           <Menu className="w-6 h-6" />
         </button>
@@ -126,17 +127,29 @@ export function Header({ onToggleSidebar }: HeaderProps) {
       {/* Right Side Icons - Jobie style notification/profile */}
       <div className="flex items-center space-x-2 md:space-x-4">
         <div className="hidden sm:flex items-center space-x-2">
-          <button className="relative p-2.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-full transition-all">
+          <button
+            className="relative p-2.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-full transition-all"
+            aria-label="Messages"
+            title="Messages"
+          >
             <MessageCircle className="w-5 h-5" />
             <span className="absolute top-2 right-2 w-4 h-4 bg-indigo-600 text-[10px] text-white flex items-center justify-center rounded-full border-2 border-white">18</span>
           </button>
 
-          <button className="relative p-2.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-full transition-all">
+          <button
+            className="relative p-2.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-full transition-all"
+            aria-label="Notifications"
+            title="Notifications"
+          >
             <Bell className="w-5 h-5" />
             <span className="absolute top-2 right-2 w-4 h-4 bg-rose-500 text-[10px] text-white flex items-center justify-center rounded-full border-2 border-white">52</span>
           </button>
 
-          <button className="p-2.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-full transition-all">
+          <button
+            className="p-2.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-full transition-all"
+            aria-label="Settings"
+            title="Settings"
+          >
             <Settings className="w-5 h-5" />
           </button>
         </div>

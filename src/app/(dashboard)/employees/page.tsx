@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 import { EmployeeForm } from '@/components/employee-form';
 import { Employee } from '@/types';
 import {
@@ -63,7 +64,6 @@ function NoDataAnimation({ message = 'No data found', description }: { message?:
     return (
       <div className="flex flex-col items-center justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        <div className="mt-2 text-gray-400 text-sm">Loading...</div>
       </div>
     );
   }
@@ -524,7 +524,7 @@ export default function EmployeesPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <CardTitle className="text-xl font-bold text-gray-900">Employee Management</CardTitle>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               {/* Main Tab Switcher */}
               <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
                 <button
@@ -722,7 +722,17 @@ export default function EmployeesPage() {
                 <TableBody>
                   {activeTab === 'employees' ? (
                     employeesLoading ? (
-                      <TableRow><TableCell colSpan={7} className="text-center py-12"><Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" /></TableCell></TableRow>
+                      Array.from({ length: employeeLimit }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                          <TableCell className="text-right"><Skeleton className="h-4 w-8 ml-auto" /></TableCell>
+                        </TableRow>
+                      ))
                     ) : employees.length === 0 ? (
                       <TableRow><TableCell colSpan={7} className="text-center py-12"><NoDataAnimation message="No employees found" /></TableCell></TableRow>
                     ) : (
@@ -787,7 +797,15 @@ export default function EmployeesPage() {
                     )
                   ) : (
                     rolesLoading ? (
-                      <TableRow><TableCell colSpan={4} className="text-center py-12"><Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" /></TableCell></TableRow>
+                      Array.from({ length: roleLimit }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                          <TableCell className="text-right"><Skeleton className="h-4 w-8 ml-auto" /></TableCell>
+                        </TableRow>
+                      ))
                     ) : roles.length === 0 ? (
                       <TableRow><TableCell colSpan={4} className="text-center py-12"><NoDataAnimation message="No roles found" /></TableCell></TableRow>
                     ) : (

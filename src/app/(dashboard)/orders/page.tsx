@@ -9,7 +9,7 @@ import { OrderForm } from '@/components/order-form';
 import { OrderAssignmentStepper } from '@/components/order-assignment-stepper';
 import { Order, OrderStatus, PaymentStatusEnum } from '@/types';
 import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal, Download, Filter, Check, X, Package, MapPin, User, Users, DollarSign, Calendar, Map as MapIcon, Share2, Printer, Mail, Phone } from 'lucide-react';
-import { useOrders, useDeleteOrder, useUpdateOrder, useUpdateOrderStatus, useAssignCollector } from '@/hooks/use-orders';
+import { useOrders, useDeleteOrder, useUpdateOrder, useUpdateOrderStatus, useAssignCollector, useOrderStats } from '@/hooks/use-orders';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -25,6 +25,7 @@ import { ordersApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
 import { OrderStatusBadge, PaymentStatusBadge, toDisplayOrderStatus, toDisplayPaymentStatus } from '@/components/status-badges';
 
 // Dynamically import Lottie for better performance
@@ -725,65 +726,23 @@ export default function OrdersPage() {
   const updateOrderStatusMutation = useUpdateOrderStatus();
   const assignCollectorMutation = useAssignCollector();
 
-  // Fetch stats by querying each status count directly
-  const { data: allOrdersData } = useOrders({
-    page: 1,
-    limit: 1,
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  });
+  // Fetch unified stats for tab counts (one combined request instead of 6)
+  const { data: statsData } = useOrderStats();
 
-  const { data: pendingOrdersData } = useOrders({
-    page: 1,
-    limit: 1,
-    status: 'PENDING',
-  });
-
-  const { data: assignedOrdersData } = useOrders({
-    page: 1,
-    limit: 1,
-    status: 'ASSIGNED',
-  });
-
-  const { data: inProgressOrdersData } = useOrders({
-    page: 1,
-    limit: 1,
-    status: 'IN_PROGRESS',
-  });
-
-  const { data: completedOrdersData } = useOrders({
-    page: 1,
-    limit: 1,
-    status: 'COMPLETED',
-  });
-
-  const { data: cancelledOrdersData } = useOrders({
-    page: 1,
-    limit: 1,
-    status: 'CANCELLED',
-  });
-
-  // Calculate stats from pagination totals
+  // Calculate stats from the stats API response
   const stats = useMemo(() => {
-    const allData = allOrdersData as unknown as ApiResponse;
-    const pendingData = pendingOrdersData as unknown as ApiResponse;
-    const assignedData = assignedOrdersData as unknown as ApiResponse;
-    const inProgressData = inProgressOrdersData as unknown as ApiResponse;
-    const completedData = completedOrdersData as unknown as ApiResponse;
-    const cancelledData = cancelledOrdersData as unknown as ApiResponse;
-
     return {
-      total: allData?.data?.pagination?.total || 0,
-      pending: pendingData?.data?.pagination?.total || 0,
-      assigned: assignedData?.data?.pagination?.total || 0,
-      inProgress: inProgressData?.data?.pagination?.total || 0,
-      completed: completedData?.data?.pagination?.total || 0,
-      cancelled: cancelledData?.data?.pagination?.total || 0,
-      unpaid: 0,
-      paid: 0,
-      refunded: 0,
+      total: statsData?.data?.total || 0,
+      pending: statsData?.data?.pending || 0,
+      assigned: statsData?.data?.assigned || 0,
+      inProgress: statsData?.data?.inProgress || 0,
+      completed: statsData?.data?.completed || 0,
+      cancelled: statsData?.data?.cancelled || 0,
+      unpaid: statsData?.data?.unpaid || 0,
+      paid: statsData?.data?.paid || 0,
+      refunded: statsData?.data?.refunded || 0,
     };
-  }, [allOrdersData, pendingOrdersData, assignedOrdersData, inProgressOrdersData, completedOrdersData, cancelledOrdersData]);
+  }, [statsData]);
 
   // Handle the actual API response structure
   const apiResponse = ordersData as unknown as ApiResponse;
@@ -1008,7 +967,7 @@ export default function OrdersPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <CardTitle className="text-xl font-bold text-gray-900">Work Orders</CardTitle>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Button
                 variant="outline"
                 size="sm"
@@ -1126,9 +1085,8 @@ export default function OrdersPage() {
         </CardHeader>
         <CardContent className="p-0">
           {isLoading || !mounted ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-              <span className="ml-2 text-gray-600">Loading orders...</span>
+            <div className="p-4">
+              <TableSkeleton columnCount={8} rowCount={rowsPerPage} />
             </div>
           ) : (
             <>
