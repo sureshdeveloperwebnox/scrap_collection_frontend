@@ -43,7 +43,7 @@ export default function SignInPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!validateForm()) return;
 
     try {
@@ -63,18 +63,21 @@ export default function SignInPage() {
             <div className="absolute top-0 left-0 w-full h-px bg-white" style={{ transform: 'rotate(12deg) translateY(20%)' }} />
             <div className="absolute bottom-0 left-0 w-full h-px bg-white" style={{ transform: 'rotate(-12deg) translateY(-20%)' }} />
           </div>
-          
+
           {/* Logo */}
-          <div className="absolute top-8 left-8 z-20">
-            <Image
-              src="https://ezycashforcars.com.au/wp-content/uploads/2025/05/ezy-cash-for-cars.png"
-              alt="Scrap Management Logo"
-              width={60}
-              height={60}
-              className="object-contain"
-            />
+          <div className="absolute top-8 left-8 z-20 flex items-center gap-3">
+            <div className="bg-white rounded-lg p-2">
+              <Image
+                src="/images/logo/scraplogo.png"
+                alt="Aussie ScrapX Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
+            </div>
+            <span className="text-white text-2xl font-black tracking-tight uppercase" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}>AUSSIE SCRAPX</span>
           </div>
-          
+
           {/* Content */}
           <div className="relative z-10 flex flex-col items-center justify-center w-full px-12 text-white">
             <h1 className="text-6xl font-bold uppercase tracking-wider mb-6 text-center">
@@ -95,14 +98,17 @@ export default function SignInPage() {
           <div className="absolute bottom-0 left-0 w-24 h-24 border-2 border-cyan-600 rounded-full opacity-10 -translate-x-1/2 translate-y-1/2" />
 
           {/* Mobile Logo */}
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 lg:hidden z-10">
-            <Image
-              src="https://ezycashforcars.com.au/wp-content/uploads/2025/05/ezy-cash-for-cars.png"
-              alt="Scrap Management Logo"
-              width={50}
-              height={50}
-              className="object-contain"
-            />
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 lg:hidden z-10 flex items-center gap-2">
+            <div className="bg-cyan-600 rounded-lg p-1.5">
+              <Image
+                src="https://ezycashforcars.com.au/wp-content/uploads/2025/05/ezy-cash-for-cars.png"
+                alt="Aussie ScrapX Logo"
+                width={35}
+                height={35}
+                className="object-contain"
+              />
+            </div>
+            <span className="text-cyan-600 text-xl font-black tracking-tight uppercase" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}>AUSSIE SCRAPX</span>
           </div>
 
           {/* Login Card */}
@@ -128,9 +134,8 @@ export default function SignInPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="user name"
-                      className={`h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200/20 transition-all ${
-                        errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
-                      }`}
+                      className={`h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200/20 transition-all ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
+                        }`}
                       required
                     />
                     {errors.email && (
@@ -149,9 +154,8 @@ export default function SignInPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="password"
-                      className={`h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200/20 transition-all ${
-                        errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
-                      }`}
+                      className={`h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200/20 transition-all ${errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
+                        }`}
                       required
                     />
                     {errors.password && (

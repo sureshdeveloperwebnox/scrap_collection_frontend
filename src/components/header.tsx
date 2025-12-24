@@ -52,6 +52,12 @@ export function Header({ onToggleSidebar }: HeaderProps) {
     // Default cases for main routes
     if (segments.length === 0) return 'Dashboard';
 
+    // Check if this is an order detail page (e.g., /orders/uuid)
+    if (segments[0] === 'orders' && segments.length === 2 && segments[1].length > 20) {
+      // This is likely a UUID, show "Order Details" instead
+      return 'Order Details';
+    }
+
     const lastSegment = segments[segments.length - 1];
 
     // Specific overrides for better look
