@@ -1,24 +1,82 @@
 'use client';
 
-import { Search, Bell, MessageCircle, Moon, Menu, ChevronDown, Calendar, Mail } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/lib/store/auth-store';
-import { useSignOut } from '@/hooks/use-auth';
 import { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
+import {
+  Search,
+  Bell,
+  Menu,
+  MessageCircle,
+  ChevronDown,
+  Calendar,
+  Mail,
+  Moon,
+  Settings,
+  X
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/lib/store/auth-store';
+import { useSidebarStore } from '@/lib/store/sidebar-store';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
-  isSidebarOpen?: boolean;
 }
 
-export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) {
-  const router = useRouter();
+export function Header({ onToggleSidebar }: HeaderProps) {
   const { user } = useAuthStore();
+  const { isCollapsed, toggleCollapsed, toggleMobileOpen } = useSidebarStore();
+
+  const handleToggle = () => {
+    // If a prop is passed, use it, otherwise use store directly
+    if (onToggleSidebar) {
+      onToggleSidebar();
+    } else {
+      // Direct store toggle logic (default fallback)
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        toggleMobileOpen();
+      } else {
+        toggleCollapsed();
+      }
+    }
+  };
+
   const [appsDropdownOpen, setAppsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
-  // Close dropdown when clicking outside
+  // Map pathnames to Titles
+  const getPageTitle = (path: string) => {
+    // Remove leading slash and split by slash
+    const segments = path.split('/').filter(Boolean);
+
+    // Default cases for main routes
+    if (segments.length === 0) return 'Dashboard';
+
+    const lastSegment = segments[segments.length - 1];
+
+    // Specific overrides for better look
+    const overrides: Record<string, string> = {
+      'dashboard': 'Dashboard',
+      'leads': 'Leads',
+      'customers': 'Customers',
+      'orders': 'Orders',
+      'scrap': 'Scrap Management',
+      'vehicles': 'Vehicles',
+      'pickup-requests': 'Pickup Requests',
+      'scrap-yards': 'Scrap Yards',
+      'payments': 'Payments',
+      'employees': 'Employees',
+      'collectors': 'Collectors',
+      'reports': 'Reports',
+      'settings': 'Settings',
+      'vehicle-types': 'Vehicle Types'
+    };
+
+    return overrides[lastSegment] || lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1).replace(/-/g, ' ');
+  };
+
+  const pageTitle = getPageTitle(pathname);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -34,108 +92,68 @@ export function Header({ onToggleSidebar, isSidebarOpen = false }: HeaderProps) 
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [appsDropdownOpen]);
-  
+
   return (
-    <header className="bg-white shadow-sm border border-gray-200 rounded-2xl h-16 flex items-center justify-between px-4 ml-2 mr-4 mt-4">
-      <div className="flex flex-1 items-center min-w-0 space-x-4">
+    <header className="h-20 flex items-center justify-between px-8 border-b border-gray-100 bg-white sticky top-0 z-30">
+      <div className="flex items-center space-x-6">
         {/* Hamburger Menu Button */}
         <button
-          onClick={onToggleSidebar}
-          className="flex items-center justify-center w-9 h-9 text-gray-600 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 flex-shrink-0"
-          title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+          onClick={handleToggle}
+          className="flex items-center justify-center w-10 h-10 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 flex-shrink-0"
+          title={isCollapsed ? "Open sidebar" : "Close sidebar"}
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-6 h-6" />
         </button>
-        
-        {/* Navigation Links */}
-        <div className="hidden md:flex items-center space-x-1">
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setAppsDropdownOpen(!appsDropdownOpen)}
-              className="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
-            >
-              <span>Apps</span>
-              <ChevronDown className={cn(
-                "w-4 h-4 transition-transform",
-                appsDropdownOpen && "rotate-180"
-              )} />
-            </button>
-            
-            {/* Dropdown Menu */}
-            {appsDropdownOpen && (
-              <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-                  All Apps
-                </button>
-                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-                  Recent Apps
-                </button>
-              </div>
-            )}
-          </div>
-          
-          <button className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all">
-            <MessageCircle className="w-4 h-4 mr-1.5" />
-            <span>Chat</span>
-          </button>
-          
-          <button className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all">
-            <Calendar className="w-4 h-4 mr-1.5" />
-            <span>Calendar</span>
-          </button>
-          
-          <button className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all">
-            <Mail className="w-4 h-4 mr-1.5" />
-            <span>Email</span>
-          </button>
-        </div>
+
+        {/* Brand/Breadcrumb context for Jobie feel */}
+        <h1 className="text-xl font-bold text-gray-800 hidden sm:block">{pageTitle}</h1>
       </div>
-      
-      {/* Center Search Bar */}
-      <div className="hidden lg:flex flex-1 max-w-md mx-8">
-        <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+
+      {/* SEARCH BAR - Jobie center pill style */}
+      <div className="hidden lg:flex flex-1 max-w-xl mx-12">
+        <div className="relative w-full group">
           <input
             type="text"
-            placeholder="Try to searching..."
-            className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 bg-gray-50"
+            placeholder="Search something here..."
+            className="w-full h-11 pl-6 pr-12 bg-gray-100 hover:bg-gray-200/70 border-none rounded-full text-sm font-medium transition-all duration-300 focus:ring-4 focus:ring-cyan-500/10 focus:bg-white focus:shadow-md outline-none"
           />
+          <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+            <Search className="text-gray-400 h-5 w-5 group-hover:text-cyan-600 transition-colors" />
+          </div>
         </div>
       </div>
-      
-      {/* Right Side Icons and User */}
-      <div className="flex flex-shrink-0 items-center space-x-3">
-        {/* Dark Mode Toggle */}
-        <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all">
-          <Moon className="w-5 h-5" />
-        </button>
-        
-        {/* Chat Icon */}
-        <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all relative">
-          <MessageCircle className="w-5 h-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
-        
-        {/* Notifications */}
-        <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all relative">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
-        
-        {/* User Profile */}
-        <div className="flex items-center space-x-2 pl-3 border-l border-gray-200">
-          <div className="w-8 h-8 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-semibold text-xs">
-              {user?.name?.charAt(0).toUpperCase() || 'M'}
-            </span>
+
+      {/* Right Side Icons - Jobie style notification/profile */}
+      <div className="flex items-center space-x-2 md:space-x-4">
+        <div className="hidden sm:flex items-center space-x-2">
+          <button className="relative p-2.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-full transition-all">
+            <MessageCircle className="w-5 h-5" />
+            <span className="absolute top-2 right-2 w-4 h-4 bg-indigo-600 text-[10px] text-white flex items-center justify-center rounded-full border-2 border-white">18</span>
+          </button>
+
+          <button className="relative p-2.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-full transition-all">
+            <Bell className="w-5 h-5" />
+            <span className="absolute top-2 right-2 w-4 h-4 bg-rose-500 text-[10px] text-white flex items-center justify-center rounded-full border-2 border-white">52</span>
+          </button>
+
+          <button className="p-2.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-full transition-all">
+            <Settings className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* User Profile - Header side */}
+        <div className="flex items-center space-x-3 pl-4 border-l border-gray-100">
+          <div className="hidden md:block text-right">
+            <div className="text-sm font-bold text-gray-900 leading-none">{user?.name || 'Oda Dink'}</div>
+            <div className="text-[11px] text-gray-500 mt-1 uppercase tracking-wider font-semibold">{user?.role || 'Super Admin'}</div>
           </div>
-          <div className="hidden xl:flex flex-col">
-            <span className="text-sm font-semibold text-gray-900">
-              {user?.name || 'Mike Nielsen'}
-            </span>
-            <span className="text-xs text-gray-600">
-              {user?.role || 'Admin'}
-            </span>
+          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm ring-2 ring-gray-100 cursor-pointer transition-transform hover:scale-110">
+            <div className="w-full h-full bg-cyan-100 flex items-center justify-center">
+              <span className="text-cyan-700 font-bold text-xs">
+                {user?.name?.charAt(0).toUpperCase() || 'O'}
+                {user?.name?.split(' ')[1]?.charAt(0).toUpperCase() || 'D'}
+              </span>
+            </div>
           </div>
         </div>
       </div>

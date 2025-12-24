@@ -2,10 +2,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardStats as DashboardStatsType } from '@/types';
-import { 
-  Users, 
-  ShoppingCart, 
-  Truck, 
+import {
+  Users,
+  ShoppingCart,
+  Truck,
   DollarSign,
   TrendingUp,
   Calendar
@@ -68,21 +68,23 @@ export const DashboardStats = () => {
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
       {statCards.map((stat, index) => (
-        <Card key={index}>
-          <CardHeader className="flex flex-row justify-between items-center pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {stat.title}
-            </CardTitle>
-            <div className={`p-2 rounded-md ${stat.bgColor}`}>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
+        <div key={index} className="bg-white rounded-[2rem] p-6 shadow-sm border-none transition-all hover:shadow-xl hover:-translate-y-1">
+          <div className="flex items-center gap-4">
+            <div className={`w-14 h-14 rounded-2xl ${stat.bgColor} flex items-center justify-center flex-shrink-0 shadow-inner`}>
+              <stat.icon className={`h-6 w-6 ${stat.color}`} />
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stat.value}</div>
-          </CardContent>
-        </Card>
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-bold text-gray-500 uppercase tracking-wider">
+                {stat.title}
+              </div>
+              <div className="text-2xl font-black text-gray-900 mt-1">
+                {stat.value}
+              </div>
+            </div>
+          </div>
+        </div>
       ))}
     </div>
   );

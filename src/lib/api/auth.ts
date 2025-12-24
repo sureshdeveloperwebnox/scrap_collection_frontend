@@ -15,13 +15,12 @@ export interface SignUpRequest {
 
 export interface AuthResponse {
   data: {
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    role: string;
-  };
-  token: string;
+    user: {
+      id: string;
+      email: string;
+      name: string;
+      role: string;
+    };
   }
 }
 
@@ -44,13 +43,17 @@ export const authApi = {
     await apiClient.post('/auth/signout');
   },
 
-  refreshToken: async (): Promise<AuthResponse> => {
-    const response = await apiClient.post('/auth/refresh');
-    return response.data;
+  refreshToken: async (): Promise<void> => {
+    await apiClient.post('/auth/refresh');
   },
 
   signInWithGoogle: async (data: GoogleSignInRequest): Promise<AuthResponse> => {
     const response = await apiClient.post('/auth/google', data);
     return response.data;
   },
-}; 
+
+  getMe: async (): Promise<AuthResponse> => {
+    const response = await apiClient.post('/auth/me');
+    return response.data;
+  },
+};

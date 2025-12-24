@@ -157,7 +157,7 @@ export default function PickupRequestsPage() {
             </Select>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -174,7 +174,7 @@ export default function PickupRequestsPage() {
                   <TableHead>Pickup Address</TableHead>
                   <TableHead>Assigned To</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -219,7 +219,7 @@ export default function PickupRequestsPage() {
                         {request.status.replace('_', ' ')}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-right">
                       <div className="flex items-center gap-2">
                         <Button variant="ghost" size="icon" onClick={() => handleDelete(request.id)}>
                           {deleteMutation.isPending ? (

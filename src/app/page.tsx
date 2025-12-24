@@ -2,32 +2,21 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/lib/store/auth-store';
 
 export default function HomePage() {
   const router = useRouter();
+  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    // Instant redirect without any loading
-    if (typeof window !== 'undefined') {
-      // Check localStorage directly for immediate response
-      const authStorage = localStorage.getItem('auth-storage');
-      if (authStorage) {
-        try {
-          const parsed = JSON.parse(authStorage);
-          if (parsed?.state?.isAuthenticated) {
-            router.push('/dashboard');
-            return;
-          }
-        } catch (error) {
-          // If parsing fails, continue to signin
-        }
-      }
-      
-      // If no auth data, redirect to signin immediately
+    // Check authentication state and redirect accordingly
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    } else {
       router.push('/auth/signin');
     }
-  }, [router]);
+  }, [router, isAuthenticated]);
 
   // Return null to avoid any rendering
   return null;
-} 
+}

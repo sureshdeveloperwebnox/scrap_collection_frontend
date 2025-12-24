@@ -710,7 +710,7 @@ export default function CollectorAssignmentPage() {
                           <TableHead className="font-semibold text-gray-900 text-sm py-4">Collector</TableHead>
                           <TableHead className="font-semibold text-gray-900 text-sm py-4">Contact</TableHead>
                           <TableHead className="font-semibold text-gray-900 text-sm py-4">Status</TableHead>
-                          <TableHead className="text-right pr-6 font-semibold text-gray-900 text-sm py-4">Actions</TableHead>
+                          <TableHead className="text-right font-semibold text-gray-900 text-sm py-4">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -766,7 +766,7 @@ export default function CollectorAssignmentPage() {
                                 </Select>
                               </div>
                             </TableCell>
-                            <TableCell className="text-right pr-6">
+                            <TableCell className="text-right">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-all duration-200">
@@ -851,7 +851,7 @@ export default function CollectorAssignmentPage() {
                           <TableHead className="font-semibold text-gray-900 text-sm py-4">Vehicle</TableHead>
                           <TableHead className="font-semibold text-gray-900 text-sm py-4">Scrap Yard</TableHead>
                           <TableHead className="font-semibold text-gray-900 text-sm py-4">Status</TableHead>
-                          <TableHead className="text-right pr-6 font-semibold text-gray-900 text-sm py-4">Control</TableHead>
+                          <TableHead className="text-right font-semibold text-gray-900 text-sm py-4">Control</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1012,7 +1012,7 @@ export default function CollectorAssignmentPage() {
                           <TableHead className="pl-6 font-semibold text-gray-900 text-sm py-4">Crew Detail</TableHead>
                           <TableHead className="font-semibold text-gray-900 text-sm py-4">Collective Members</TableHead>
                           <TableHead className="font-semibold text-gray-900 text-sm py-4">Status</TableHead>
-                          <TableHead className="text-right pr-6 font-semibold text-gray-900 text-sm py-4">Operations</TableHead>
+                          <TableHead className="text-right font-semibold text-gray-900 text-sm py-4">Operations</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>

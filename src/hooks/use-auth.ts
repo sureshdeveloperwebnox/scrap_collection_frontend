@@ -3,45 +3,7 @@ import { CredentialResponse } from '@react-oauth/google';
 import { authApi, SignInRequest, SignUpRequest, GoogleSignInRequest } from '@/lib/api/auth';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
-import { getAuthenticatedClient } from '@/lib/api/client';
-import { useEffect } from 'react';
 import { toast } from 'sonner';
-
-// Hook to initialize authentication state
-export const useAuthInit = () => {
-  const { token, user, isAuthenticated, setLoading, setHydrated, logout } = useAuthStore();
-  const router = useRouter();
-
-  useEffect(() => {
-    const initializeAuth = async () => {
-      setLoading(true);
-      
-      try {
-        // Check if we have stored auth data
-        if (token && user && isAuthenticated) {
-          // Verify token validity with backend
-          try {
-            const client = getAuthenticatedClient(token);
-            await client.get('/auth/verify'); // or whatever endpoint verifies the token
-            console.log('Token is valid, user is authenticated');
-          } catch (error) {
-            console.log('Token is invalid, clearing auth state');
-            // Token is invalid, clear auth state and redirect
-            logout();
-            router.push('/auth/signin');
-          }
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-      } finally {
-        setLoading(false);
-        setHydrated(true);
-      }
-    };
-
-    initializeAuth();
-  }, [token, user, isAuthenticated, setLoading, setHydrated, logout, router]);
-};
 
 export const useSignIn = () => {
   const router = useRouter();
@@ -55,18 +17,18 @@ export const useSignIn = () => {
     },
     onSuccess: (response) => {
       console.log("Sign in response:", response);
-      
-      if (response?.data?.user && response?.data?.token) {
-        // Store in Zustand store
-        login(response.data.user, response.data.token);
+
+      if (response?.data?.user) {
+        // Store only user data in Zustand store (tokens are in httpOnly cookies)
+        login(response.data.user);
 
         toast.success('Login successful!', {
           description: 'You are now logged in',
         });
-        
-        // Use Next.js router for navigation instead of page refresh
+
+        // Use Next.js router for navigation
         router.push('/dashboard');
-        
+
         // Invalidate all queries to refresh with authenticated state
         queryClient.invalidateQueries();
       } else {
@@ -78,10 +40,10 @@ export const useSignIn = () => {
     },
     onError: (error: any) => {
       console.error('Sign in error:', error);
-      
+
       // Extract error message from different possible error structures
       let errorMessage = 'Please check your credentials and try again';
-      
+
       if (error?.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error?.response?.data?.error) {
@@ -95,7 +57,7 @@ export const useSignIn = () => {
       } else if (error?.response?.status === 500) {
         errorMessage = 'Server error. Please try again later';
       }
-      
+
       toast.error('Login failed', {
         description: errorMessage,
       });
@@ -117,17 +79,17 @@ export const useSignUp = () => {
       setLoading(true);
     },
     onSuccess: (response) => {
-      if (response?.data?.user && response?.data?.token) {
-        // Store in Zustand store
-        login(response.data.user, response.data.token);
-        
+      if (response?.data?.user) {
+        // Store only user data in Zustand store (tokens are in httpOnly cookies)
+        login(response.data.user);
+
         toast.success('Registration successful!', {
           description: 'Your account has been created and you are now logged in',
         });
-        
-        // Use Next.js router for navigation instead of page refresh
+
+        // Use Next.js router for navigation
         router.push('/dashboard');
-        
+
         // Invalidate all queries to refresh with authenticated state
         queryClient.invalidateQueries();
       } else {
@@ -139,10 +101,10 @@ export const useSignUp = () => {
     },
     onError: (error: any) => {
       console.error('Sign up error:', error);
-      
+
       // Extract error message from different possible error structures
       let errorMessage = 'Please check your information and try again';
-      
+
       if (error?.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error?.response?.data?.error) {
@@ -156,7 +118,7 @@ export const useSignUp = () => {
       } else if (error?.response?.status === 500) {
         errorMessage = 'Server error. Please try again later';
       }
-      
+
       toast.error('Registration failed', {
         description: errorMessage,
       });
@@ -170,54 +132,40 @@ export const useSignUp = () => {
 export const useSignOut = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { logout, token } = useAuthStore();
+  const { logout } = useAuthStore();
 
   return useMutation({
     mutationFn: async () => {
-      // Use authenticated client for sign out
-      if (token) {
-        const client = getAuthenticatedClient(token);
-        await client.post('/auth/signout');
-      }
+      // Call API to clear cookies on server
+      await authApi.signOut();
     },
     onSuccess: () => {
       // Clear Zustand store
       logout();
-      
+
       toast.success('Logged out successfully', {
         description: 'You have been logged out',
       });
-      
+
       // Clear all cached data
       queryClient.clear();
-      
-      // Use Next.js router for navigation instead of page refresh
+
+      // Use Next.js router for navigation
       router.push('/auth/signin');
     },
     onError: (error: any) => {
       // Even if API call fails, clear local state
       logout();
       queryClient.clear();
-      
+
       toast.error('Logout failed', {
         description: error?.message || 'You have been logged out locally',
       });
-      
-      // Use Next.js router for navigation instead of page refresh
+
+      // Use Next.js router for navigation
       router.push('/auth/signin');
     },
   });
-};
-
-// Hook to get authenticated API client
-export const useAuthenticatedClient = () => {
-  const { token } = useAuthStore();
-  
-  if (!token) {
-    throw new Error('No authentication token available');
-  }
-  
-  return getAuthenticatedClient(token);
 };
 
 export const useGoogleSignIn = () => {
@@ -232,18 +180,18 @@ export const useGoogleSignIn = () => {
     },
     onSuccess: (response) => {
       console.log("Google sign in response:", response);
-      
-      if (response?.data?.user && response?.data?.token) {
-        // Store in Zustand store
-        login(response.data.user, response.data.token);
+
+      if (response?.data?.user) {
+        // Store only user data in Zustand store (tokens are in httpOnly cookies)
+        login(response.data.user);
 
         toast.success('Google sign-in successful!', {
           description: 'You are now logged in',
         });
-        
-        // Use Next.js router for navigation instead of page refresh
+
+        // Use Next.js router for navigation
         router.push('/dashboard');
-        
+
         // Invalidate all queries to refresh with authenticated state
         queryClient.invalidateQueries();
       } else {
@@ -255,10 +203,10 @@ export const useGoogleSignIn = () => {
     },
     onError: (error: any) => {
       console.error('Google sign in error:', error);
-      
+
       // Extract error message from different possible error structures
       let errorMessage = 'Google sign-in failed. Please try again';
-      
+
       if (error?.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error?.response?.data?.error) {
@@ -270,7 +218,7 @@ export const useGoogleSignIn = () => {
       } else if (error?.response?.status === 500) {
         errorMessage = 'Server error. Please try again later';
       }
-      
+
       toast.error('Google sign-in failed', {
         description: errorMessage,
       });
@@ -297,4 +245,4 @@ export const useGoogleSignIn = () => {
     isError: googleSignInMutation.isError,
     error: googleSignInMutation.error,
   };
-}; 
+};

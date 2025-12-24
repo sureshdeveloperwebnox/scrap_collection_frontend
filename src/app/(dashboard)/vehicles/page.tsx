@@ -158,8 +158,8 @@ export default function VehiclesPage() {
         isActive: typeStatusFilter === 'all' ? undefined : typeStatusFilter === 'active',
     } as any);
 
-    // Fetch ALL types for select dropdown in name form
-    const { data: allTypesData } = useVehicleTypes({ page: 1, limit: 1000 } as any);
+    // Fetch ALL types for select dropdown in name form (max limit is 100)
+    const { data: allTypesData } = useVehicleTypes({ page: 1, limit: 100 } as any);
 
     const { data: typeStats } = useVehicleTypeStats();
 
@@ -323,9 +323,9 @@ export default function VehiclesPage() {
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader className="bg-white">
-                                    <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50">
-                                        <TableHead colSpan={activeMainTab === 'names' ? 7 : 4} className="p-0 bg-transparent">
-                                            <div className="flex items-center gap-1 px-2 py-2">
+                                    <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50/50">
+                                        <TableHead colSpan={activeMainTab === 'names' ? 7 : 4} className="p-0 bg-transparent h-auto">
+                                            <div className="flex items-center gap-1 px-6 py-3">
                                                 {(['all', 'active', 'inactive'] as StatusTabKey[]).map((status) => {
                                                     const isCurrentStatus = activeMainTab === 'names' ? nameStatusFilter === status : typeStatusFilter === status;
                                                     let count = 0;
@@ -375,7 +375,7 @@ export default function VehiclesPage() {
                                                 <TableHead>Status</TableHead>
                                             </>
                                         )}
-                                        <TableHead className="text-right pr-6">Action</TableHead>
+                                        <TableHead className="text-right">Action</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -395,7 +395,7 @@ export default function VehiclesPage() {
                                                                 <StatusBadge isActive={v.isActive} />
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell className="text-right pr-6">
+                                                        <TableCell className="text-right">
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                                                 <DropdownMenuContent align="end">
@@ -419,7 +419,7 @@ export default function VehiclesPage() {
                                                                 <StatusBadge isActive={t.isActive} />
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell className="text-right pr-6">
+                                                        <TableCell className="text-right">
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                                                 <DropdownMenuContent align="end">

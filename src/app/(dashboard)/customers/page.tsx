@@ -725,7 +725,7 @@ export default function CustomersPage() {
             </div>
           )}
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-0">
           {isLoading || !mounted ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -738,10 +738,10 @@ export default function CustomersPage() {
                 <Table>
                   <TableHeader className="bg-white">
                     {/* Status Tabs Row */}
-                    <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50">
-                      <TableHead colSpan={8} className="p-0 bg-transparent">
+                    <TableRow className="hover:bg-transparent border-b-2 border-gray-200 bg-gray-50/50">
+                      <TableHead colSpan={8} className="p-0 bg-transparent h-auto">
                         <div className="w-full overflow-x-auto">
-                          <div className="inline-flex items-center gap-1 px-2 py-2">
+                          <div className="inline-flex items-center gap-1 px-6 py-3">
                             {(['All', 'Active', 'Inactive', 'VIP', 'Blocked'] as const).map((tab) => {
                               const style = getTabStyle(tab);
                               const isActive = activeTab === tab;
@@ -798,7 +798,7 @@ export default function CustomersPage() {
                           Created Date
                         </button>
                       </TableHead>
-                      <TableHead className="w-12">Action</TableHead>
+                      <TableHead className="w-12 text-right">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -896,7 +896,7 @@ export default function CustomersPage() {
                             <TableCell className="text-gray-600">
                               {formatDateHuman(customer.createdAt)}
                             </TableCell>
-                            <TableCell onClick={(e) => e.stopPropagation()}>
+                            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
