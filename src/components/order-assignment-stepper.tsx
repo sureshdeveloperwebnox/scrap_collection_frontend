@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useEmployees } from '@/hooks/use-employees';
 import { useCrews } from '@/hooks/use-crews';
 import { useScrapYards } from '@/hooks/use-scrap-yards';
-import { useUpdateOrder } from '@/hooks/use-orders';
+import { useUpdateOrder, useAssignCollector } from '@/hooks/use-orders';
 import { Order, OrderStatus } from '@/types';
 import { toast } from 'sonner';
 import {
@@ -49,7 +49,9 @@ export function OrderAssignmentStepper({
     const [currentStep, setCurrentStep] = useState(1);
     const [assignmentData, setAssignmentData] = useState<AssignmentData>({
         yardId: order.yardId || '',
-        collectorIds: order.assignedCollectorId ? [order.assignedCollectorId] : [],
+        collectorIds: (order as any).assignOrders
+            ? (order as any).assignOrders.map((ao: any) => ao.collectorId).filter((id: any) => !!id)
+            : (order.assignedCollectorId ? [order.assignedCollectorId] : []),
         crewId: order.crewId || '',
         routeDistance: undefined,
         routeDuration: undefined,
@@ -79,7 +81,7 @@ export function OrderAssignmentStepper({
 
     const { data: crewsData, isLoading: crewsLoading } = useCrews();
 
-    const updateOrderMutation = useUpdateOrder();
+    const assignOrderMutation = useAssignCollector();
 
     // Memoized data
     const scrapYards = useMemo(() => {
@@ -189,19 +191,18 @@ export function OrderAssignmentStepper({
 
     const handleSubmit = async () => {
         try {
-            await updateOrderMutation.mutateAsync({
-                id: order.id,
+            await assignOrderMutation.mutateAsync({
+                orderId: order.id,
                 data: {
                     yardId: assignmentData.yardId,
-                    assignedCollectorId: assignmentData.collectorIds[0] || undefined,
+                    collectorIds: assignmentData.collectorIds,
                     crewId: assignmentData.crewId || undefined,
-                    orderStatus: 'ASSIGNED' as OrderStatus,
                     routeDistance: assignmentData.routeDistance,
                     routeDuration: assignmentData.routeDuration,
                 },
             });
 
-            toast.success(`Order assigned successfully! Distance: ${assignmentData.routeDistance || 'N/A'}, Duration: ${assignmentData.routeDuration || 'N/A'}`);
+            toast.success(`Order assigned successfully!`);
             if (onSuccess) onSuccess();
             onClose();
         } catch (error: any) {
@@ -239,7 +240,7 @@ export function OrderAssignmentStepper({
                             type="button"
                             variant="outline"
                             onClick={onClose}
-                            disabled={updateOrderMutation.isPending}
+                            disabled={assignOrderMutation.isPending}
                             className="h-12 px-6 rounded-xl"
                         >
                             Cancel
@@ -614,7 +615,7 @@ export function OrderAssignmentStepper({
                         type="button"
                         variant="outline"
                         onClick={handleBack}
-                        disabled={currentStep === 1 || updateOrderMutation.isPending}
+                        disabled={currentStep === 1 || assignOrderMutation.isPending}
                         className="h-12 px-6 rounded-xl"
                     >
                         <ArrowLeft className="h-5 w-5 mr-2" />
@@ -635,10 +636,10 @@ export function OrderAssignmentStepper({
                         <Button
                             type="button"
                             onClick={handleSubmit}
-                            disabled={updateOrderMutation.isPending}
+                            disabled={assignOrderMutation.isPending}
                             className="h-12 px-8 rounded-xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
                         >
-                            {updateOrderMutation.isPending ? (
+                            {assignOrderMutation.isPending ? (
                                 <>
                                     <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                                     Assigning...

@@ -63,15 +63,23 @@ export const ordersApi = {
     await apiClient.delete(`/orders/${id}`);
   },
 
-  // Assign order to collector
-  assignOrder: async (orderId: string, collectorId: string): Promise<{ data: Order }> => {
-    const response = await apiClient.post(`/orders/${orderId}/assign`, { collectorId });
+  // Assign order to collector/crew
+  assignOrder: async (orderId: string, data: {
+    collectorId?: string;
+    collectorIds?: string[];
+    crewId?: string;
+    yardId?: string;
+    routeDistance?: string;
+    routeDuration?: string;
+  }): Promise<{ data: Order }> => {
+    const response = await apiClient.post(`/orders/${orderId}/assign`, data);
     return response.data;
   },
 
   // Assign collector (alias)
-  assignCollector: async (orderId: string, collectorId: string): Promise<{ data: Order }> => {
-    return ordersApi.assignOrder(orderId, collectorId);
+  assignCollector: async (orderId: string, data: { collectorId?: string; collectorIds?: string[]; crewId?: string } | string): Promise<{ data: Order }> => {
+    const payload = typeof data === 'string' ? { collectorId: data } : data;
+    return ordersApi.assignOrder(orderId, payload);
   },
 
   // Auto-assign collector

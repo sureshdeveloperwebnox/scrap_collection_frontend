@@ -68,6 +68,12 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                 pickupTime: orderData.pickupTime ? new Date(orderData.pickupTime) : undefined,
                 createdAt: new Date(orderData.createdAt),
                 updatedAt: new Date(orderData.updatedAt),
+                assignOrders: orderData.assignOrders?.map((ao: any) => ({
+                    ...ao,
+                    assignedAt: new Date(ao.assignedAt),
+                    startTime: ao.startTime ? new Date(ao.startTime) : undefined,
+                    endTime: ao.endTime ? new Date(ao.endTime) : undefined,
+                })),
             };
 
             // Populate route info from saved data if available
@@ -169,6 +175,26 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
         month: 'short',
         year: 'numeric',
     });
+
+    const assignedCollectors = order.assignOrders?.filter(ao => ao.collector).map(ao => ({
+        ...ao.collector!,
+        assignment: { startTime: ao.startTime, endTime: ao.endTime, notes: ao.notes }
+    })) || [];
+
+    if (assignedCollectors.length === 0 && order.assignedCollector) {
+        assignedCollectors.push({ ...order.assignedCollector, assignment: undefined } as any);
+    }
+
+    // Crews logic
+    const assignedCrews = order.assignOrders?.filter(ao => ao.crew).map(ao => ({
+        ...ao.crew!,
+        assignment: { startTime: ao.startTime, endTime: ao.endTime, notes: ao.notes }
+    })) || [];
+
+    if (assignedCrews.length === 0 && (order.crew || crew)) {
+        const c = order.crew || crew;
+        if (c) assignedCrews.push({ ...c, assignment: undefined } as any);
+    }
 
     return (
         <div className="space-y-6 pb-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -333,7 +359,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                                 </CardContent>
                             </Card>
 
-                            {(order.assignedCollector || order.crew || crew) && (
+                            {(assignedCollectors.length > 0 || assignedCrews.length > 0) && (
                                 <Card className="border-none shadow-sm bg-white overflow-hidden">
                                     <div className="h-1 bg-cyan-500" />
                                     <CardHeader className="pb-3 px-6 pt-5">
@@ -343,71 +369,133 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="px-6 py-4 space-y-4">
-                                        {order.assignedCollector && (
-                                            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50/50 border border-gray-100">
-                                                <div className="h-12 w-12 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600 font-bold text-lg">
-                                                    {order.assignedCollector.fullName.charAt(0).toUpperCase()}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p
-                                                        className="text-sm font-bold text-gray-900 cursor-pointer hover:text-cyan-600 transition-colors"
-                                                        onClick={() => router.push(`/employees?view=${order.assignedCollector?.id}&returnTo=/orders/${order.id}`)}
-                                                    >
-                                                        {order.assignedCollector.fullName}
-                                                    </p>
-                                                    <div className="flex items-center gap-3 mt-1">
-                                                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-semibold">
-                                                            <Mail className="h-3 w-3" />
-                                                            {order.assignedCollector.email}
-                                                        </div>
-                                                        {order.assignedCollector.phone && (
+                                        {assignedCollectors.map((collector, index) => (
+                                            <div key={collector.id} className="flex flex-col gap-3 p-4 rounded-xl bg-gray-50/50 border border-gray-100">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="h-12 w-12 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600 font-bold text-lg">
+                                                        {collector.fullName.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p
+                                                            className="text-sm font-bold text-gray-900 cursor-pointer hover:text-cyan-600 transition-colors"
+                                                            onClick={() => router.push(`/employees?view=${collector.id}&returnTo=/orders/${order.id}`)}
+                                                        >
+                                                            {collector.fullName}
+                                                        </p>
+                                                        <div className="flex items-center gap-3 mt-1">
                                                             <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-semibold">
-                                                                <Phone className="h-3 w-3" />
-                                                                {order.assignedCollector.phone}
+                                                                <Mail className="h-3 w-3" />
+                                                                {collector.email}
+                                                            </div>
+                                                            {collector.phone && (
+                                                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-semibold">
+                                                                    <Phone className="h-3 w-3" />
+                                                                    {collector.phone}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <Badge className="bg-cyan-100 text-cyan-700 hover:bg-cyan-100 border-none px-3 py-1 text-[10px] font-bold uppercase">
+                                                        {index === 0 ? 'Lead Collector' : 'Collector'}
+                                                    </Badge>
+                                                </div>
+
+                                                {(collector as any).assignment && (
+                                                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 pl-[64px]">
+                                                        {/* Start Time */}
+                                                        {(collector as any).assignment.startTime && (
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-semibold text-gray-500 uppercase text-[10px] tracking-wide">Start:</span>
+                                                                <span className="font-medium text-gray-800">
+                                                                    {(collector as any).assignment.startTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                                                </span>
+                                                            </div>
+                                                        )}
+
+                                                        {/* End Time */}
+                                                        {(collector as any).assignment.endTime && (
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-semibold text-gray-500 uppercase text-[10px] tracking-wide">End:</span>
+                                                                <span className="font-medium text-gray-800">
+                                                                    {(collector as any).assignment.endTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                                                </span>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Notes */}
+                                                        {(collector as any).assignment.notes && (
+                                                            <div className="col-span-2 mt-2 bg-white p-2 rounded-lg border border-gray-100">
+                                                                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Notes</p>
+                                                                <p className="italic text-gray-700">"{(collector as any).assignment.notes}"</p>
                                                             </div>
                                                         )}
                                                     </div>
-                                                </div>
-                                                <Badge className="bg-cyan-100 text-cyan-700 hover:bg-cyan-100 border-none px-3 py-1 text-[10px] font-bold uppercase">
-                                                    Lead Collector
-                                                </Badge>
+                                                )}
                                             </div>
-                                        )}
+                                        ))}
 
-                                        {(order.crew || crew) && (
-                                            <div className="flex items-center gap-4 p-4 rounded-xl bg-emerald-50/50 border border-emerald-100">
-                                                <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-lg">
-                                                    {(order.crew?.name || crew?.name || 'C').charAt(0).toUpperCase()}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="text-sm font-bold text-gray-900">{order.crew?.name || crew?.name}</p>
-                                                    <p className="text-[10px] text-muted-foreground font-semibold mt-1">
-                                                        Team Assignment • {(order.crew?.members?.length || crew?.members?.length || 0)} Members
-                                                    </p>
+                                        {assignedCrews.map((crewItem) => (
+                                            <div key={crewItem.id} className="flex flex-col gap-3 p-4 rounded-xl bg-emerald-50/50 border border-emerald-100">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-lg">
+                                                        {crewItem.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="text-sm font-bold text-gray-900">{crewItem.name}</p>
+                                                        <p className="text-[10px] text-muted-foreground font-semibold mt-1">
+                                                            Team Assignment • {crewItem.members?.length || 0} Members
+                                                        </p>
 
-                                                    {/* List Members */}
-                                                    {(order.crew?.members?.length || crew?.members?.length) ? (
-                                                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-emerald-100/50">
-                                                            {(order.crew?.members || crew?.members || []).map((member) => (
-                                                                <div
-                                                                    key={member.id}
-                                                                    className="flex items-center gap-1.5 bg-white/60 px-2 py-1 rounded-md border border-emerald-100/50 cursor-pointer hover:border-emerald-300 transition-colors"
-                                                                    onClick={() => router.push(`/employees?view=${member.id}&returnTo=/orders/${order.id}`)}
-                                                                >
-                                                                    <div className="h-4 w-4 rounded-full bg-emerald-500 flex items-center justify-center text-[8px] text-white font-bold">
-                                                                        {member.fullName.charAt(0).toUpperCase()}
+                                                        {crewItem.members && crewItem.members.length > 0 && (
+                                                            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-emerald-100/50">
+                                                                {crewItem.members.map((member: any) => (
+                                                                    <div
+                                                                        key={member.id}
+                                                                        className="flex items-center gap-1.5 bg-white/60 px-2 py-1 rounded-md border border-emerald-100/50 cursor-pointer hover:border-emerald-300 transition-colors"
+                                                                        onClick={() => router.push(`/employees?view=${member.id}&returnTo=/orders/${order.id}`)}
+                                                                    >
+                                                                        <div className="h-4 w-4 rounded-full bg-emerald-500 flex items-center justify-center text-[8px] text-white font-bold">
+                                                                            {member.fullName.charAt(0).toUpperCase()}
+                                                                        </div>
+                                                                        <span className="text-[10px] font-medium text-gray-700">{member.fullName}</span>
                                                                     </div>
-                                                                    <span className="text-[10px] font-medium text-gray-700">{member.fullName}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    ) : null}
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none px-3 py-1 text-[10px] font-bold uppercase">
+                                                        Assigned Crew
+                                                    </Badge>
                                                 </div>
-                                                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none px-3 py-1 text-[10px] font-bold uppercase">
-                                                    Assigned Crew
-                                                </Badge>
+
+                                                {(crewItem as any).assignment && (
+                                                    <div className="grid grid-cols-2 gap-2 text-xs text-emerald-800 pl-[64px]">
+                                                        {((crewItem as any).assignment.startTime) && (
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-semibold opacity-70 uppercase text-[10px] tracking-wide">Start:</span>
+                                                                <span className="font-medium">
+                                                                    {(crewItem as any).assignment.startTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        {((crewItem as any).assignment.endTime) && (
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-semibold opacity-70 uppercase text-[10px] tracking-wide">End:</span>
+                                                                <span className="font-medium">
+                                                                    {(crewItem as any).assignment.endTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        {((crewItem as any).assignment.notes) && (
+                                                            <div className="col-span-2 mt-2 bg-white/60 p-2 rounded-lg border border-emerald-100/50">
+                                                                <p className="text-[10px] font-semibold opacity-70 uppercase tracking-wide mb-1">Notes</p>
+                                                                <p className="italic">"{(crewItem as any).assignment.notes}"</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
+                                        ))}
                                     </CardContent>
                                 </Card>
                             )}
@@ -432,14 +520,16 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                                     <PipelineItem
                                         title="Assignment"
                                         time={
-                                            order.crew || crew ? `Crew: ${order.crew?.name || crew?.name}` :
-                                                order.assignedCollector ? `${order.assignedCollector.fullName} (${order.assignedCollector.email})` :
-                                                    'Awaiting Team Selection'
+                                            assignedCrews.length > 0
+                                                ? `Crew: ${assignedCrews[0].name}${assignedCrews.length > 1 ? ` +${assignedCrews.length - 1}` : ''}`
+                                                : assignedCollectors.length > 0
+                                                    ? `${assignedCollectors[0].fullName}${assignedCollectors.length > 1 ? ` +${assignedCollectors.length - 1}` : ''}`
+                                                    : 'Awaiting Team Selection'
                                         }
-                                        status={order.assignedCollectorId || order.crewId ? 'completed' : 'pending'}
+                                        status={assignedCollectors.length > 0 || assignedCrews.length > 0 ? 'completed' : 'pending'}
                                         action={(
                                             <Button variant="link" size="sm" onClick={() => setIsAssignmentOpen(true)} className="p-0 h-auto text-[10px] font-bold text-cyan-600">
-                                                {order.assignedCollectorId || order.crewId ? 'Change' : 'Assign'}
+                                                {assignedCollectors.length > 0 || assignedCrews.length > 0 ? 'Change' : 'Assign'}
                                             </Button>
                                         )}
                                     />
