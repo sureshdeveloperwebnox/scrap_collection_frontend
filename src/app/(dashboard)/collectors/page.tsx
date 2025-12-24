@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee } from '@/hooks/use-employees';
+import { useRoles } from '@/hooks/use-roles';
 import { useVehicleNames } from '@/hooks/use-vehicle-names';
 import { useScrapYards } from '@/hooks/use-scrap-yards';
 import { useCollectorAssignments, useCreateCollectorAssignment, useUpdateCollectorAssignment, useDeleteCollectorAssignment } from '@/hooks/use-collector-assignments';
@@ -211,6 +212,7 @@ export default function CollectorAssignmentPage() {
 
   const { data: vehicleNamesData } = useVehicleNames({ page: 1, limit: 100 });
   const { data: scrapYardsData } = useScrapYards({ page: 1, limit: 100, status: 'active' });
+  const { data: rolesData } = useRoles({ limit: 100, status: true });
 
   const createEmployeeMutation = useCreateEmployee();
   const updateEmployeeMutation = useUpdateEmployee();
@@ -440,9 +442,13 @@ export default function CollectorAssignmentPage() {
         });
         toast.success('Collector updated successfully');
       } else {
+        const collectorRole = (rolesData as any)?.data?.roles?.find((r: any) =>
+          r.name.toLowerCase() === 'collector'
+        );
+
         await createEmployeeMutation.mutateAsync({
           ...formData,
-          roleId: 1,
+          roleId: collectorRole?.id || 3, // Fallback to 3 if roles not loaded
           organizationId: user?.organizationId!,
         });
         toast.success('Collector created successfully');
