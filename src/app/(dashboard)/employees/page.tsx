@@ -64,7 +64,6 @@ function NoDataAnimation({ message = 'No data found', description }: { message?:
     return (
       <div className="flex flex-col items-center justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        <div className="mt-2 text-gray-400 text-sm">Loading...</div>
       </div>
     );
   }

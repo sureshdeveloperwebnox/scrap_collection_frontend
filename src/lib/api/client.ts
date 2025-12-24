@@ -68,8 +68,8 @@ apiClient.interceptors.response.use(
 
     const originalRequest = error.config;
 
-    // Skip auto-refresh for /me and /refresh endpoints to prevent infinite loops
-    const skipRefreshUrls = ['/auth/me', '/auth/refresh'];
+    // Skip auto-refresh for /refresh endpoint to prevent infinite loops
+    const skipRefreshUrls = ['/auth/refresh'];
     const shouldSkipRefresh = skipRefreshUrls.some(url => originalRequest.url?.includes(url));
 
     // Handle 401 errors (Unauthorized)
