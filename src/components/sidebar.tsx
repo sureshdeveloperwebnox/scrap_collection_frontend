@@ -199,7 +199,7 @@ const NavItem = memo(({
       }}
       aria-current={isActive ? 'page' : undefined}
       className={cn(
-        'group flex items-center relative transition-all duration-200 ease-in-out',
+        'group flex items-center relative transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
         'text-sm font-medium rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white/20',
         'py-3 h-12',
         isActive ? 'text-cyan-700' : 'text-white/80 hover:text-white',
@@ -223,7 +223,7 @@ const NavItem = memo(({
 
       {/* Item Icon Wrapper - Fixed width prevents jump */}
       <div className={cn(
-        "flex items-center justify-center flex-shrink-0 relative z-10 transition-transform duration-200 transform-gpu",
+        "flex items-center justify-center flex-shrink-0 relative z-10 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu",
         isCollapsed ? "w-12" : "w-5"
       )}>
         <item.icon className={cn(
@@ -239,7 +239,7 @@ const NavItem = memo(({
             initial={{ opacity: 0, width: 0, x: -10 }}
             animate={{ opacity: 1, width: 'auto', x: 0 }}
             exit={{ opacity: 0, width: 0, x: -10 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
               "truncate relative z-10 font-bold tracking-tight text-[0.9rem] whitespace-nowrap",
               isActive ? "text-cyan-700" : "text-white/80"
@@ -322,14 +322,14 @@ export function Sidebar() {
       <aside
         className={cn(
           "fixed left-0 top-0 flex flex-col z-50 h-[100dvh] sidebar-wrapper",
-          "bg-gradient-to-b from-cyan-600 via-cyan-700 to-cyan-800 shadow-2xl shadow-cyan-900/40",
+          "bg-gradient-to-b from-cyan-600 via-cyan-700 to-cyan-800 shadow-2xl shadow-cyan-900/40 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
           isCollapsed ? "lg:w-20" : "w-[260px]",
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* Brand Section - Unified structure to prevent snapping */}
         <div className={cn(
-          "flex items-center px-6 py-8 flex-shrink-0 transition-all duration-200",
+          "flex items-center px-6 py-8 flex-shrink-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
           isCollapsed ? "lg:px-3 lg:justify-center" : "gap-3"
         )}>
           <div className="flex items-center">
@@ -377,7 +377,7 @@ export function Sidebar() {
         {/* User Account Section - Unified structure for smooth transition */}
         <div className="p-4 mt-auto border-t border-white/10 bg-black/5">
           <div className={cn(
-            "bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 transition-all duration-200",
+            "bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
             isCollapsed ? "p-2 flex flex-col items-center gap-4 border-transparent bg-transparent" : "p-3"
           )}>
             <div className="flex items-center gap-3 w-full">
