@@ -53,6 +53,10 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
     const [showAssignmentStepper, setShowAssignmentStepper] = useState(false);
     const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
 
+    // Validation errors state
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
+
     const { user } = useAuthStore();
     const organizationId = user?.organizationId || 1;
     const queryClient = useQueryClient();
@@ -218,40 +222,113 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
             setPhoneError(undefined);
             setPhoneTouched(false);
             setCurrentStep(1);
+            setValidationErrors({});
+            setTouchedFields(new Set());
         }
     }, [order, isOpen, organizationId]);
 
     const createOrderMutation = useCreateOrder();
     const updateOrderMutation = useUpdateOrder();
 
+    // Validation helper functions
+    const validateField = (fieldName: string, value: any): string | undefined => {
+        switch (fieldName) {
+            case 'customerName':
+                if (!value || value.trim().length === 0) return 'Customer name is required';
+                if (value.trim().length < 2) return 'Customer name must be at least 2 characters long';
+                if (value.length > 100) return 'Customer name cannot exceed 100 characters';
+                break;
+            case 'customerPhone':
+                if (!value || value.trim() === '' || value === '+') return 'Phone number is required';
+                try {
+                    const isValid = isValidPhoneNumber(value.trim());
+                    if (!isValid) return 'Please enter a valid phone number';
+                } catch (error) {
+                    return 'Please enter a valid phone number';
+                }
+                break;
+            case 'address':
+                if (!value || value.trim().length === 0) return 'Collection address is required';
+                if (value.trim().length < 5) return 'Collection address must be at least 5 characters long';
+                if (value.length > 500) return 'Collection address cannot exceed 500 characters';
+                break;
+            case 'vehicleDescription':
+                if (!value || value.trim().length === 0) return 'Scrap description is required';
+                if (value.trim().length < 5) return 'Scrap description must be at least 5 characters long';
+                if (value.length > 1000) return 'Scrap description cannot exceed 1000 characters';
+                break;
+            case 'pickupTime':
+                if (!value) return 'Pickup date and time is required';
+                break;
+            case 'instructions':
+                if (value && value.length > 2000) return 'Instructions cannot exceed 2000 characters';
+                break;
+            case 'quotedPrice':
+                if (value !== undefined && value !== null && value < 0) return 'Quoted price cannot be negative';
+                break;
+        }
+        return undefined;
+    };
+
     const validateStep = (step: number): boolean => {
+        const errors: Record<string, string> = {};
+
         if (step === 1) {
             // Validate customer info
-            if (!formData.customerName.trim()) {
-                toast.error('Customer name is required');
-                return false;
-            }
-            if (!formData.customerPhone || formData.customerPhone.trim() === '' || formData.customerPhone === '+') {
-                toast.error('Customer phone is required');
-                return false;
-            }
-            try {
-                const isValid = isValidPhoneNumber(formData.customerPhone.trim());
-                if (!isValid) {
-                    toast.error('Please enter a valid phone number');
-                    return false;
-                }
-            } catch (error) {
-                toast.error('Please enter a valid phone number');
+            const nameError = validateField('customerName', formData.customerName);
+            if (nameError) errors.customerName = nameError;
+
+            const phoneError = validateField('customerPhone', formData.customerPhone);
+            if (phoneError) errors.customerPhone = phoneError;
+
+            if (Object.keys(errors).length > 0) {
+                setValidationErrors(errors);
+                toast.error(Object.values(errors)[0]);
                 return false;
             }
             return true;
         }
 
         if (step === 2) {
-            // Validate location
-            if (!formData.address.trim()) {
-                toast.error('Collection address is required');
+            // Validate location and scrap details
+            const addressError = validateField('address', formData.address);
+            if (addressError) {
+                errors.address = addressError;
+                setValidationErrors(errors);
+                toast.error(addressError);
+                return false;
+            }
+
+            const descriptionError = validateField('vehicleDescription', formData.vehicleDetails.description);
+            if (descriptionError) {
+                errors.vehicleDescription = descriptionError;
+                setValidationErrors(errors);
+                toast.error(descriptionError);
+                return false;
+            }
+
+            return true;
+        }
+
+        if (step === 3) {
+            // Validate additional details
+            const pickupTimeError = validateField('pickupTime', formData.pickupTime);
+            if (pickupTimeError) {
+                errors.pickupTime = pickupTimeError;
+                setValidationErrors(errors);
+                toast.error(pickupTimeError);
+                return false;
+            }
+
+            const instructionsError = validateField('instructions', formData.instructions);
+            if (instructionsError) errors.instructions = instructionsError;
+
+            const quotedPriceError = validateField('quotedPrice', formData.quotedPrice);
+            if (quotedPriceError) errors.quotedPrice = quotedPriceError;
+
+            if (Object.keys(errors).length > 0) {
+                setValidationErrors(errors);
+                toast.error(Object.values(errors)[0]);
                 return false;
             }
             return true;
@@ -357,8 +434,27 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
 
     const handleInputChange = (field: string, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+
+        // Mark field as touched
+        setTouchedFields(prev => new Set(prev).add(field));
+
+        // Clear validation error for this field
+        if (validationErrors[field]) {
+            setValidationErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[field];
+                return newErrors;
+            });
+        }
+
         if (field === 'customerPhone' && phoneError) {
             setPhoneError(undefined);
+        }
+
+        // Real-time validation for specific fields
+        const error = validateField(field, value);
+        if (error && touchedFields.has(field)) {
+            setValidationErrors(prev => ({ ...prev, [field]: error }));
         }
     };
 
@@ -367,6 +463,25 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
             ...prev,
             vehicleDetails: { ...prev.vehicleDetails, [field]: value }
         }));
+
+        // Mark field as touched
+        const fieldKey = `vehicle${field.charAt(0).toUpperCase() + field.slice(1)}`;
+        setTouchedFields(prev => new Set(prev).add(fieldKey));
+
+        // Clear validation error for this field
+        if (validationErrors[fieldKey]) {
+            setValidationErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[fieldKey];
+                return newErrors;
+            });
+        }
+
+        // Real-time validation
+        const error = validateField(fieldKey, value);
+        if (error && touchedFields.has(fieldKey)) {
+            setValidationErrors(prev => ({ ...prev, [fieldKey]: error }));
+        }
     };
 
     const isLoading = createOrderMutation.isPending || updateOrderMutation.isPending;
@@ -498,13 +613,22 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
                                                     id="customerName"
                                                     value={formData.customerName}
                                                     onChange={(e) => handleInputChange('customerName', e.target.value)}
+                                                    onBlur={() => setTouchedFields(prev => new Set(prev).add('customerName'))}
                                                     required
                                                     disabled={isLoading || !!formData.customerId}
                                                     className={`pl-14 h-12 rounded-xl border-gray-200 bg-white shadow-sm ${formData.customerId ? 'bg-gray-50 cursor-not-allowed' : ''
+                                                        } ${validationErrors.customerName && touchedFields.has('customerName') ? 'border-red-500 focus:ring-red-500' : ''
                                                         }`}
                                                     placeholder="Enter customer name"
+                                                    maxLength={100}
                                                 />
                                             </div>
+                                            {validationErrors.customerName && touchedFields.has('customerName') && (
+                                                <p className="text-sm text-red-600 mt-1">{validationErrors.customerName}</p>
+                                            )}
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {formData.customerName.length}/100 characters
+                                            </p>
                                         </div>
 
                                         <div className="space-y-2">
@@ -616,16 +740,26 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="vehicleDescription" className="text-sm font-medium text-gray-700">Description</Label>
+                                            <Label htmlFor="vehicleDescription" className="text-sm font-medium text-gray-700">Scrap Description *</Label>
                                             <textarea
                                                 id="vehicleDescription"
                                                 value={formData.vehicleDetails.description || ''}
                                                 onChange={(e) => handleVehicleDetailChange('description', e.target.value)}
-                                                placeholder="Enter scrap description..."
+                                                onBlur={() => setTouchedFields(prev => new Set(prev).add('vehicleDescription'))}
+                                                placeholder="Enter scrap description (required)..."
                                                 disabled={isLoading}
                                                 rows={4}
-                                                className="w-full px-4 py-3 rounded-xl border-gray-200 bg-white shadow-sm resize-none"
+                                                maxLength={1000}
+                                                required
+                                                className={`w-full px-4 py-3 rounded-xl border-gray-200 bg-white shadow-sm resize-none ${validationErrors.vehicleDescription && touchedFields.has('vehicleDescription') ? 'border-red-500 focus:ring-red-500' : ''
+                                                    }`}
                                             />
+                                            {validationErrors.vehicleDescription && touchedFields.has('vehicleDescription') && (
+                                                <p className="text-sm text-red-600 mt-1">{validationErrors.vehicleDescription}</p>
+                                            )}
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {(formData.vehicleDetails.description || '').length}/1000 characters
+                                            </p>
                                         </div>
                                     </div>
 
@@ -645,12 +779,21 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
                                                     id="address"
                                                     value={formData.address}
                                                     onChange={(e) => handleInputChange('address', e.target.value)}
+                                                    onBlur={() => setTouchedFields(prev => new Set(prev).add('address'))}
                                                     required
                                                     disabled={isLoading}
-                                                    className="pl-14 h-12 rounded-xl"
+                                                    className={`pl-14 h-12 rounded-xl ${validationErrors.address && touchedFields.has('address') ? 'border-red-500 focus:ring-red-500' : ''
+                                                        }`}
                                                     placeholder="Enter collection address"
+                                                    maxLength={500}
                                                 />
                                             </div>
+                                            {validationErrors.address && touchedFields.has('address') && (
+                                                <p className="text-sm text-red-600 mt-1">{validationErrors.address}</p>
+                                            )}
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {formData.address.length}/500 characters
+                                            </p>
                                         </div>
 
                                         <div className="space-y-2">
@@ -678,15 +821,22 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
-                                            <Label htmlFor="pickupTime" className="text-sm font-medium text-gray-700">Pickup Date & Time</Label>
+                                            <Label htmlFor="pickupTime" className="text-sm font-medium text-gray-700">Pickup Date & Time *</Label>
                                             <DateTimePicker
                                                 date={formData.pickupTime}
-                                                onDateChange={(date) => handleInputChange('pickupTime', date)}
+                                                onDateChange={(date) => {
+                                                    handleInputChange('pickupTime', date);
+                                                    setTouchedFields(prev => new Set(prev).add('pickupTime'));
+                                                }}
                                                 disabled={isLoading}
-                                                placeholder="Select pickup date and time"
+                                                placeholder="Select pickup date and time (required)"
                                                 showTime={true}
-                                                className="w-full"
+                                                className={`w-full ${validationErrors.pickupTime && touchedFields.has('pickupTime') ? 'border-red-500 focus:ring-red-500' : ''
+                                                    }`}
                                             />
+                                            {validationErrors.pickupTime && touchedFields.has('pickupTime') && (
+                                                <p className="text-sm text-red-600 mt-1">{validationErrors.pickupTime}</p>
+                                            )}
                                         </div>
 
                                         <div className="space-y-2">
@@ -702,11 +852,16 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
                                                     min="0"
                                                     value={formData.quotedPrice || ''}
                                                     onChange={(e) => handleInputChange('quotedPrice', e.target.value ? parseFloat(e.target.value) : undefined)}
+                                                    onBlur={() => setTouchedFields(prev => new Set(prev).add('quotedPrice'))}
                                                     disabled={isLoading}
-                                                    className="pl-12 h-12 rounded-xl"
+                                                    className={`pl-12 h-12 rounded-xl ${validationErrors.quotedPrice && touchedFields.has('quotedPrice') ? 'border-red-500 focus:ring-red-500' : ''
+                                                        }`}
                                                     placeholder="0.00"
                                                 />
                                             </div>
+                                            {validationErrors.quotedPrice && touchedFields.has('quotedPrice') && (
+                                                <p className="text-sm text-red-600 mt-1">{validationErrors.quotedPrice}</p>
+                                            )}
                                         </div>
                                     </div>
 
@@ -720,12 +875,21 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
                                                 id="instructions"
                                                 value={formData.instructions}
                                                 onChange={(e) => handleInputChange('instructions', e.target.value)}
+                                                onBlur={() => setTouchedFields(prev => new Set(prev).add('instructions'))}
                                                 rows={4}
                                                 disabled={isLoading}
-                                                className="w-full pl-12 pr-4 py-3 rounded-xl border-gray-200 bg-white shadow-sm resize-none"
+                                                maxLength={2000}
+                                                className={`w-full pl-12 pr-4 py-3 rounded-xl border-gray-200 bg-white shadow-sm resize-none ${validationErrors.instructions && touchedFields.has('instructions') ? 'border-red-500 focus:ring-red-500' : ''
+                                                    }`}
                                                 placeholder="Enter any special instructions for this order..."
                                             />
                                         </div>
+                                        {validationErrors.instructions && touchedFields.has('instructions') && (
+                                            <p className="text-sm text-red-600 mt-1">{validationErrors.instructions}</p>
+                                        )}
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            {formData.instructions.length}/2000 characters
+                                        </p>
                                     </div>
 
                                     {/* Review Summary */}

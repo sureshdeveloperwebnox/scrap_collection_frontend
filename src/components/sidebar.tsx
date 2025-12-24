@@ -352,7 +352,7 @@ export function Sidebar() {
                   className="flex items-center ml-3 overflow-hidden"
                 >
                   <span className="text-white font-black text-xl tracking-tighter whitespace-nowrap">
-                    SCRAP<span className="text-cyan-200">X</span>
+                    <span className="text-cyan-200">A</span>USSIE SCRAP<span className="text-cyan-200">X</span>
                   </span>
                 </m.div>
               )}
