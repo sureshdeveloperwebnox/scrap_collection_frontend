@@ -84,10 +84,24 @@ export interface Order {
   adminNotes?: string;
   instructions?: string;
   photos?: string[];
+  assignOrders?: AssignOrder[];
   organizationId: number;
   customerId?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface AssignOrder {
+  id: string;
+  orderId: string;
+  collectorId?: string;
+  collector?: Employee;
+  crewId?: string;
+  crew?: Crew;
+  assignedAt: Date;
+  startTime?: Date;
+  endTime?: Date;
+  notes?: string;
 }
 
 // Employee Interface

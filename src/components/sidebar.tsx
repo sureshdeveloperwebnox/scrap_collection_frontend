@@ -39,6 +39,7 @@ import {
   LogOut,
   ArrowUpRight
 } from 'lucide-react';
+import { useSignOut } from '@/hooks/use-auth';
 
 // Navigation item type
 type NavigationItem = {
@@ -254,10 +255,12 @@ const NavItem = memo(({
 
 NavItem.displayName = 'NavItem';
 
+
 export function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
+  const { mutate: signOut } = useSignOut();
 
   // High-performance Zustand state subscription
   const {
@@ -404,7 +407,7 @@ export function Sidebar() {
                       </div>
                     </div>
                     <button
-                      onClick={() => useAuthStore.getState().logout()}
+                      onClick={() => signOut()}
                       className="p-2 text-white/40 hover:text-red-300 hover:bg-white/10 rounded-lg transition-all ml-2"
                       aria-label="Logout"
                       title="Logout"
@@ -418,7 +421,7 @@ export function Sidebar() {
 
             {isCollapsed && (
               <button
-                onClick={() => useAuthStore.getState().logout()}
+                onClick={() => signOut()}
                 className="p-2 text-white/40 hover:text-red-300 transition-colors"
                 title="Logout"
                 aria-label="Logout"

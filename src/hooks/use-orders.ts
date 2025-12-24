@@ -359,14 +359,19 @@ export const useAssignCollector = () => {
   const { updateOrderInCache } = useOrdersCacheStore();
 
   return useMutation({
-    mutationFn: ({ orderId, collectorId }: { orderId: string; collectorId: string }) =>
-      ordersApi.assignCollector(orderId, collectorId),
+    mutationFn: ({ orderId, data }: { orderId: string; data: any }) =>
+      ordersApi.assignOrder(orderId, data),
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.orders.lists() });
       const previousQueries = queryClient.getQueriesData({ queryKey: queryKeys.orders.lists() });
 
       // Optimistically update cache
-      updateOrderInCache(variables.orderId, { assignedCollectorId: variables.collectorId, orderStatus: 'ASSIGNED' });
+      const updates: any = { orderStatus: 'ASSIGNED' };
+      if (variables.data.collectorId) updates.assignedCollectorId = variables.data.collectorId;
+      if (variables.data.collectorIds?.length > 0) updates.assignedCollectorId = variables.data.collectorIds[0];
+      if (variables.data.crewId) updates.crewId = variables.data.crewId;
+
+      updateOrderInCache(variables.orderId, updates);
 
       return { previousQueries };
     },
