@@ -265,3 +265,27 @@ export const useGoogleSignIn = () => {
     error: googleSignInMutation.error,
   };
 };
+export const useUpdateProfile = () => {
+  const queryClient = useQueryClient();
+  const { updateUser } = useAuthStore();
+
+  return useMutation({
+    mutationFn: (data: any) => authApi.updateProfile(data),
+    onSuccess: (response) => {
+      if (response?.data?.user) {
+        // Update local store with new user data
+        const userData = response.data.user;
+        // Map backend firstName/lastName to name if needed
+        const name = userData.name || `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
+        updateUser({ ...userData, name });
+        
+        toast.success('Profile updated successfully!');
+        queryClient.invalidateQueries({ queryKey: ['me'] });
+      }
+    },
+    onError: (error: any) => {
+      console.error('Update profile error:', error);
+      toast.error(error?.response?.data?.message || 'Failed to update profile');
+    },
+  });
+};

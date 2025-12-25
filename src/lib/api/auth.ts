@@ -58,4 +58,9 @@ export const authApi = {
     const response = await apiClient.post('/auth/me');
     return response.data;
   },
+
+  updateProfile: async (data: any): Promise<AuthResponse> => {
+    const response = await apiClient.post('/auth/profile', data);
+    return response.data;
+  },
 };

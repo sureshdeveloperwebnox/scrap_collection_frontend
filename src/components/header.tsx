@@ -12,11 +12,23 @@ import {
   Mail,
   Moon,
   Settings,
-  X
+  X,
+  LogOut,
+  User as UserIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { useSidebarStore } from '@/lib/store/sidebar-store';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { UserProfileDialog } from "./user-profile-dialog";
+import { useSignOut } from "@/hooks/use-auth";
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -25,6 +37,8 @@ interface HeaderProps {
 export function Header({ onToggleSidebar }: HeaderProps) {
   const { user } = useAuthStore();
   const { isCollapsed, toggleCollapsed, toggleMobileOpen } = useSidebarStore();
+  const signOutMutation = useSignOut();
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   const handleToggle = () => {
     // If a prop is passed, use it, otherwise use store directly
@@ -161,21 +175,70 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         </div>
 
         {/* User Profile - Header side */}
-        <div className="flex items-center space-x-3 pl-4 border-l border-gray-100">
-          <div className="hidden md:block text-right">
-            <div className="text-sm font-bold text-gray-900 leading-none">{user?.name || 'Oda Dink'}</div>
-            <div className="text-[11px] text-gray-500 mt-1 uppercase tracking-wider font-semibold">{user?.role || 'Super Admin'}</div>
-          </div>
-          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm ring-2 ring-gray-100 cursor-pointer transition-transform hover:scale-110">
-            <div className="w-full h-full bg-cyan-100 flex items-center justify-center">
-              <span className="text-cyan-700 font-bold text-xs">
-                {user?.name?.charAt(0).toUpperCase() || 'O'}
-                {user?.name?.split(' ')[1]?.charAt(0).toUpperCase() || 'D'}
-              </span>
-            </div>
-          </div>
+        <div className="flex items-center pl-4 border-l border-gray-100">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="flex items-center space-x-3 cursor-pointer group transition-all">
+                <div className="hidden md:block text-right">
+                  <div className="text-sm font-bold text-gray-900 leading-none group-hover:text-cyan-600 transition-colors">
+                    {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (user?.name || 'Administrator')}
+                  </div>
+                  <div className="text-[11px] text-gray-500 mt-1 uppercase tracking-wider font-semibold">
+                    {user?.role || 'Super Admin'}
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm ring-2 ring-gray-100 transition-transform group-hover:scale-110">
+                  <div className="w-full h-full bg-cyan-100 flex items-center justify-center">
+                    <span className="text-cyan-700 font-bold text-xs uppercase">
+                      {user?.firstName?.charAt(0) || user?.name?.charAt(0) || 'A'}
+                      {user?.lastName?.charAt(0) || user?.name?.split(' ')[1]?.charAt(0) || user?.name?.charAt(1) || ''}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 mt-2 rounded-xl border-gray-100 shadow-xl p-2">
+              <DropdownMenuLabel className="font-normal p-2">
+                <div className="flex flex-col space-y-1.5 overflow-hidden">
+                  <p className="text-sm font-bold text-gray-900 truncate">
+                    {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (user?.name || 'Administrator')}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate" title={user?.email || ''}>
+                    {user?.email || 'admin@example.com'}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-gray-100" />
+              <DropdownMenuItem
+                className="flex items-center gap-2 p-2 rounded-lg cursor-pointer focus:bg-cyan-50 focus:text-cyan-700 transition-colors"
+                onClick={() => setProfileDialogOpen(true)}
+              >
+                <UserIcon className="w-4 h-4" />
+                <span className="font-medium">Edit Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="flex items-center gap-2 p-2 rounded-lg cursor-pointer focus:bg-cyan-50 focus:text-cyan-700 transition-colors"
+                onClick={() => { }} // Could add settings link if needed
+              >
+                <Settings className="w-4 h-4" />
+                <span className="font-medium">Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-gray-100" />
+              <DropdownMenuItem
+                className="flex items-center gap-2 p-2 rounded-lg cursor-pointer focus:bg-red-50 focus:text-red-700 transition-colors"
+                onClick={() => signOutMutation.mutate()}
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="font-medium">Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
+      <UserProfileDialog
+        isOpen={profileDialogOpen}
+        onClose={() => setProfileDialogOpen(false)}
+      />
     </header>
   );
 }

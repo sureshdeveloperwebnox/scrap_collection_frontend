@@ -2,8 +2,11 @@ import { create } from 'zustand';
 
 interface User {
   id: string;
+  firstName?: string;
+  lastName?: string;
   name: string;
   email: string;
+  phone?: string;
   role: string;
   organizationId?: number;
 }
@@ -15,6 +18,7 @@ interface AuthState {
   isHydrated: boolean;
   login: (user: User) => void;
   logout: () => void;
+  updateUser: (user: Partial<User>) => void;
   setLoading: (loading: boolean) => void;
   setHydrated: (hydrated: boolean) => void;
   restoreSession: (user: User) => void;
@@ -41,6 +45,15 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       isAuthenticated: false,
       isLoading: false,
     });
+  },
+
+  updateUser: (userData) => {
+    const currentUser = get().user;
+    if (currentUser) {
+      set({
+        user: { ...currentUser, ...userData },
+      });
+    }
   },
 
   setLoading: (loading: boolean) => {
