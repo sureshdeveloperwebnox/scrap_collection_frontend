@@ -965,7 +965,7 @@ export default function OrdersPage() {
       <Card className="bg-white shadow-sm border border-gray-200 rounded-lg">
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <CardTitle className="text-xl font-bold text-gray-900">Work Orders</CardTitle>
+            <CardTitle className="text-xl font-bold text-gray-900">Orders</CardTitle>
 
             <div className="flex items-center gap-2 flex-wrap">
               <Button

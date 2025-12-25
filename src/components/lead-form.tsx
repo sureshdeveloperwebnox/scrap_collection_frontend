@@ -683,7 +683,7 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
               <div className="space-y-6">
                 {/* Customer Information - Horizontal Layout */}
                 <div className="space-y-5">
-                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Customer Information</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Lead Information</h3>
                   <div className="grid grid-cols-1 gap-5">
                     <div className="space-y-2">
                       <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">Full Name *</Label>
