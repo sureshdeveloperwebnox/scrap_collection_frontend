@@ -9,8 +9,10 @@ export interface SignInRequest {
 export interface SignUpRequest {
   email: string;
   password: string;
-  confirmPassword: string;
   name: string;
+  phone: string;
+  address: string;
+  countryId?: number;
 }
 
 export interface AuthResponse {

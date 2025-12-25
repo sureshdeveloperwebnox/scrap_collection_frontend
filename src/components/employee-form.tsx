@@ -11,9 +11,10 @@ import { useCreateEmployee, useUpdateEmployee } from '@/hooks/use-employees';
 import { useRoles } from '@/hooks/use-roles';
 import { useScrapYards } from '@/hooks/use-scrap-yards';
 import { toast } from 'sonner';
-import { isValidPhoneNumber } from 'libphonenumber-js';
+import { validatePhoneNumber, getPhonePlaceholder } from '@/lib/phone-utils';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import { CountryCode } from 'libphonenumber-js';
 import { User, Mail, Lock, MapPin, Shield } from 'lucide-react';
 
 interface EmployeeFormProps {
@@ -26,6 +27,7 @@ interface EmployeeFormProps {
 export function EmployeeForm({ employee, isOpen, onClose, onSubmit }: EmployeeFormProps) {
   const [phoneError, setPhoneError] = useState<string | undefined>(undefined);
   const [phoneTouched, setPhoneTouched] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<CountryCode>('AU');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState({
@@ -60,6 +62,15 @@ export function EmployeeForm({ employee, isOpen, onClose, onSubmit }: EmployeeFo
         scrapYardId: employee.scrapYardId?.toString() || (employee as any).scrapYard?.id?.toString() || 'none',
         password: '',
       });
+
+      // Detect country from existing phone number
+      if (employee.phone) {
+        const validation = validatePhoneNumber(employee.phone);
+        if (validation.country) {
+          setSelectedCountry(validation.country);
+        }
+      }
+
       setPhoneError(undefined);
       setPhoneTouched(false);
       setValidationErrors({});
@@ -95,20 +106,19 @@ export function EmployeeForm({ employee, isOpen, onClose, onSubmit }: EmployeeFo
 
     // Validate phone
     setPhoneTouched(true);
-    let validPhone = formData.phone;
-    if (!validPhone || validPhone.trim() === '' || validPhone === '+') {
+    let finalPhone = formData.phone;
+    if (!finalPhone || finalPhone.trim() === '' || finalPhone === '+') {
       errors.phone = "Phone number is required";
       setPhoneError("Phone number is required");
     } else {
-      // Ensure formatting with +
-      if (!validPhone.startsWith('+')) validPhone = '+' + validPhone;
-
-      if (!isValidPhoneNumber(validPhone)) {
-        const digits = validPhone.replace(/\D/g, '');
-        if (digits.length < 7 || digits.length > 15) {
-          errors.phone = "Invalid phone number";
-          setPhoneError("Invalid phone number");
-        }
+      const validation = validatePhoneNumber(finalPhone, selectedCountry);
+      if (!validation.isValid) {
+        errors.phone = validation.error || "Invalid phone number";
+        setPhoneError(validation.error || "Invalid phone number");
+      } else {
+        finalPhone = validation.formatted || finalPhone;
+        // Update form data with formatted E.164 number
+        setFormData(prev => ({ ...prev, phone: finalPhone }));
       }
     }
 
@@ -117,9 +127,6 @@ export function EmployeeForm({ employee, isOpen, onClose, onSubmit }: EmployeeFo
       toast.error("Please fix the validation errors");
       return;
     }
-
-    // Prepare data
-    const finalPhone = formData.phone.startsWith('+') ? formData.phone : `+${formData.phone}`;
 
     const submitData: any = {
       organizationId: formData.organizationId,
@@ -259,11 +266,28 @@ export function EmployeeForm({ employee, isOpen, onClose, onSubmit }: EmployeeFo
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="text-sm font-medium text-gray-700">Phone *</Label>
                   <PhoneInput
-                    country={'au'}
-                    value={formData.phone}
-                    onChange={(value) => {
-                      handleInputChange('phone', value);
+                    country={selectedCountry.toLowerCase()}
+                    value={formData.phone?.replace(/^\+/, '') || ''}
+                    onChange={(value, countryData: any) => {
+                      if (countryData && countryData.iso2) {
+                        const isoCode = countryData.iso2.toUpperCase() as CountryCode;
+                        setSelectedCountry(isoCode);
+                      }
+
+                      const phoneWithPlus = value.startsWith('+') ? value : `+${value}`;
+                      handleInputChange('phone', phoneWithPlus);
                       if (phoneError) setPhoneError(undefined);
+                    }}
+                    onBlur={() => {
+                      setPhoneTouched(true);
+                      if (formData.phone && formData.phone.trim() !== '' && formData.phone !== '+') {
+                        const validation = validatePhoneNumber(formData.phone, selectedCountry);
+                        if (!validation.isValid) {
+                          setPhoneError(validation.error);
+                        } else if (validation.formatted) {
+                          handleInputChange('phone', validation.formatted);
+                        }
+                      }
                     }}
                     inputClass={`!w-full !h-12 !rounded-xl !border-gray-200 !bg-white !shadow-sm focus:!border-cyan-400 focus:!ring-cyan-200 focus:!ring-2 transition-all ${phoneError ? '!border-red-500 focus:!border-red-500' : ''
                       }`}
@@ -271,6 +295,8 @@ export function EmployeeForm({ employee, isOpen, onClose, onSubmit }: EmployeeFo
                     buttonClass={`!border-gray-200 !rounded-l-xl ${phoneError ? '!border-red-500' : ''}`}
                     disabled={isLoading}
                     preferredCountries={['au', 'us', 'gb', 'in', 'nz', 'ca']}
+                    placeholder={getPhonePlaceholder(selectedCountry)}
+                    specialLabel=""
                   />
                   {phoneError && <p className="text-sm text-red-600">{phoneError}</p>}
                 </div>

@@ -10,6 +10,7 @@ export const collectorsApi = {
     status?: string;
     workZone?: string;
     available?: boolean;
+    organizationId?: number;
   }): Promise<{ data: Collector[], total: number, page: number, limit: number }> => {
     const response = await apiClient.get('/collectors', { params });
     return response.data;

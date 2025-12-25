@@ -10,6 +10,7 @@ export const scrapYardsApi = {
     status?: string;
     city?: string;
     state?: string;
+    organizationId?: number;
   }): Promise<{ data: ScrapYard[], total: number, page: number, limit: number }> => {
     const response = await apiClient.get('/scrap-yards', { params });
     return response.data;

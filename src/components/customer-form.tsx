@@ -13,7 +13,8 @@ import { toast } from 'sonner';
 import { User, Mail, Phone, MapPin, Calendar } from 'lucide-react';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import { isValidPhoneNumber, parsePhoneNumber, CountryCode } from 'libphonenumber-js';
+import { validatePhoneNumber, getPhonePlaceholder } from '@/lib/phone-utils';
+import { CountryCode } from 'libphonenumber-js';
 import { GoogleMapPicker } from '@/components/google-map-picker';
 import { z } from 'zod';
 import { useAuthStore } from '@/lib/store/auth-store';
@@ -36,14 +37,22 @@ const createCustomerSchema = z.object({
         .trim(),
     phone: z.string()
         .min(1, 'Phone number is required')
-        .refine((val) => {
-            if (!val || val.trim() === '' || val === '+') return false;
-            try {
-                return isValidPhoneNumber(val.trim());
-            } catch {
-                return false;
+        .superRefine((val, ctx) => {
+            if (!val || val.trim() === '' || val === '+') {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: 'Phone number is required',
+                });
+                return;
             }
-        }, 'Please enter a valid phone number'),
+            const validation = validatePhoneNumber(val);
+            if (!validation.isValid) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: validation.error || 'Please enter a valid phone number',
+                });
+            }
+        }),
     email: z.string()
         .email('Please provide a valid email address')
         .optional()
@@ -91,14 +100,22 @@ const updateCustomerSchema = createCustomerSchema.partial().extend({
         .optional(),
     phone: z.string()
         .min(1, 'Phone number is required')
-        .refine((val) => {
-            if (!val || val.trim() === '' || val === '+') return false;
-            try {
-                return isValidPhoneNumber(val.trim());
-            } catch {
-                return false;
+        .superRefine((val, ctx) => {
+            if (!val || val.trim() === '' || val === '+') {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: 'Phone number is required',
+                });
+                return;
             }
-        }, 'Please enter a valid phone number')
+            const validation = validatePhoneNumber(val);
+            if (!validation.isValid) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: validation.error || 'Please enter a valid phone number',
+                });
+            }
+        })
         .optional(),
     address: z.string()
         .min(5, 'Address must be at least 5 characters long')
@@ -109,6 +126,7 @@ const updateCustomerSchema = createCustomerSchema.partial().extend({
 export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting = false, onSuccess }: CustomerFormProps) {
     const [phoneError, setPhoneError] = useState<string | undefined>(undefined);
     const [phoneTouched, setPhoneTouched] = useState(false);
+    const [selectedCountry, setSelectedCountry] = useState<CountryCode>('AU');
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
     const { user } = useAuthStore();
     const organizationId = user?.organizationId || 1;
@@ -210,6 +228,15 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                 vehicleCondition: customer.vehicleCondition,
                 accountStatus: customer.accountStatus || 'ACTIVE',
             });
+
+            // Detect country from existing phone number
+            if (phoneValue) {
+                const validation = validatePhoneNumber(phoneValue);
+                if (validation.country) {
+                    setSelectedCountry(validation.country);
+                }
+            }
+
             setPhoneError(undefined);
             setPhoneTouched(false);
             setValidationErrors({});
@@ -330,16 +357,10 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
 
         // Additional phone validation
         if (formData.phone && formData.phone.trim() !== '' && formData.phone !== '+') {
-            try {
-                const isValid = isValidPhoneNumber(formData.phone.trim());
-                if (!isValid) {
-                    setPhoneError('Please enter a valid phone number');
-                    toast.error('Please enter a valid phone number');
-                    return;
-                }
-            } catch (error) {
-                setPhoneError('Please enter a valid phone number');
-                toast.error('Please enter a valid phone number');
+            const validation = validatePhoneNumber(formData.phone.trim());
+            if (!validation.isValid) {
+                setPhoneError(validation.error || 'Please enter a valid phone number');
+                toast.error(validation.error || 'Please enter a valid phone number');
                 return;
             }
         }
@@ -536,27 +557,18 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                                             <Label htmlFor="phone" className="text-sm font-medium text-gray-700">Phone *</Label>
                                             <div className="flex flex-col gap-2">
                                                 <PhoneInput
-                                                    country={(() => {
-                                                        // Detect country from existing phone number when editing
-                                                        if (customer && formData.phone) {
-                                                            try {
-                                                                const phoneNumber = formData.phone.startsWith('+') ? formData.phone : `+${formData.phone}`;
-                                                                const parsed = parsePhoneNumber(phoneNumber);
-                                                                if (parsed && parsed.country) {
-                                                                    return parsed.country.toLowerCase();
-                                                                }
-                                                            } catch (e) {
-                                                                // If parsing fails, use default
-                                                            }
-                                                        }
-                                                        return 'au'; // Default to Australia
-                                                    })()}
+                                                    country={selectedCountry.toLowerCase()}
                                                     value={formData.phone?.replace(/^\+/, '') || ''}
                                                     preferredCountries={['au', 'us', 'gb', 'in', 'nz', 'ca']}
-                                                    disableCountryGuess={true}
+                                                    disableCountryGuess={false}
                                                     disableDropdown={false}
-                                                    onChange={(value, country, e, formattedValue) => {
-                                                        const phoneWithPlus = value ? `+${value}` : '';
+                                                    onChange={(value, countryData: any) => {
+                                                        if (countryData && countryData.iso2) {
+                                                            const isoCode = countryData.iso2.toUpperCase() as CountryCode;
+                                                            setSelectedCountry(isoCode);
+                                                        }
+
+                                                        const phoneWithPlus = value.startsWith('+') ? value : `+${value}`;
                                                         handleInputChange('phone', phoneWithPlus);
 
                                                         if (phoneError) {
@@ -566,38 +578,13 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                                                     onBlur={() => {
                                                         setPhoneTouched(true);
                                                         if (formData.phone && formData.phone.trim() !== '' && formData.phone !== '+') {
-                                                            try {
-                                                                const parsed = parsePhoneNumber(formData.phone);
-                                                                if (parsed && parsed.country) {
-                                                                    const countryCode = parsed.country.toUpperCase() as CountryCode;
-                                                                    const isValid = isValidPhoneNumber(formData.phone, countryCode);
-
-                                                                    if (!isValid) {
-                                                                        const nationalNumber = parsed.nationalNumber;
-                                                                        if (nationalNumber && nationalNumber.length >= 7 && nationalNumber.length <= 15) {
-                                                                            setPhoneError(undefined);
-                                                                        } else {
-                                                                            setPhoneError(`Please enter a valid ${parsed.country.toUpperCase()} phone number`);
-                                                                        }
-                                                                    } else {
-                                                                        setPhoneError(undefined);
-                                                                    }
-                                                                } else {
-                                                                    const digitsOnly = formData.phone.replace(/\D/g, '');
-                                                                    if (digitsOnly.length >= 10 && digitsOnly.length <= 15) {
-                                                                        setPhoneError(undefined);
-                                                                    } else {
-                                                                        const isValid = isValidPhoneNumber(formData.phone);
-                                                                        setPhoneError(isValid ? undefined : 'Please enter a valid phone number');
-                                                                    }
-                                                                }
-                                                            } catch (error) {
-                                                                const digitsOnly = formData.phone.replace(/\D/g, '');
-                                                                if (digitsOnly.length >= 10 && digitsOnly.length <= 15) {
-                                                                    setPhoneError(undefined);
-                                                                } else {
-                                                                    const isValid = isValidPhoneNumber(formData.phone);
-                                                                    setPhoneError(isValid ? undefined : 'Please enter a valid phone number');
+                                                            const validation = validatePhoneNumber(formData.phone, selectedCountry);
+                                                            if (!validation.isValid) {
+                                                                setPhoneError(validation.error);
+                                                            } else {
+                                                                setPhoneError(undefined);
+                                                                if (validation.formatted) {
+                                                                    handleInputChange('phone', validation.formatted);
                                                                 }
                                                             }
                                                         } else {
@@ -614,7 +601,7 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                                                     buttonClass={`!border-gray-200 !rounded-l-xl ${phoneError && phoneTouched ? '!border-red-500' : ''}`}
                                                     containerClass={`!w-full ${phoneError && phoneTouched ? 'error' : ''}`}
                                                     disabled={isLoading}
-                                                    placeholder="Enter phone number"
+                                                    placeholder={getPhonePlaceholder(selectedCountry)}
                                                     specialLabel=""
                                                 />
                                                 {phoneError && phoneTouched && (

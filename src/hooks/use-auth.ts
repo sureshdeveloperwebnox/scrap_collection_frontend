@@ -178,7 +178,7 @@ export const useGoogleSignIn = () => {
     onMutate: () => {
       setLoading(true);
     },
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       console.log("Google sign in response:", response);
 
       if (response?.data?.user) {
@@ -189,11 +189,30 @@ export const useGoogleSignIn = () => {
           description: 'You are now logged in',
         });
 
-        // Use Next.js router for navigation
-        router.push('/dashboard');
-
         // Invalidate all queries to refresh with authenticated state
         queryClient.invalidateQueries();
+
+        // Check if user has an organization
+        try {
+          const { organizationApi } = await import('@/lib/api/organizations');
+          const orgResponse = await organizationApi.getMyOrganization();
+
+          if (orgResponse?.data) {
+            // User has organization, go to dashboard
+            router.push('/dashboard');
+          } else {
+            // User doesn't have organization, redirect to setup
+            router.push('/organization/setup');
+          }
+        } catch (error: any) {
+          // If 404 or organization not found, redirect to setup
+          if (error?.response?.status === 404 || error?.message?.includes('not found')) {
+            router.push('/organization/setup');
+          } else {
+            // For other errors, still go to dashboard
+            router.push('/dashboard');
+          }
+        }
       } else {
         // Handle case where response doesn't have expected data
         toast.error('Google sign-in failed', {

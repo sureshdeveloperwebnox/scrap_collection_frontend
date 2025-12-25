@@ -18,6 +18,8 @@ import {
   paymentsApi,
   dashboardApi,
   employeesApi,
+  vehicleNamesApi,
+  pickupRequestsApi,
   apiClient
 } from '@/lib/api';
 import { useSidebarStore } from '@/lib/store/sidebar-store';
@@ -102,10 +104,11 @@ const PREFETCH_CONFIG = {
       queryFn: () => customersApi.getCustomers({ page: 1, limit: 10, organizationId: orgId })
     });
   },
-  orders: (client: any, _orgId: number) => {
+  orders: (client: any, orgId: number) => {
+    if (!orgId) return;
     client.prefetchQuery({
-      queryKey: queryKeys.orders.list({ page: 1, limit: 10 }),
-      queryFn: () => ordersApi.getOrders({ page: 1, limit: 10 })
+      queryKey: queryKeys.orders.list({ page: 1, limit: 10, organizationId: orgId }),
+      queryFn: () => ordersApi.getOrders({ page: 1, limit: 10, organizationId: orgId })
     });
   },
   scrap: (client: any, orgId: number) => {
@@ -115,40 +118,46 @@ const PREFETCH_CONFIG = {
       queryFn: () => scrapApi.getScrapCategories({ page: 1, limit: 10, organizationId: orgId })
     });
   },
-  scrapYards: (client: any, _orgId: number) => {
+  scrapYards: (client: any, orgId: number) => {
+    if (!orgId) return;
     client.prefetchQuery({
-      queryKey: queryKeys.scrapYards.list({ page: 1, limit: 10 }),
-      queryFn: () => scrapYardsApi.getScrapYards({ page: 1, limit: 10 })
+      queryKey: queryKeys.scrapYards.list({ page: 1, limit: 10, organizationId: orgId }),
+      queryFn: () => scrapYardsApi.getScrapYards({ page: 1, limit: 10, organizationId: orgId })
     });
   },
-  collectors: (client: any, _orgId: number) => {
+  collectors: (client: any, orgId: number) => {
+    if (!orgId) return;
     client.prefetchQuery({
-      queryKey: queryKeys.collectors.list({ page: 1, limit: 10 }),
-      queryFn: () => collectorsApi.getCollectors({ page: 1, limit: 10 })
+      queryKey: queryKeys.collectors.list({ page: 1, limit: 10, organizationId: orgId }),
+      queryFn: () => collectorsApi.getCollectors({ page: 1, limit: 10, organizationId: orgId })
     });
   },
-  payments: (client: any, _orgId: number) => {
+  payments: (client: any, orgId: number) => {
+    if (!orgId) return;
     client.prefetchQuery({
-      queryKey: queryKeys.payments.list({ page: 1, limit: 10 }),
-      queryFn: () => paymentsApi.getPayments({ page: 1, limit: 10 })
+      queryKey: queryKeys.payments.list({ page: 1, limit: 10, organizationId: orgId }),
+      queryFn: () => paymentsApi.getPayments({ page: 1, limit: 10, organizationId: orgId })
     });
   },
-  employees: (client: any, _orgId: number) => {
+  employees: (client: any, orgId: number) => {
+    if (!orgId) return;
     client.prefetchQuery({
-      queryKey: queryKeys.employees.list({ page: 1, limit: 10 }),
-      queryFn: () => employeesApi.getEmployees({ page: 1, limit: 10 })
+      queryKey: queryKeys.employees.list({ page: 1, limit: 10, organizationId: orgId }),
+      queryFn: () => employeesApi.getEmployees({ page: 1, limit: 10, organizationId: orgId })
     });
   },
-  vehicles: (client: any, _orgId: number) => {
+  vehicles: (client: any, orgId: number) => {
+    if (!orgId) return;
     client.prefetchQuery({
-      queryKey: ['vehicles', { page: 1, limit: 10 }],
-      queryFn: () => apiClient.get('/vehicles', { params: { page: 1, limit: 10 } })
+      queryKey: queryKeys.vehicleNames.list({ page: 1, limit: 10, organizationId: orgId }),
+      queryFn: () => vehicleNamesApi.getVehicleNames({ page: 1, limit: 10, organizationId: orgId })
     });
   },
-  pickupRequests: (client: any, _orgId: number) => {
+  pickupRequests: (client: any, orgId: number) => {
+    if (!orgId) return;
     client.prefetchQuery({
-      queryKey: ['pickup-requests', { page: 1, limit: 10 }],
-      queryFn: () => apiClient.get('/pickup-requests', { params: { page: 1, limit: 10 } })
+      queryKey: ['pickup-requests', { page: 1, limit: 10, organizationId: orgId }],
+      queryFn: () => pickupRequestsApi.getPickupRequests({ page: 1, limit: 10, organizationId: orgId })
     });
   },
 };

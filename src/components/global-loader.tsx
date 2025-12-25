@@ -85,12 +85,13 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
 
     if (shouldShowLoader) {
       // Threshold to avoid flashing on near-instant operations
+      // Reduced to 10ms for faster appearance on refresh
       timeoutRef.current = setTimeout(() => {
         if (!showLoader) {
           loaderStartTimeRef.current = Date.now();
           setShowLoader(true);
         }
-      }, 50);
+      }, 10);
     } else {
       if (showLoader && loaderStartTimeRef.current) {
         const elapsed = Date.now() - loaderStartTimeRef.current;
@@ -115,16 +116,24 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
   }, [shouldShowLoader, showLoader]);
 
   // Don't render anything if loader shouldn't be shown
-  if (!showLoader || isAnimationLoading) {
+  if (!showLoader) {
     return null;
   }
 
-  // Fallback if animation data failed to load
-  if (!animationData) {
+  // Fallback or while animation is loading
+  if (isAnimationLoading || !animationData) {
     return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80 backdrop-blur-sm">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80 backdrop-blur-xl transition-all duration-500">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin" />
+            <div className="absolute inset-0 border-4 border-transparent border-b-cyan-300 rounded-full animate-pulse" />
+          </div>
+          <div className="flex flex-col items-center gap-1.5 animate-pulse">
+            <p className="text-cyan-700 font-bold tracking-[0.2em] uppercase text-[10px]">
+              Initializing
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -132,7 +141,7 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80 backdrop-blur-xl transition-all duration-500"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/95 backdrop-blur-xl transition-all duration-500"
       aria-label="Loading"
       role="status"
       aria-live="polite"
@@ -140,7 +149,7 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
       <div className="flex flex-col items-center justify-center scale-110">
         <div className="relative w-48 h-48 md:w-56 md:h-56 flex items-center justify-center">
           {/* Subtle Glow Effect */}
-          <div className="absolute inset-0 bg-cyan-400/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute inset-0 bg-cyan-400/15 rounded-full blur-3xl animate-pulse" />
 
           <Lottie
             animationData={animationData}
@@ -157,12 +166,12 @@ function GlobalLoaderComponent({ minDelay = 300 }: GlobalLoaderProps) {
         </div>
 
         {/* Progress Text */}
-        <div className="mt-4 flex flex-col items-center gap-1.5 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-300">
-          <p className="text-cyan-700 font-bold tracking-widest uppercase text-[10px]">
+        <div className="mt-4 flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-300">
+          <p className="text-cyan-700 font-bold tracking-[0.2em] uppercase text-[10px]">
             Please wait
           </p>
           <p className="text-gray-400 text-sm font-medium">
-            Loading your dashboard...
+            Preparing your experience...
           </p>
         </div>
       </div>
