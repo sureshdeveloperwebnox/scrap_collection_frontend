@@ -7,6 +7,7 @@ interface User {
   name: string;
   email: string;
   phone?: string;
+  profileImg?: string;
   role: string;
   organizationId?: number;
 }

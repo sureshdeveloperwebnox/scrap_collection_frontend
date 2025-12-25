@@ -30,6 +30,8 @@ import {
 import { UserProfileDialog } from "./user-profile-dialog";
 import { useSignOut } from "@/hooks/use-auth";
 
+import { getImageUrl } from '@/utils/image-utils';
+
 interface HeaderProps {
   onToggleSidebar?: () => void;
 }
@@ -189,10 +191,18 @@ export function Header({ onToggleSidebar }: HeaderProps) {
                 </div>
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm ring-2 ring-gray-100 transition-transform group-hover:scale-110">
                   <div className="w-full h-full bg-cyan-100 flex items-center justify-center">
-                    <span className="text-cyan-700 font-bold text-xs uppercase">
-                      {user?.firstName?.charAt(0) || user?.name?.charAt(0) || 'A'}
-                      {user?.lastName?.charAt(0) || user?.name?.split(' ')[1]?.charAt(0) || user?.name?.charAt(1) || ''}
-                    </span>
+                    {user?.profileImg ? (
+                      <img
+                        src={getImageUrl(user.profileImg)}
+                        alt={user.firstName || user.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-cyan-700 font-bold text-xs uppercase">
+                        {user?.firstName?.charAt(0) || user?.name?.charAt(0) || 'A'}
+                        {user?.lastName?.charAt(0) || user?.name?.split(' ')[1]?.charAt(0) || user?.name?.charAt(1) || ''}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
