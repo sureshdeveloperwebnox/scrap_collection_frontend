@@ -416,6 +416,7 @@ export default function CollectorAssignmentPage() {
         toast.success('Assignment updated successfully');
       } else {
         await createAssignmentMutation.mutateAsync({
+          organizationId: user.organizationId,
           collectorId: collectorId || undefined,
           crewId: crewId || undefined,
           vehicleNameId: formData.vehicleNameId === 'none' ? undefined : formData.vehicleNameId,
