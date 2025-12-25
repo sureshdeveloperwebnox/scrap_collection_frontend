@@ -567,7 +567,7 @@ function StatCard({ title, value, color, icon: Icon, delay = 0 }: { title: strin
       y: 0,
       opacity: 1,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 100,
         damping: 15,
         delay
