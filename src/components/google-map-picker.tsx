@@ -90,9 +90,9 @@ export function GoogleMapPicker({
           const lat = location.lat();
           const lng = location.lng();
           // Only update if coordinates actually changed significantly
-          if (!latitude || !longitude || 
-              Math.abs(lat - latitude) > 0.001 || 
-              Math.abs(lng - longitude) > 0.001) {
+          if (!latitude || !longitude ||
+            Math.abs(lat - latitude) > 0.001 ||
+            Math.abs(lng - longitude) > 0.001) {
             onLocationChange(lat, lng);
           }
         } else if (status !== 'OK') {
@@ -113,7 +113,7 @@ export function GoogleMapPicker({
       const lat = e.latLng.lat();
       const lng = e.latLng.lng();
       onLocationChange(lat, lng);
-      
+
       // Reverse geocode to get address
       if (onAddressChange && window.google?.maps?.Geocoder) {
         setIsGeocoding(true);
@@ -140,39 +140,39 @@ export function GoogleMapPicker({
       if (place.geometry && place.geometry.location) {
         const lat = place.geometry.location.lat();
         const lng = place.geometry.location.lng();
-        
+
         // Get the complete address - prefer formatted_address, fallback to constructing from components
         let fullAddress = place.formatted_address || '';
-        
+
         // If formatted_address is not available, construct from address components
         if (!fullAddress && place.address_components) {
           const addressParts: string[] = [];
-          
+
           // Extract address components
           const streetNumber = place.address_components.find(
             (component: any) => component.types.includes('street_number')
           )?.long_name;
-          
+
           const route = place.address_components.find(
             (component: any) => component.types.includes('route')
           )?.long_name;
-          
+
           const locality = place.address_components.find(
             (component: any) => component.types.includes('locality')
           )?.long_name;
-          
+
           const administrativeAreaLevel1 = place.address_components.find(
             (component: any) => component.types.includes('administrative_area_level_1')
           )?.long_name;
-          
+
           const country = place.address_components.find(
             (component: any) => component.types.includes('country')
           )?.long_name;
-          
+
           const postalCode = place.address_components.find(
             (component: any) => component.types.includes('postal_code')
           )?.long_name;
-          
+
           // Build address string
           if (streetNumber || route) {
             addressParts.push([streetNumber, route].filter(Boolean).join(' '));
@@ -189,18 +189,18 @@ export function GoogleMapPicker({
           if (country) {
             addressParts.push(country);
           }
-          
+
           fullAddress = addressParts.join(', ');
         }
-        
+
         // Fallback to place name if still no address
         if (!fullAddress && place.name) {
           fullAddress = place.name;
         }
-        
+
         // Mark that this is from autocomplete selection to prevent geocoding effect
         isAutocompleteSelectionRef.current = true;
-        
+
         console.log('Place selected from autocomplete:', {
           lat,
           lng,
@@ -208,10 +208,10 @@ export function GoogleMapPicker({
           placeName: place.name,
           formattedAddress: place.formatted_address
         });
-        
+
         // Update coordinates first
         onLocationChange(lat, lng);
-        
+
         // Then update address if we have one
         if (fullAddress && fullAddress.trim()) {
           onAddressChange(fullAddress.trim());
@@ -269,40 +269,46 @@ export function GoogleMapPicker({
 
   return (
     <div className="space-y-4 w-full">
-        <div className="space-y-2 w-full">
-          <Label>Location</Label>
-          
-          {/* Search box above the map */}
-          {onAddressChange && (
-            <div className="space-y-2 mb-3 w-full">
-              <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-10" />
-                <Autocomplete
-                  onLoad={onLoad}
-                  onPlaceChanged={onPlaceChanged}
-                  options={{
-                    fields: ['formatted_address', 'geometry', 'name', 'place_id', 'address_components'],
-                    types: ['geocode', 'establishment'],
-                  }}
-                >
-                  <Input
-                    ref={addressInputRef}
-                    id="address-search"
-                    value={address || ''}
-                    onChange={(e) => onAddressChange(e.target.value)}
-                    placeholder="Search for a location"
-                    className="pl-10 w-full"
-                  />
-                </Autocomplete>
-              </div>
-              <p className="text-xs text-gray-500">
-                Search for a location or click on the map to select coordinates.
-              </p>
-            </div>
-          )}
+      <div className="space-y-2 w-full">
+        <Label>Location</Label>
 
-          <div className="border rounded-md overflow-hidden relative w-full p-0 m-0">
-            <div className="w-full" style={{ width: '100%' }}>
+        {/* Search box above the map */}
+        {onAddressChange && (
+          <div className="space-y-2 mb-3 w-full">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-10" />
+              <Autocomplete
+                onLoad={onLoad}
+                onPlaceChanged={onPlaceChanged}
+                options={{
+                  fields: ['formatted_address', 'geometry', 'name', 'place_id', 'address_components'],
+                  types: ['geocode', 'establishment'],
+                }}
+              >
+                <Input
+                  ref={addressInputRef}
+                  id="address-search"
+                  value={address || ''}
+                  onChange={(e) => onAddressChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    // Prevent form submission when Enter is pressed in autocomplete
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
+                  placeholder="Search for a location"
+                  className="pl-10 w-full"
+                />
+              </Autocomplete>
+            </div>
+            <p className="text-xs text-gray-500">
+              Search for a location or click on the map to select coordinates.
+            </p>
+          </div>
+        )}
+
+        <div className="border rounded-md overflow-hidden relative w-full p-0 m-0">
+          <div className="w-full" style={{ width: '100%' }}>
             <GoogleMap
               mapContainerStyle={mapContainerStyle}
               center={center}
@@ -316,14 +322,14 @@ export function GoogleMapPicker({
             >
               {position && <Marker position={position} />}
             </GoogleMap>
-            </div>
           </div>
-          <p className="text-xs text-gray-500">
-            Click on the map to select a location. The address will be automatically filled.
-          </p>
         </div>
+        <p className="text-xs text-gray-500">
+          Click on the map to select a location. The address will be automatically filled.
+        </p>
+      </div>
 
-        {showCoordinates && (
+      {showCoordinates && (
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="latitude">Latitude</Label>
@@ -360,8 +366,8 @@ export function GoogleMapPicker({
             </div>
           </div>
         </div>
-        )}
-      </div>
+      )}
+    </div>
   );
 }
 

@@ -5,6 +5,7 @@ import { Customer } from '@/types';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { useCustomerStatsStore } from '@/lib/store/customer-stats-store';
 import { useCustomersCacheStore } from '@/lib/store/customers-cache-store';
+import { useLeadStatsStore } from '@/lib/store/lead-stats-store';
 import { useMemo } from 'react';
 
 // Get all customers with optional filters and pagination
@@ -306,22 +307,43 @@ export const useConvertLeadToCustomer = () => {
   const { user } = useAuthStore();
   const organizationId = user?.organizationId;
   const { incrementStatus } = useCustomerStatsStore();
+  const { invalidateCache } = useCustomersCacheStore();
+  const { incrementStatus: incrementLeadStatus, decrementStatus: decrementLeadStatus } = useLeadStatsStore();
 
   return useMutation({
     mutationFn: (leadId: string) =>
       customersApi.convertLeadToCustomer(leadId),
-    onSuccess: () => {
-      // Increment ACTIVE status count
+    onSuccess: (result, leadId) => {
+      // Get the lead from cache to know which status to decrement
+      const lead = queryClient.getQueryData<{ data: any }>(['leads', 'detail', leadId]);
+      if (lead?.data?.status) {
+        // Decrement old status
+        decrementLeadStatus(lead.data.status as any);
+      }
+
+      // Increment customer ACTIVE status count
       incrementStatus('ACTIVE');
 
-      // Invalidate customers list
-      queryClient.invalidateQueries({ queryKey: queryKeys.customers.lists() });
+      // Increment lead CONVERTED status count
+      incrementLeadStatus('CONVERTED');
+
+      // Invalidate Zustand cache to force fresh fetch
+      invalidateCache();
+
+      // Invalidate and refetch customers list immediately
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.customers.lists(),
+        refetchType: 'active'
+      });
 
       // Invalidate stats query
       queryClient.invalidateQueries({ queryKey: queryKeys.customers.stats(organizationId) });
 
       // Invalidate leads list
       queryClient.invalidateQueries({ queryKey: queryKeys.leads.lists() });
+
+      // Invalidate lead stats to update CONVERTED tab count
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.stats(organizationId) });
 
       // Update dashboard stats
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats() });

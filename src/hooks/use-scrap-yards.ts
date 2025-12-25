@@ -115,7 +115,14 @@ export const useCreateScrapYard = () => {
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
       queryClient.invalidateQueries({ queryKey: queryKeys.scrapYards.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.scrapYards.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.scrapYards.stats() });
+
+      // Force refetch of any active queries
+      queryClient.refetchQueries({
+        queryKey: queryKeys.scrapYards.lists(),
+        type: 'active'
+      });
     },
   });
 };
