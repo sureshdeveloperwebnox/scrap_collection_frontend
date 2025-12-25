@@ -93,130 +93,223 @@ export default function DashboardPage() {
     };
 
 
-
-    // Memoized Stats Section to prevent re-renders
+    // Memoized Stats Section
     const StatsSection = useMemo(() => (
         <section aria-label="Key Performance Metrics">
             <m.div
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-                role="region"
-                aria-label="Statistics overview"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12"
             >
-                {/* Total Leads Card */}
+                {/* 1. TOTAL LEADS - HOLOGRAPHIC CYAN */}
                 <m.article
                     variants={cardVariants}
-                    whileHover={{ y: -4, boxShadow: "0 12px 30px rgba(0,0,0,0.08)" }}
-                    className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-all duration-300 group"
-                    aria-label={`Total leads: ${stats.leads.total}`}
+                    whileHover={{ y: -10, scale: 1.02 }}
+                    className="relative overflow-hidden group h-[200px] rounded-[40px] p-1 transition-all duration-500 shadow-[0_20px_50px_rgba(6,182,212,0.3)] hover:shadow-[0_40px_120px_rgba(6,182,212,0.6)]"
                 >
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-cyan-50 rounded-2xl group-hover:bg-cyan-100 transition-colors duration-300" aria-hidden="true">
-                            <UserPlus className="w-6 h-6 text-cyan-600" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#00D2FF] to-[#3a7bd5]" />
+
+                    {/* Pulsing Central Glow */}
+                    <m.div
+                        animate={{ opacity: [0.2, 0.4, 0.2] }}
+                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                        className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2),transparent_75%)] pointer-events-none"
+                    />
+
+                    {/* NEW: Holographic Liquid Wave Shine */}
+                    <m.div
+                        animate={{
+                            x: ['-150%', '150%'],
+                            rotate: [25, 35],
+                            scaleY: [1, 1.2, 1]
+                        }}
+                        transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                        className="absolute inset-y-[-50%] w-[120%] bg-gradient-to-r from-transparent via-white/30 to-transparent blur-[40px] z-20 pointer-events-none"
+                    />
+
+                    {/* Glossy Top Edge Light */}
+                    <div className="absolute top-[2px] left-8 right-8 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent z-30" />
+
+                    {/* Glass Surface Overlay */}
+                    <div className="absolute inset-0 bg-white/5 backdrop-blur-[2px] m-1 rounded-[39px] border border-white/20 z-10" />
+
+                    <div className="relative z-30 flex flex-col justify-between h-full p-6 text-white">
+                        <div className="flex justify-between items-start">
+                            <div className="p-3 bg-white/20 backdrop-blur-xl rounded-[22px] border border-white/40 shadow-xl">
+                                <UserPlus className="w-6 h-6 text-white" />
+                            </div>
+                            <m.div
+                                animate={{ boxShadow: ["0 0 0px transparent", "0 0 20px rgba(255,255,255,0.4)", "0 0 0px transparent"] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                                className="px-3 py-1.5 bg-black/10 backdrop-blur-xl rounded-full border border-white/20 text-[11px] font-black tracking-tight"
+                            >
+                                <TrendingUp size={14} className="inline mr-1" />
+                                {stats.leads.trend}%
+                            </m.div>
                         </div>
-                        <div className={cn(
-                            "flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full",
-                            stats.leads.trend >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
-                        )} aria-label={`Trend: ${stats.leads.trend >= 0 ? 'up' : 'down'} ${Math.abs(stats.leads.trend)} percent`}>
-                            {stats.leads.trend >= 0 ? <TrendingUp size={12} aria-hidden="true" /> : <TrendingDown size={12} aria-hidden="true" />}
-                            {Math.abs(stats.leads.trend)}%
+
+                        <div>
+                            <p className="text-[11px] font-bold text-white/60 uppercase tracking-[3px] mb-1">Total Leads</p>
+                            <div className="text-5xl font-black tracking-tighter drop-shadow-2xl">
+                                {loading ? '...' : stats.leads.total.toLocaleString()}
+                            </div>
                         </div>
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                        <span className="text-3xl font-semibold text-gray-900 tracking-tight" aria-live="polite">{loading ? '...' : stats.leads.total.toLocaleString()}</span>
-                        <p className="text-gray-400 text-xs font-semibold uppercase tracking-widest opacity-80">Total Leads</p>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">New Today</span>
-                        <span className="text-xs font-bold text-gray-700">{stats.leads.new}</span>
                     </div>
                 </m.article>
 
-                {/* Total Customers Card */}
-                <m.div
+                {/* 2. TOTAL CUSTOMERS - HOLOGRAPHIC PURPLE */}
+                <m.article
                     variants={cardVariants}
-                    whileHover={{ y: -4, boxShadow: "0 12px 30px rgba(0,0,0,0.08)" }}
-                    className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-all duration-300 group"
+                    whileHover={{ y: -10, scale: 1.02 }}
+                    className="relative overflow-hidden group h-[200px] rounded-[40px] p-1 transition-all duration-500 shadow-[0_20px_50px_rgba(168,85,247,0.3)] hover:shadow-[0_40px_120px_rgba(168,85,247,0.6)]"
                 >
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-purple-50 rounded-2xl group-hover:bg-purple-100 transition-colors duration-300">
-                            <Users className="w-6 h-6 text-purple-600" />
-                        </div>
-                        <div className={cn(
-                            "flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full",
-                            stats.customers.trend >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
-                        )}>
-                            {stats.customers.trend >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                            {Math.abs(stats.customers.trend)}%
-                        </div>
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                        <span className="text-3xl font-semibold text-gray-900 tracking-tight">{loading ? '...' : stats.customers.total.toLocaleString()}</span>
-                        <p className="text-gray-400 text-xs font-semibold uppercase tracking-widest opacity-80">Total Customers</p>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Active Now</span>
-                        <span className="text-xs font-bold text-gray-700">{stats.customers.active}</span>
-                    </div>
-                </m.div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#A855F7] to-[#7E22CE]" />
 
-                {/* Total Orders Card */}
-                <m.div
-                    variants={cardVariants}
-                    whileHover={{ y: -4, boxShadow: "0 12px 30px rgba(0,0,0,0.08)" }}
-                    className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-all duration-300 group"
-                >
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-orange-50 rounded-2xl group-hover:bg-orange-100 transition-colors duration-300">
-                            <ShoppingCart className="w-6 h-6 text-orange-600" />
-                        </div>
-                        <div className={cn(
-                            "flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full",
-                            stats.orders.trend >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
-                        )}>
-                            {stats.orders.trend >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                            {Math.abs(stats.orders.trend)}%
-                        </div>
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                        <span className="text-3xl font-semibold text-gray-900 tracking-tight">{loading ? '...' : stats.orders.total.toLocaleString()}</span>
-                        <p className="text-gray-400 text-xs font-semibold uppercase tracking-widest opacity-80">Total Orders</p>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Completed</span>
-                        <span className="text-xs font-bold text-gray-700">{stats.orders.completed}</span>
-                    </div>
-                </m.div>
+                    <m.div
+                        animate={{ opacity: [0.2, 0.4, 0.2] }}
+                        transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+                        className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2),transparent_75%)] pointer-events-none"
+                    />
 
-                {/* Revenue Card */}
-                <m.div
+                    <m.div
+                        animate={{
+                            x: ['-150%', '150%'],
+                            rotate: [-25, -35],
+                            scaleY: [1, 1.2, 1]
+                        }}
+                        transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                        className="absolute inset-y-[-50%] w-[120%] bg-gradient-to-r from-transparent via-white/30 to-transparent blur-[40px] z-20 pointer-events-none"
+                    />
+
+                    <div className="absolute top-[2px] left-8 right-8 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent z-30" />
+                    <div className="absolute inset-0 bg-white/5 backdrop-blur-[2px] m-1 rounded-[39px] border border-white/20 z-10" />
+
+                    <div className="relative z-30 flex flex-col justify-between h-full p-6 text-white text-shadow-sm">
+                        <div className="flex justify-between items-start">
+                            <div className="p-3 bg-white/20 backdrop-blur-xl rounded-[22px] border border-white/40 shadow-xl">
+                                <Users className="w-6 h-6 text-white" />
+                            </div>
+                            <m.div
+                                animate={{ boxShadow: ["0 0 0px transparent", "0 0 20px rgba(255,255,255,0.4)", "0 0 0px transparent"] }}
+                                transition={{ duration: 2.2, repeat: Infinity }}
+                                className="px-3 py-1.5 bg-black/10 backdrop-blur-xl rounded-full border border-white/20 text-[11px] font-black tracking-tight"
+                            >
+                                <TrendingUp size={14} className="inline mr-1" />
+                                {stats.customers.trend}%
+                            </m.div>
+                        </div>
+
+                        <div>
+                            <p className="text-[11px] font-bold text-white/60 uppercase tracking-[3px] mb-1">Total Customers</p>
+                            <div className="text-5xl font-black tracking-tighter drop-shadow-2xl">
+                                {loading ? '...' : stats.customers.total.toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                </m.article>
+
+                {/* 3. TOTAL ORDERS - HOLOGRAPHIC ORANGE */}
+                <m.article
                     variants={cardVariants}
-                    whileHover={{ y: -4, boxShadow: "0 12px 30px rgba(0,0,0,0.08)" }}
-                    className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-all duration-300 group"
+                    whileHover={{ y: -10, scale: 1.02 }}
+                    className="relative overflow-hidden group h-[200px] rounded-[40px] p-1 transition-all duration-500 shadow-[0_20px_50px_rgba(249,115,22,0.3)] hover:shadow-[0_40px_120px_rgba(249,115,22,0.6)]"
                 >
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-emerald-50 rounded-2xl group-hover:bg-emerald-100 transition-colors duration-300">
-                            <DollarSign className="w-6 h-6 text-emerald-600" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#FF9F0A] to-[#FF3B30]" />
+
+                    <m.div
+                        animate={{ opacity: [0.2, 0.4, 0.2] }}
+                        transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+                        className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2),transparent_75%)] pointer-events-none"
+                    />
+
+                    <m.div
+                        animate={{
+                            x: ['-150%', '150%'],
+                            rotate: [20, 30],
+                            scaleY: [1, 1.3, 1]
+                        }}
+                        transition={{ duration: 4.5, repeat: Infinity, ease: "linear" }}
+                        className="absolute inset-y-[-50%] w-[120%] bg-gradient-to-r from-transparent via-white/30 to-transparent blur-[40px] z-20 pointer-events-none"
+                    />
+
+                    <div className="absolute top-[2px] left-8 right-8 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent z-30" />
+                    <div className="absolute inset-0 bg-white/5 backdrop-blur-[2px] m-1 rounded-[39px] border border-white/20 z-10" />
+
+                    <div className="relative z-30 flex flex-col justify-between h-full p-6 text-white text-shadow-sm">
+                        <div className="flex justify-between items-start">
+                            <div className="p-3 bg-white/20 backdrop-blur-xl rounded-[22px] border border-white/40 shadow-xl">
+                                <ShoppingCart className="w-6 h-6 text-white" />
+                            </div>
+                            <m.div
+                                animate={{ boxShadow: ["0 0 0px transparent", "0 0 20px rgba(255,255,255,0.4)", "0 0 0px transparent"] }}
+                                transition={{ duration: 1.8, repeat: Infinity }}
+                                className="px-3 py-1.5 bg-black/10 backdrop-blur-xl rounded-full border border-white/20 text-[11px] font-black tracking-tight"
+                            >
+                                <TrendingUp size={14} className="inline mr-1" />
+                                {stats.orders.trend}%
+                            </m.div>
                         </div>
-                        <div className={cn(
-                            "flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full",
-                            stats.orders.trend >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
-                        )}>
-                            {stats.orders.trend >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                            {Math.abs(stats.orders.trend)}%
+
+                        <div>
+                            <p className="text-[11px] font-bold text-white/60 uppercase tracking-[3px] mb-1">Total Orders</p>
+                            <div className="text-5xl font-black tracking-tighter drop-shadow-2xl">
+                                {loading ? '...' : stats.orders.total.toLocaleString()}
+                            </div>
                         </div>
                     </div>
-                    <div className="flex flex-col gap-0.5">
-                        <span className="text-3xl font-semibold text-gray-900 tracking-tight">₹{loading ? '...' : stats.orders.revenue.toLocaleString()}</span>
-                        <p className="text-gray-400 text-xs font-semibold uppercase tracking-widest opacity-80">Total Revenue</p>
+                </m.article>
+
+                {/* 4. TOTAL REVENUE - HOLOGRAPHIC EMERALD */}
+                <m.article
+                    variants={cardVariants}
+                    whileHover={{ y: -10, scale: 1.02 }}
+                    className="relative overflow-hidden group h-[200px] rounded-[40px] p-1 transition-all duration-500 shadow-[0_20px_50px_rgba(16,185,129,0.3)] hover:shadow-[0_40px_120px_rgba(16,185,129,0.6)]"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#30D158] to-[#1D976C]" />
+
+                    <m.div
+                        animate={{ opacity: [0.2, 0.4, 0.2] }}
+                        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                        className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2),transparent_75%)] pointer-events-none"
+                    />
+
+                    <m.div
+                        animate={{
+                            x: ['-150%', '150%'],
+                            rotate: [-20, -30],
+                            scaleY: [1, 1.4, 1]
+                        }}
+                        transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
+                        className="absolute inset-y-[-50%] w-[120%] bg-gradient-to-r from-transparent via-white/30 to-transparent blur-[40px] z-20 pointer-events-none"
+                    />
+
+                    <div className="absolute top-[2px] left-8 right-8 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent z-30" />
+                    <div className="absolute inset-0 bg-white/5 backdrop-blur-[2px] m-1 rounded-[39px] border border-white/20 z-10" />
+
+                    <div className="relative z-30 flex flex-col justify-between h-full p-6 text-white text-shadow-sm">
+                        <div className="flex justify-between items-start">
+                            <div className="p-3 bg-white/20 backdrop-blur-xl rounded-[22px] border border-white/40 shadow-xl">
+                                <DollarSign className="w-6 h-6 text-white" />
+                            </div>
+                            <m.div
+                                animate={{ boxShadow: ["0 0 0px transparent", "0 0 20px rgba(255,255,255,0.4)", "0 0 0px transparent"] }}
+                                transition={{ duration: 2.5, repeat: Infinity }}
+                                className="px-3 py-1.5 bg-black/10 backdrop-blur-xl rounded-full border border-white/20 text-[11px] font-black tracking-tight"
+                            >
+                                ↗
+                                <span className="ml-1">Growth</span>
+                            </m.div>
+                        </div>
+
+                        <div>
+                            <p className="text-[11px] font-bold text-white/60 uppercase tracking-[3px] mb-1">Net Revenue</p>
+                            <div className="text-4xl font-extrabold tracking-tighter drop-shadow-2xl">
+                                ₹{loading ? '...' : stats.orders.revenue.toLocaleString()}
+                            </div>
+                        </div>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">This Month</span>
-                        <span className="text-xs font-bold text-gray-700">₹{stats.orders.revenue.toLocaleString()}</span>
-                    </div>
-                </m.div>
+                </m.article>
             </m.div>
         </section>
     ), [stats, loading, containerVariants, cardVariants]);
