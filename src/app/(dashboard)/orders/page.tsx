@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { OrderForm } from '@/components/order-form';
 import { OrderAssignmentStepper } from '@/components/order-assignment-stepper';
 import { Order, OrderStatus, PaymentStatusEnum } from '@/types';
-import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal, Download, Filter, Check, X, Package, MapPin, User, Users, DollarSign, Calendar, Map as MapIcon, Share2, Printer, Mail, Phone } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal, Download, Filter, Check, X, Package, MapPin, User, Users, DollarSign, Calendar, Map as MapIcon, Share2, Printer, Mail, Phone, ShoppingCart, Activity } from 'lucide-react';
 import { useOrders, useDeleteOrder, useUpdateOrder, useUpdateOrderStatus, useAssignCollector, useOrderStats } from '@/hooks/use-orders';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,6 +30,7 @@ import { OrderStatusBadge, PaymentStatusBadge, toDisplayOrderStatus, toDisplayPa
 
 // Dynamically import Lottie for better performance
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
+import { motion, AnimatePresence } from 'framer-motion';
 
 // No Data Animation Component - Optimized with lazy loading
 function NoDataAnimation() {
@@ -557,6 +558,82 @@ function CollectorInfoDialog({
   );
 }
 
+
+// Premium Stat Card Component
+function StatCard({ title, value, color, icon: Icon, delay = 0 }: { title: string, value: number, color: string, icon: any, delay?: number }) {
+  const cardVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        delay
+      }
+    }
+  };
+
+  const getGradient = (c: string) => {
+    switch (c) {
+      case 'cyan': return 'from-cyan-500 to-blue-600 shadow-cyan-200/50';
+      case 'yellow': return 'from-amber-400 to-orange-500 shadow-orange-200/50';
+      case 'blue': return 'from-blue-500 to-indigo-600 shadow-blue-200/50';
+      case 'orange': return 'from-orange-400 to-red-500 shadow-red-200/50';
+      case 'green': return 'from-emerald-400 to-green-600 shadow-green-200/50';
+      case 'red': return 'from-rose-500 to-red-700 shadow-red-200/50';
+      default: return 'from-gray-400 to-gray-600 shadow-gray-200/50';
+    }
+  };
+
+  return (
+    <motion.div
+      variants={cardVariants}
+      initial="hidden"
+      animate="visible"
+      whileHover={{ y: -8, scale: 1.02 }}
+      className={cn(
+        "relative overflow-hidden group h-[130px] rounded-[32px] p-0.5 transition-all duration-500 shadow-xl",
+        getGradient(color)
+      )}
+    >
+      <div className={cn("absolute inset-0 bg-gradient-to-br", getGradient(color).split(' ').slice(0, 2).join(' '))} />
+
+      {/* Glossy Top Edge Light */}
+      <div className="absolute top-[1px] left-8 right-8 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent z-30" />
+
+      {/* Glass Surface Overlay */}
+      <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px] m-1 rounded-[30px] border border-white/20 z-10" />
+
+      <div className="relative z-30 flex flex-col justify-between h-full p-5 text-white">
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-[10px] font-bold text-white/80 uppercase tracking-[2px] mb-1">{title}</p>
+            <div className="text-3xl font-black tracking-tight drop-shadow-lg">
+              {value.toLocaleString()}
+            </div>
+          </div>
+          <div className="p-3 bg-white/20 backdrop-blur-xl rounded-2xl border border-white/30 shadow-lg group-hover:rotate-12 group-hover:scale-110 transition-all duration-500">
+            <Icon className="w-6 h-6 text-white" />
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <motion.div
+            animate={{
+              opacity: [0.3, 0.8, 0.3],
+              scale: [1, 1.2, 1]
+            }}
+            transition={{ duration: 4, repeat: Infinity }}
+            className="w-1.5 h-1.5 rounded-full bg-white/40 shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+          />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function OrdersPage() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
@@ -909,63 +986,31 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-        <Card className="bg-gradient-to-br from-cyan-50 to-cyan-100 border-cyan-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-cyan-700">Total Orders</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-cyan-700">{stats.total || 0}</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-yellow-700">Pending</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-700">{stats.pending || 0}</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-700">Assigned</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-700">{stats.assigned || 0}</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-orange-700">In Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-700">{stats.inProgress || 0}</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-green-700">Completed</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-700">{stats.completed || 0}</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-red-700">Cancelled</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-700">{stats.cancelled || 0}</div>
-          </CardContent>
-        </Card>
+      {/* Stats Cards - New Premium Design */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <StatCard title="Total Orders" value={stats.total} color="cyan" icon={ShoppingCart} delay={0} />
+        <StatCard title="Pending" value={stats.pending} color="yellow" icon={Clock} delay={0.1} />
+        <StatCard title="Assigned" value={stats.assigned} color="blue" icon={User} delay={0.2} />
+        <StatCard title="In Progress" value={stats.inProgress} color="orange" icon={Activity} delay={0.3} />
+        <StatCard title="Completed" value={stats.completed} color="green" icon={CheckCircle2} delay={0.4} />
+        <StatCard title="Cancelled" value={stats.cancelled} color="red" icon={X} delay={0.5} />
       </div>
 
       {/* Orders List Card */}
-      <Card className="bg-white shadow-sm border border-gray-200 rounded-lg">
-        <CardHeader className="pb-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 rounded-[32px] overflow-hidden"
+      >
+        <div className="p-6 pb-0">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <CardTitle className="text-xl font-bold text-gray-900">Orders</CardTitle>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+                <Package className="w-5 h-5 text-cyan-600" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Recent Orders</h2>
+            </div>
 
             <div className="flex items-center gap-2 flex-wrap">
               <Button
@@ -1082,8 +1127,8 @@ export default function OrdersPage() {
               </div>
             </div>
           )}
-        </CardHeader>
-        <CardContent className="p-0">
+        </div>
+        <div className="p-0">
           {isLoading || !mounted ? (
             <div className="p-4">
               <TableSkeleton columnCount={8} rowCount={rowsPerPage} />
@@ -1210,21 +1255,21 @@ export default function OrdersPage() {
                             </TableCell>
 
                             <TableCell>
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                              <div className="flex items-start gap-2 pt-1">
+                                <Clock className="h-4 w-4 text-cyan-500 mt-0.5 flex-shrink-0" />
                                 <div className="flex flex-col">
-                                  <span className="text-sm text-gray-700">{formatTime(order.pickupTime || order.createdAt)}</span>
+                                  <span className="text-sm font-medium text-gray-700">{formatTime(order.pickupTime || order.createdAt)}</span>
                                   {order.pickupTime && (
-                                    <span className="text-xs text-gray-500">Pickup</span>
+                                    <span className="text-[10px] font-bold text-amber-600 uppercase tracking-tight">Pickup</span>
                                   )}
                                 </div>
                               </div>
                             </TableCell>
 
                             <TableCell>
-                              <div className="flex items-center gap-1 max-w-[200px]">
-                                <MapPin className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                                <span className="truncate text-sm text-gray-700">{order.address || 'N/A'}</span>
+                              <div className="flex items-start gap-2 max-w-[200px] pt-1">
+                                <MapPin className="h-4 w-4 text-rose-500 mt-0.5 flex-shrink-0" />
+                                <span className="truncate text-sm text-gray-700 font-medium">{order.address || 'N/A'}</span>
                               </div>
                             </TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()}>
@@ -1237,14 +1282,14 @@ export default function OrdersPage() {
                                     setCollectorInfoOrder(order);
                                   }}
                                   className={cn(
-                                    "h-7 text-xs hover:bg-opacity-10",
+                                    "h-8 text-xs font-semibold hover:bg-opacity-10 rounded-full px-3",
                                     order.crewId ? "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" : "text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50"
                                   )}
                                 >
                                   {order.crewId ? (
-                                    <Users className="h-3 w-3 mr-1" />
+                                    <Users className="h-4 w-4 mr-1.5" />
                                   ) : (
-                                    <User className="h-3 w-3 mr-1" />
+                                    <User className="h-4 w-4 mr-1.5" />
                                   )}
                                   {order.crew?.name || order.assignedCollector?.fullName || 'View Details'}
                                 </Button>
@@ -1397,55 +1442,81 @@ export default function OrdersPage() {
                   orders.map((order) => {
                     const isHighlighted = highlightedOrderId === order.id;
                     return (
-                      <div
+                      <motion.div
                         key={order.id}
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
                         ref={isHighlighted ? highlightedRowRef : null}
                         className={cn(
-                          "rounded-lg border bg-card p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:bg-gradient-to-br hover:from-cyan-50 hover:to-purple-50 cursor-pointer",
-                          isHighlighted && "bg-cyan-50 border-cyan-200 border-2 animate-pulse"
+                          "relative overflow-hidden group rounded-[24px] border-2 bg-white p-5 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer",
+                          isHighlighted ? "border-cyan-500 ring-4 ring-cyan-100" : "border-gray-100 hover:border-cyan-200"
                         )}
                         onClick={() => router.push(`/orders/${order.id}`)}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <OrderAvatar
-                              name={order.customerName || 'N/A'}
-                              size="md"
-                            />
-                            <div>
-                              <div className="font-semibold">{order.customerName || 'N/A'}</div>
-                              <div className="text-xs font-semibold text-cyan-600">
-                                {order.orderNumber || 'N/A'} • {formatDateDDMMYYYY(order.createdAt)}
+                        {/* Modern Header for Mobile Card */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-4">
+                            <div className="relative">
+                              <OrderAvatar name={order.customerName || 'N/A'} size="md" className="ring-2 ring-white shadow-md" />
+                              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-cyan-500 border-2 border-white flex items-center justify-center">
+                                <Package className="w-3 h-3 text-white" />
                               </div>
-                              <div className="text-sm text-muted-foreground">{order.customerPhone || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-gray-900 group-hover:text-cyan-600 transition-colors leading-tight">
+                                {order.customerName || 'N/A'}
+                              </h4>
+                              <p className="text-[10px] font-black tracking-widest text-cyan-600 uppercase mt-0.5">
+                                {order.orderNumber || 'N/A'}
+                              </p>
                             </div>
                           </div>
-                          <div className="flex flex-col gap-1">
+                          <div className="flex flex-col items-end gap-1.5">
                             <OrderStatusBadge status={order.orderStatus} />
                             <PaymentStatusBadge status={order.paymentStatus} />
                           </div>
                         </div>
-                        <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                          <div className="text-muted-foreground">Address</div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3 text-gray-400" />
-                            <span className="truncate">{order.address || 'N/A'}</span>
-                          </div>
-                          <div className="text-muted-foreground">Collector</div>
+
+                        {/* Order Details Grid */}
+                        <div className="grid grid-cols-2 gap-4 py-3 border-y border-gray-50 mb-4">
                           <div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Created</p>
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="w-3 h-3 text-cyan-500" />
+                              <span className="text-xs font-semibold text-gray-700">{formatDateHuman(order.createdAt)}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Pickup Time</p>
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="w-3 h-3 text-amber-500" />
+                              <span className="text-xs font-semibold text-gray-700">{formatTime(order.pickupTime || order.createdAt)}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Address Section */}
+                        <div className="flex items-start gap-3 mb-4 bg-gray-50 rounded-xl p-3">
+                          <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center flex-shrink-0">
+                            <MapPin className="w-4 h-4 text-rose-500" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Address</p>
+                            <p className="text-xs text-gray-600 truncate font-medium">{order.address || 'N/A'}</p>
+                          </div>
+                        </div>
+
+                        {/* Actions Section */}
+                        <div className="flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-2">
                             {order.assignedCollector || order.assignedCollectorId ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCollectorInfoOrder(order);
-                                }}
-                                className="h-7 text-xs text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 p-0"
-                              >
-                                <User className="h-3 w-3 mr-1" />
-                                {order.assignedCollector?.fullName || 'View Details'}
-                              </Button>
+                              <div className="flex items-center gap-2 py-1.5 px-3 rounded-full bg-cyan-50 border border-cyan-100">
+                                <User className="w-3 h-3 text-cyan-600" />
+                                <span className="text-[10px] font-bold text-cyan-700 truncate max-w-[80px]">
+                                  {order.assignedCollector?.fullName?.split(' ')[0] || 'Assigned'}
+                                </span>
+                              </div>
                             ) : (
                               <Button
                                 variant="outline"
@@ -1455,88 +1526,82 @@ export default function OrdersPage() {
                                   setAssignmentOrder(order);
                                   setIsAssignmentStepperOpen(true);
                                 }}
-                                className="h-7 text-xs"
+                                className="h-7 text-[10px] rounded-full border-dashed border-cyan-300 text-cyan-600 hover:bg-cyan-50"
                               >
-                                Assign
+                                Assign Collector
                               </Button>
                             )}
                           </div>
-                          <div className="text-muted-foreground">Created</div>
-                          <div>{formatDateHuman(order.createdAt)}</div>
+
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => router.push(`/orders/${order.id}`)}
+                              className="h-8 w-8 rounded-full bg-gray-50 hover:bg-cyan-100 text-gray-600 hover:text-cyan-600 transition-all p-0"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const convertedOrder: Order = {
+                                  id: order.id,
+                                  leadId: order.leadId,
+                                  customerId: order.customerId,
+                                  customerName: order.customerName,
+                                  customerPhone: order.customerPhone,
+                                  customerCountryCode: order.customerCountryCode,
+                                  address: order.address,
+                                  latitude: order.latitude,
+                                  longitude: order.longitude,
+                                  vehicleDetails: order.vehicleDetails,
+                                  assignedCollectorId: order.assignedCollectorId,
+                                  pickupTime: order.pickupTime ? new Date(order.pickupTime) : undefined,
+                                  orderStatus: order.orderStatus,
+                                  paymentStatus: order.paymentStatus,
+                                  quotedPrice: order.quotedPrice,
+                                  actualPrice: order.actualPrice,
+                                  yardId: order.yardId,
+                                  customerNotes: order.customerNotes,
+                                  adminNotes: order.adminNotes,
+                                  organizationId: order.organizationId,
+                                  createdAt: new Date(order.createdAt),
+                                  updatedAt: new Date(order.updatedAt),
+                                };
+                                setEditingOrder(convertedOrder);
+                                setIsFormOpen(true);
+                              }}
+                              className="h-8 w-8 rounded-full bg-gray-50 hover:bg-amber-100 text-gray-600 hover:text-amber-600 transition-all p-0"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(order);
+                              }}
+                              className="h-8 w-8 rounded-full bg-gray-50 hover:bg-rose-100 text-gray-600 hover:text-rose-600 transition-all p-0"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setDetailsOrder(order)}
-                            className="bg-cyan-50/50 hover:bg-cyan-100 text-cyan-600 hover:text-cyan-700 transition-all duration-200 border border-cyan-200/50 hover:border-cyan-300 shadow-sm hover:shadow-md z-10 relative"
-                            title="View Details"
-                          >
-                            <Eye className="h-4 w-4 mr-1" /> View
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              const convertedOrder: Order = {
-                                id: order.id,
-                                leadId: order.leadId,
-                                customerId: order.customerId,
-                                customerName: order.customerName,
-                                customerPhone: order.customerPhone,
-                                customerCountryCode: order.customerCountryCode,
-                                address: order.address,
-                                latitude: order.latitude,
-                                longitude: order.longitude,
-                                vehicleDetails: order.vehicleDetails,
-                                assignedCollectorId: order.assignedCollectorId,
-                                pickupTime: order.pickupTime ? new Date(order.pickupTime) : undefined,
-                                orderStatus: order.orderStatus,
-                                paymentStatus: order.paymentStatus,
-                                quotedPrice: order.quotedPrice,
-                                actualPrice: order.actualPrice,
-                                yardId: order.yardId,
-                                customerNotes: order.customerNotes,
-                                adminNotes: order.adminNotes,
-                                organizationId: order.organizationId,
-                                createdAt: new Date(order.createdAt),
-                                updatedAt: new Date(order.updatedAt),
-                              };
-                              setEditingOrder(convertedOrder);
-                              setIsFormOpen(true);
-                            }}
-                            className="bg-cyan-50/50 hover:bg-cyan-100 text-cyan-600 hover:text-cyan-700 transition-all duration-200 border border-cyan-200/50 hover:border-cyan-300 shadow-sm hover:shadow-md z-10 relative"
-                            title="Edit Order"
-                          >
-                            <Edit2 className="h-4 w-4 mr-1" /> Edit
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteClick(order);
-                            }}
-                            className="bg-red-50/50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all duration-200 border border-red-200/50 hover:border-red-300 shadow-sm hover:shadow-md z-10 relative"
-                            title="Delete Order"
-                            disabled={deleteOrderMutation.isPending}
-                          >
-                            {deleteOrderMutation.isPending ? (
-                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4 mr-1" />
-                            )}
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
+
+                        {/* Subtle Background Decoration */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
+                      </motion.div>
                     );
                   })
                 )}
               </div>
             </>
           )}
-        </CardContent>
+        </div>
 
         {/* Pagination Controls */}
         {!isLoading && pagination.totalPages > 0 && (
@@ -1563,7 +1628,7 @@ export default function OrdersPage() {
             </div>
           </div>
         )}
-      </Card>
+      </motion.div>
 
       {/* Sticky Add button for mobile */}
       <Button onClick={() => setIsFormOpen(true)} className="sm:hidden fixed bottom-6 right-6 rounded-full shadow-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white transform hover:scale-110 transition-all duration-200 hover:shadow-2xl">
