@@ -24,7 +24,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Pagination } from '@/components/ui/pagination';
 import { RowsPerPage } from '@/components/ui/rows-per-page';
-import { Checkbox } from '@/components/ui/checkbox';
+
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -756,9 +756,7 @@ export default function ScrapManagementPage() {
 
                   {/* Column Headers */}
                   <TableRow className="hover:bg-transparent border-b bg-gray-50">
-                    <TableHead className="w-12">
-                      <Checkbox className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500" />
-                    </TableHead>
+                    <TableHead style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>S.NO</TableHead>
                     <TableHead>{activeTab === 'categories' ? 'Category' : 'Scrap Name'}</TableHead>
                     {activeTab === 'categories' ? (
                       <>
@@ -799,8 +797,8 @@ export default function ScrapManagementPage() {
                     ) : (
                       categories.map((category) => (
                         <TableRow key={category.id} className="border-b hover:bg-gray-50 transition-colors bg-white">
-                          <TableCell>
-                            <Checkbox className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500" />
+                          <TableCell className="text-gray-600 font-medium">
+                            {(categoryPage - 1) * categoryLimit + categories.indexOf(category) + 1}
                           </TableCell>
                           <TableCell>
                             <span className="font-medium text-gray-900">{category.name}</span>
@@ -878,8 +876,8 @@ export default function ScrapManagementPage() {
                     ) : (
                       names.map((name) => (
                         <TableRow key={name.id} className="border-b hover:bg-gray-50 transition-colors bg-white">
-                          <TableCell>
-                            <Checkbox className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500" />
+                          <TableCell className="text-gray-600 font-medium">
+                            {(namePage - 1) * nameLimit + names.indexOf(name) + 1}
                           </TableCell>
                           <TableCell>
                             <span className="font-medium text-gray-900">{name.name}</span>

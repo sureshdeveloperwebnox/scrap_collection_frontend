@@ -752,13 +752,7 @@ export default function CollectorAssignmentPage() {
                     <Table>
                       <TableHeader className="bg-gray-50/50">
                         <TableRow className="border-b-0">
-                          <TableHead className="w-12 pl-6">
-                            <Checkbox
-                              checked={isAllSelected}
-                              onCheckedChange={handleSelectAllCollectors}
-                              className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
-                            />
-                          </TableHead>
+                          <TableHead style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }} className="pl-6">S.NO</TableHead>
                           <TableHead className="font-semibold text-gray-900 text-sm py-4">Collector</TableHead>
                           <TableHead className="font-semibold text-gray-900 text-sm py-4">Contact</TableHead>
                           <TableHead className="font-semibold text-gray-900 text-sm py-4">Status</TableHead>
@@ -768,12 +762,8 @@ export default function CollectorAssignmentPage() {
                       <TableBody>
                         {filteredCollectors.map((collector) => (
                           <TableRow key={collector.id} className="group hover:bg-cyan-50/30 transition-colors duration-200">
-                            <TableCell className="pl-6">
-                              <Checkbox
-                                checked={selectedCollectors.has(collector.id)}
-                                onCheckedChange={(checked) => handleSelectCollector(collector.id, checked as boolean)}
-                                className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500 shadow-sm"
-                              />
+                            <TableCell className="pl-6 text-gray-600 font-medium">
+                              {(collectorPage - 1) * limit + filteredCollectors.indexOf(collector) + 1}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-3">

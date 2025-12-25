@@ -42,6 +42,7 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { useSignOut } from '@/hooks/use-auth';
+import { getImageUrl } from '@/utils/image-utils';
 
 // Navigation item type
 type NavigationItem = {
@@ -392,12 +393,20 @@ export function Sidebar() {
           )}>
             <div className="flex items-center gap-3 w-full">
               <div className={cn(
-                "rounded-xl bg-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-[transform,shadow] duration-200 flex-shrink-0",
+                "rounded-xl bg-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-[transform,shadow] duration-200 flex-shrink-0 overflow-hidden",
                 isCollapsed ? "w-10 h-10" : "w-10 h-10"
               )}>
-                <span className="text-cyan-700 font-black text-sm">
-                  {user?.name?.charAt(0).toUpperCase() || 'U'}
-                </span>
+                {user?.profileImg ? (
+                  <img
+                    src={getImageUrl(user.profileImg)}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-cyan-700 font-black text-sm">
+                    {user?.name?.charAt(0).toUpperCase() || 'U'}
+                  </span>
+                )}
               </div>
 
               <AnimatePresence>

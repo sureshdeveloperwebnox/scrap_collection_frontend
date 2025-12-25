@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Pagination } from '@/components/ui/pagination';
 import { RowsPerPage } from '@/components/ui/rows-per-page';
-import { Checkbox } from '@/components/ui/checkbox';
+
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -406,7 +406,7 @@ export default function VehiclesPage() {
                                         </TableHead>
                                     </TableRow>
                                     <TableRow className="hover:bg-transparent border-b">
-                                        <TableHead className="w-12"><Checkbox className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500" /></TableHead>
+                                        <TableHead style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>S.NO</TableHead>
                                         {activeMainTab === 'names' ? (
                                             <>
                                                 <TableHead>Vehicle Name</TableHead>
@@ -440,9 +440,9 @@ export default function VehiclesPage() {
                                             ))
                                         ) :
                                             names.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-12"><NoDataAnimation message="No vehicles found" /></TableCell></TableRow> :
-                                                names.map((v: VehicleName) => (
+                                                names.map((v: VehicleName, index: number) => (
                                                     <TableRow key={v.id} className="hover:bg-gray-50">
-                                                        <TableCell><Checkbox className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500" /></TableCell>
+                                                        <TableCell className="text-gray-600 font-medium">{(namePage - 1) * nameLimit + index + 1}</TableCell>
                                                         <TableCell className="font-semibold text-gray-900">{v.name}</TableCell>
                                                         <TableCell>{v.vehicleType?.name || 'N/A'}</TableCell>
                                                         <TableCell>{v.vehicleNumber || '-'}</TableCell>
@@ -476,9 +476,9 @@ export default function VehiclesPage() {
                                             ))
                                         ) :
                                             types.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center py-12"><NoDataAnimation message="No vehicle types found" /></TableCell></TableRow> :
-                                                types.map((t: VehicleType) => (
+                                                types.map((t: VehicleType, index: number) => (
                                                     <TableRow key={t.id} className="hover:bg-gray-50">
-                                                        <TableCell><Checkbox className="data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500" /></TableCell>
+                                                        <TableCell className="text-gray-600 font-medium">{(typePage - 1) * typeLimit + index + 1}</TableCell>
                                                         <TableCell className="font-semibold text-gray-900">{t.name}</TableCell>
                                                         <TableCell>
                                                             <div className="flex items-center gap-2">

@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Pagination } from '@/components/ui/pagination';
 import { RowsPerPage } from '@/components/ui/rows-per-page';
-import { Checkbox } from '@/components/ui/checkbox';
+
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-client';
@@ -295,8 +295,6 @@ export default function CustomersPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Selection state
-  const [selectedCustomers, setSelectedCustomers] = useState<Set<string>>(new Set());
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Mounted state to prevent hydration mismatch
@@ -521,37 +519,7 @@ export default function CustomersPage() {
     }
   };
 
-  // Handle checkbox selection
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedCustomers(new Set(customers.map(customer => customer.id)));
-    } else {
-      setSelectedCustomers(new Set());
-    }
-  };
 
-  const handleSelectCustomer = (customerId: string, checked: boolean) => {
-    const newSelected = new Set(selectedCustomers);
-    if (checked) {
-      newSelected.add(customerId);
-    } else {
-      newSelected.delete(customerId);
-    }
-    setSelectedCustomers(newSelected);
-  };
-
-  const isAllSelected = customers.length > 0 && selectedCustomers.size === customers.length;
-  const isIndeterminate = selectedCustomers.size > 0 && selectedCustomers.size < customers.length;
-
-  // Handle export
-  const handleExport = () => {
-    if (selectedCustomers.size === 0) {
-      toast.info('Please select customers to export');
-      return;
-    }
-    toast.success(`Exporting ${selectedCustomers.size} customers...`);
-    // TODO: Implement export functionality
-  };
 
   const onInlineStatusChange = async (customer: ApiCustomer, value: string) => {
     try {
@@ -774,13 +742,7 @@ export default function CustomersPage() {
                     </TableRow>
                     {/* Column Headers Row */}
                     <TableRow className="hover:bg-transparent border-b bg-white">
-                      <TableHead className="w-12">
-                        <Checkbox
-                          checked={isAllSelected}
-                          onCheckedChange={handleSelectAll}
-                          className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
-                        />
-                      </TableHead>
+                      <TableHead style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>S.NO</TableHead>
                       <TableHead>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('name')}>
                           Customer
@@ -822,13 +784,8 @@ export default function CustomersPage() {
                             )}
                             onClick={() => setDetailsCustomer(customer)}
                           >
-                            <TableCell>
-                              <Checkbox
-                                checked={selectedCustomers.has(customer.id)}
-                                onCheckedChange={(checked) => handleSelectCustomer(customer.id, checked as boolean)}
-                                onClick={(e) => e.stopPropagation()}
-                                className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
-                              />
+                            <TableCell className="text-gray-600 font-medium">
+                              {(currentPage - 1) * rowsPerPage + customers.indexOf(customer) + 1}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-3">

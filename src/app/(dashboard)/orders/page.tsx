@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Pagination } from '@/components/ui/pagination';
 import { RowsPerPage } from '@/components/ui/rows-per-page';
-import { Checkbox } from '@/components/ui/checkbox';
+
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-client';
@@ -664,8 +664,6 @@ export default function OrdersPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Selection state
-  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [collectorInfoOrder, setCollectorInfoOrder] = useState<ApiOrder | null>(null);
   const [assignmentOrder, setAssignmentOrder] = useState<ApiOrder | null>(null);
@@ -916,37 +914,7 @@ export default function OrdersPage() {
     }
   };
 
-  // Handle checkbox selection
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedOrders(new Set(orders.map(order => order.id)));
-    } else {
-      setSelectedOrders(new Set());
-    }
-  };
 
-  const handleSelectOrder = (orderId: string, checked: boolean) => {
-    const newSelected = new Set(selectedOrders);
-    if (checked) {
-      newSelected.add(orderId);
-    } else {
-      newSelected.delete(orderId);
-    }
-    setSelectedOrders(newSelected);
-  };
-
-  const isAllSelected = orders.length > 0 && selectedOrders.size === orders.length;
-  const isIndeterminate = selectedOrders.size > 0 && selectedOrders.size < orders.length;
-
-  // Handle export
-  const handleExport = () => {
-    if (selectedOrders.size === 0) {
-      toast.info('Please select orders to export');
-      return;
-    }
-    toast.success(`Exporting ${selectedOrders.size} orders...`);
-    // TODO: Implement export functionality
-  };
 
   const onInlineStatusChange = async (order: ApiOrder, value: string) => {
     try {
@@ -1176,13 +1144,7 @@ export default function OrdersPage() {
                     </TableRow>
                     {/* Column Headers Row */}
                     <TableRow className="hover:bg-transparent border-b bg-white">
-                      <TableHead className="w-12">
-                        <Checkbox
-                          checked={isAllSelected}
-                          onCheckedChange={handleSelectAll}
-                          className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
-                        />
-                      </TableHead>
+                      <TableHead style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>S.NO</TableHead>
                       <TableHead>
                         <button className="inline-flex items-center gap-1 hover:text-cyan-600 transition-colors" onClick={() => toggleSort('customerName')}>
                           Customer
@@ -1228,13 +1190,8 @@ export default function OrdersPage() {
                             )}
                             onClick={() => router.push(`/orders/${order.id}`)}
                           >
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                              <Checkbox
-                                checked={selectedOrders.has(order.id)}
-                                onCheckedChange={(checked) => handleSelectOrder(order.id, checked as boolean)}
-                                onClick={(e) => e.stopPropagation()}
-                                className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
-                              />
+                            <TableCell className="text-gray-600 font-medium">
+                              {(currentPage - 1) * rowsPerPage + orders.indexOf(order) + 1}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-3">

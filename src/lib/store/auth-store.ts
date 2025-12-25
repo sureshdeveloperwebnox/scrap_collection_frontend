@@ -4,7 +4,7 @@ interface User {
   id: string;
   firstName?: string;
   lastName?: string;
-  name: string;
+  name?: string;
   email: string;
   phone?: string;
   profileImg?: string;
@@ -33,8 +33,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   isHydrated: false,
 
   login: (user: User) => {
+    // Construct name from firstName and lastName if not provided
+    const name = user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+
     set({
-      user,
+      user: { ...user, name },
       isAuthenticated: true,
       isLoading: false,
     });
@@ -66,8 +69,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 
   restoreSession: (user: User) => {
+    // Construct name from firstName and lastName if not provided
+    const name = user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+
     set({
-      user,
+      user: { ...user, name },
       isAuthenticated: true,
       isHydrated: true,
       isLoading: false,

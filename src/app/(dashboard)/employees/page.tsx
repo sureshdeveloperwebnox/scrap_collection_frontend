@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Pagination } from '@/components/ui/pagination';
 import { RowsPerPage } from '@/components/ui/rows-per-page';
-import { Checkbox } from '@/components/ui/checkbox';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -322,7 +322,6 @@ export default function EmployeesPage() {
 
   // UI State
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
   const [mounted, setMounted] = useState(false);
 
   // Employee Profile View State
@@ -738,9 +737,7 @@ export default function EmployeesPage() {
 
                   {/* Column Headers */}
                   <TableRow className="hover:bg-transparent border-b bg-white">
-                    <TableHead className="w-12">
-                      <Checkbox className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500" />
-                    </TableHead>
+                    <TableHead style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>S.NO</TableHead>
                     {activeTab === 'employees' ? (
                       <>
                         <TableHead className="font-semibold text-gray-900 text-sm py-4">Employee</TableHead>
@@ -779,7 +776,9 @@ export default function EmployeesPage() {
                     ) : (
                       employees.map((employee: Employee) => (
                         <TableRow key={employee.id} className="hover:bg-gray-50 transition-colors">
-                          <TableCell><Checkbox className="data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500" /></TableCell>
+                          <TableCell className="text-gray-600 font-medium">
+                            {(employeePage - 1) * employeeLimit + employees.indexOf(employee) + 1}
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <EmployeeAvatar name={employee.fullName} />
@@ -852,7 +851,9 @@ export default function EmployeesPage() {
                     ) : (
                       roles.map((role: Role) => (
                         <TableRow key={role.id} className="hover:bg-gray-50 transition-colors">
-                          <TableCell><Checkbox className="data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500" /></TableCell>
+                          <TableCell className="text-gray-600 font-medium">
+                            {(rolePage - 1) * roleLimit + roles.indexOf(role) + 1}
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center shadow-sm border border-white">

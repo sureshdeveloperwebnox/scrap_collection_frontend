@@ -19,9 +19,14 @@ export interface AuthResponse {
   data: {
     user: {
       id: string;
+      firstName?: string;
+      lastName?: string;
       email: string;
-      name: string;
+      phone?: string;
+      profileImg?: string;
+      name?: string;
       role: string;
+      organizationId?: number;
     };
   }
 }
