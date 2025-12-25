@@ -15,7 +15,7 @@ export const useSignIn = () => {
     onMutate: () => {
       setLoading(true);
     },
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       console.log("Sign in response:", response);
 
       if (response?.data?.user) {
@@ -26,11 +26,30 @@ export const useSignIn = () => {
           description: 'You are now logged in',
         });
 
-        // Use Next.js router for navigation
-        router.push('/dashboard');
-
         // Invalidate all queries to refresh with authenticated state
         queryClient.invalidateQueries();
+
+        // Check if user has an organization
+        try {
+          const { organizationApi } = await import('@/lib/api/organizations');
+          const orgResponse = await organizationApi.getMyOrganization();
+
+          if (orgResponse?.data) {
+            // User has organization, go to dashboard
+            router.push('/dashboard');
+          } else {
+            // User doesn't have organization, redirect to setup
+            router.push('/organization/setup');
+          }
+        } catch (error: any) {
+          // If 404 or organization not found, redirect to setup
+          if (error?.response?.status === 404 || error?.message?.includes('not found')) {
+            router.push('/organization/setup');
+          } else {
+            // For other errors, still go to dashboard
+            router.push('/dashboard');
+          }
+        }
       } else {
         // Handle case where response doesn't have expected data
         toast.error('Login failed', {
@@ -78,7 +97,7 @@ export const useSignUp = () => {
     onMutate: () => {
       setLoading(true);
     },
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       if (response?.data?.user) {
         // Store only user data in Zustand store (tokens are in httpOnly cookies)
         login(response.data.user);
@@ -87,11 +106,30 @@ export const useSignUp = () => {
           description: 'Your account has been created and you are now logged in',
         });
 
-        // Use Next.js router for navigation
-        router.push('/dashboard');
-
         // Invalidate all queries to refresh with authenticated state
         queryClient.invalidateQueries();
+
+        // Check if user has an organization
+        try {
+          const { organizationApi } = await import('@/lib/api/organizations');
+          const orgResponse = await organizationApi.getMyOrganization();
+
+          if (orgResponse?.data) {
+            // User has organization, go to dashboard
+            router.push('/dashboard');
+          } else {
+            // User doesn't have organization, redirect to setup
+            router.push('/organization/setup');
+          }
+        } catch (error: any) {
+          // If 404 or organization not found, redirect to setup
+          if (error?.response?.status === 404 || error?.message?.includes('not found')) {
+            router.push('/organization/setup');
+          } else {
+            // For other errors, still go to dashboard
+            router.push('/dashboard');
+          }
+        }
       } else {
         // Handle case where response doesn't have expected data
         toast.error('Registration failed', {
@@ -278,7 +316,7 @@ export const useUpdateProfile = () => {
         // Map backend firstName/lastName to name if needed
         const name = userData.name || `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
         updateUser({ ...userData, name });
-        
+
         toast.success('Profile updated successfully!');
         queryClient.invalidateQueries({ queryKey: ['me'] });
       }
