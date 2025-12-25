@@ -7,7 +7,7 @@ export function DashboardSkeleton() {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {Array.from({ length: 4 }).map((_, i) => (
-                    <Card key={i} className="overflow-hidden border-none shadow-lg bg-white/50 backdrop-blur-sm">
+                    <Card key={i} className="overflow-hidden border-none shadow-lg bg-white/50 backdrop-blur-sm rounded-[40px]">
                         <CardHeader className="pb-2">
                             <Skeleton className="h-4 w-24" />
                         </CardHeader>
@@ -24,7 +24,7 @@ export function DashboardSkeleton() {
 
             {/* Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                <Card className="col-span-1 lg:col-span-2 shadow-lg border-none bg-white">
+                <Card className="col-span-1 lg:col-span-2 shadow-lg border-none bg-white rounded-[32px]">
                     <CardHeader>
                         <Skeleton className="h-6 w-48" />
                     </CardHeader>
@@ -32,7 +32,7 @@ export function DashboardSkeleton() {
                         <Skeleton className="h-[300px] w-full rounded-xl" />
                     </CardContent>
                 </Card>
-                <Card className="shadow-lg border-none bg-white">
+                <Card className="shadow-lg border-none bg-white rounded-[32px]">
                     <CardHeader>
                         <Skeleton className="h-6 w-36" />
                     </CardHeader>
@@ -44,7 +44,7 @@ export function DashboardSkeleton() {
 
             {/* Bottom Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="shadow-lg border-none bg-white">
+                <Card className="shadow-lg border-none bg-white rounded-[32px]">
                     <CardHeader>
                         <Skeleton className="h-6 w-40" />
                     </CardHeader>
@@ -60,7 +60,7 @@ export function DashboardSkeleton() {
                         ))}
                     </CardContent>
                 </Card>
-                <Card className="shadow-lg border-none bg-white">
+                <Card className="shadow-lg border-none bg-white rounded-[32px]">
                     <CardHeader>
                         <Skeleton className="h-6 w-40" />
                     </CardHeader>

@@ -117,6 +117,11 @@ const config: Config = {
         "glow": "glow 2s ease-in-out infinite",
         "shimmer": "shimmer 2s infinite",
       },
+      fontFamily: {
+        jakarta: ['var(--font-jakarta)'],
+        poppins: ['var(--font-poppins)'],
+        sans: ['var(--font-jakarta)', 'ui-sans-serif', 'system-ui'],
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

@@ -23,6 +23,7 @@ import { ordersApi } from '@/lib/api/orders';
 // Dynamic imports for better code splitting
 const MinimalAnalyticsCard = lazy(() => import('@/components/analytics-card').then(mod => ({ default: mod.MinimalAnalyticsCard })));
 const AreaChartCard = lazy(() => import('@/components/analytics-card').then(mod => ({ default: mod.AreaChartCard })));
+const BarChartCard = lazy(() => import('@/components/analytics-card').then(mod => ({ default: mod.BarChartCard })));
 
 interface DashboardStats {
     leads: {
@@ -324,12 +325,12 @@ export default function DashboardPage() {
             {/* Header */}
             <header>
                 <m.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-8"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="mb-12"
                 >
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-                    <p className="text-gray-600">Welcome back! Here's what's happening today.</p>
+                    <h1 className="text-4xl font-black text-gray-900 mb-2 tracking-tighter">Dashboard</h1>
+                    <p className="text-gray-500 font-medium">Welcome back! Here's what's happening today.</p>
                 </m.div>
             </header>
 
@@ -344,9 +345,14 @@ export default function DashboardPage() {
                 transition={{ delay: 0.6 }}
                 className="mb-8"
             >
-                <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Analytics</h2>
-                    <p className="text-gray-600">Performance metrics and trends</p>
+                <div className="mb-8 flex items-center justify-between">
+                    <div>
+                        <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Detailed Analytics</h2>
+                        <p className="text-gray-400 font-medium text-sm">Performance metrics and trends across your organization</p>
+                    </div>
+                    <div className="hidden sm:flex items-center gap-2 p-1 bg-gray-100/50 rounded-2xl border border-gray-200/50">
+                        <button className="px-4 py-2 text-xs font-black uppercase tracking-wider text-gray-500 hover:text-cyan-600 transition-all">Export Report</button>
+                    </div>
                 </div>
 
                 <Suspense fallback={<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[400px] items-center justify-center p-12 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200"><Activity className="h-8 w-8 animate-spin text-gray-400" /></div>}>
@@ -390,12 +396,13 @@ export default function DashboardPage() {
                         />
 
                         {/* Collectors Activity */}
-                        <AreaChartCard
+                        <BarChartCard
                             title="Collector Activity"
-                            chartData={analyticsData?.collectorsChart || [2.5, 3.2, 2.8, 3.5, 4.1, 3.8, 4.5]}
-                            labels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']}
+                            chartData={(analyticsData?.collectorsChart || [2.5, 3.2, 2.8, 3.5, 4.1, 3.8, 4.5]).map((val: number, i: number) => ({
+                                name: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i] || '',
+                                value: val
+                            }))}
                             color="green"
-                            maxValue={5}
                         />
                     </div>
                 </Suspense>
