@@ -72,9 +72,7 @@ const createCustomerSchema = z.object({
         .max(180, 'Longitude must be between -180 and 180')
         .optional()
         .nullable(),
-    vehicleType: z.enum(['CAR', 'BIKE', 'TRUCK', 'BOAT', 'VAN', 'SUV'], {
-        message: 'Scrap type is required and must be one of: CAR, BIKE, TRUCK, BOAT, VAN, SUV'
-    }).optional(),
+    vehicleType: z.enum(['CAR', 'BIKE', 'TRUCK', 'BOAT', 'VAN', 'SUV']).optional(),
     vehicleMake: z.string().max(50, 'Make cannot exceed 50 characters').optional().or(z.literal('')),
     vehicleModel: z.string().max(50, 'Model cannot exceed 50 characters').optional().or(z.literal('')),
     vehicleNumber: z.string().max(50, 'Scrap number cannot exceed 50 characters').optional().or(z.literal('')),
@@ -84,9 +82,7 @@ const createCustomerSchema = z.object({
         .max(new Date().getFullYear() + 1, `Year cannot be later than ${new Date().getFullYear() + 1}`)
         .optional()
         .nullable(),
-    vehicleCondition: z.enum(['JUNK', 'DAMAGED', 'WRECKED', 'ACCIDENTAL', 'FULLY_SCRAP'], {
-        message: 'Scrap condition must be one of: JUNK, DAMAGED, WRECKED, ACCIDENTAL, FULLY_SCRAP'
-    }).optional(),
+    vehicleCondition: z.enum(['JUNK', 'DAMAGED', 'WRECKED', 'ACCIDENTAL', 'FULLY_SCRAP']).optional(),
     accountStatus: z.enum(['ACTIVE', 'INACTIVE', 'VIP', 'BLOCKED'], {
         message: 'Account status must be ACTIVE, INACTIVE, VIP, or BLOCKED'
     }),
@@ -664,76 +660,6 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                                 <div className="space-y-5">
                                     <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Scrap Details</h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="vehicleType" className="text-sm font-medium text-gray-700">Scrap Type</Label>
-                                            <Select
-                                                value={getCurrentVehicleTypeValue()}
-                                                onValueChange={(value) => {
-                                                    const selectedVehicleType = availableVehicleTypes.find(vt =>
-                                                        mapVehicleTypeNameToEnum(vt.name) === value
-                                                    );
-                                                    const enumValue = selectedVehicleType
-                                                        ? mapVehicleTypeNameToEnum(selectedVehicleType.name)
-                                                        : (value as VehicleTypeEnum);
-                                                    handleInputChange('vehicleType', enumValue);
-                                                }}
-                                                disabled={isLoading || vehicleTypesLoading || availableVehicleTypes.length === 0}
-                                            >
-                                                <SelectTrigger className={`h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${validationErrors.vehicleType ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
-                                                    }`}>
-                                                    <SelectValue placeholder={
-                                                        vehicleTypesLoading
-                                                            ? "Loading vehicle types..."
-                                                            : availableVehicleTypes.length === 0
-                                                                ? "No vehicle types available"
-                                                                : "Select vehicle type"
-                                                    } />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {vehicleTypesLoading ? (
-                                                        <div className="px-2 py-1.5 text-sm text-gray-500">Loading vehicle types...</div>
-                                                    ) : availableVehicleTypes.length === 0 ? (
-                                                        <div className="px-2 py-1.5 text-sm text-gray-500">No vehicle types available</div>
-                                                    ) : (
-                                                        availableVehicleTypes.map((vehicleType) => {
-                                                            const enumValue = mapVehicleTypeNameToEnum(vehicleType.name);
-                                                            const key = vehicleType.id ? String(vehicleType.id) : String(vehicleType.name);
-                                                            return (
-                                                                <SelectItem key={key} value={enumValue}>
-                                                                    {String(vehicleType.name)}
-                                                                </SelectItem>
-                                                            );
-                                                        })
-                                                    )}
-                                                </SelectContent>
-                                            </Select>
-                                            {validationErrors.vehicleType && (
-                                                <p className="text-sm text-red-600 mt-1">{validationErrors.vehicleType}</p>
-                                            )}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="vehicleCondition" className="text-sm font-medium text-gray-700">Scrap Condition</Label>
-                                            <Select
-                                                value={formData.vehicleCondition || ''}
-                                                onValueChange={(value) => handleInputChange('vehicleCondition', value as VehicleConditionEnum)}
-                                                disabled={isLoading}
-                                            >
-                                                <SelectTrigger className={`h-12 rounded-xl border-gray-200 bg-white shadow-sm focus:border-cyan-400 focus:ring-cyan-200 focus:ring-2 transition-all ${validationErrors.vehicleCondition ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
-                                                    }`}>
-                                                    <SelectValue placeholder="Select condition" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="JUNK">Junk</SelectItem>
-                                                    <SelectItem value="DAMAGED">Damaged</SelectItem>
-                                                    <SelectItem value="WRECKED">Wrecked</SelectItem>
-                                                    <SelectItem value="ACCIDENTAL">Accidental</SelectItem>
-                                                    <SelectItem value="FULLY_SCRAP">Fully Scrap</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            {validationErrors.vehicleCondition && (
-                                                <p className="text-sm text-red-600 mt-1">{validationErrors.vehicleCondition}</p>
-                                            )}
-                                        </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="vehicleMake" className="text-sm font-medium text-gray-700">Scrap Make</Label>
                                             <Input
