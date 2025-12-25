@@ -22,6 +22,7 @@ import { RowsPerPage } from '@/components/ui/rows-per-page';
 import { MapDialog } from '@/components/map-dialog';
 import { ScrapYardForm } from '@/components/scrap-yard-form';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { DeleteConfirmDialog } from '@/components/delete-confirm-dialog';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 
@@ -148,6 +149,8 @@ export default function ScrapYardsPage() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [yardToDelete, setYardToDelete] = useState<ScrapYard | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -206,14 +209,20 @@ export default function ScrapYardsPage() {
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (confirm(`Are you sure you want to delete "${name}"?`)) {
-      try {
-        await deleteScrapYardMutation.mutateAsync(id);
-        toast.success('Scrap yard deleted successfully');
-      } catch (error) {
-        toast.error('Failed to delete scrap yard');
-      }
+  const handleDelete = (yard: ScrapYard) => {
+    setYardToDelete(yard);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!yardToDelete) return;
+    try {
+      await deleteScrapYardMutation.mutateAsync(yardToDelete.id);
+      toast.success('Scrap yard deleted successfully');
+      setDeleteConfirmOpen(false);
+      setYardToDelete(null);
+    } catch (error) {
+      toast.error('Failed to delete scrap yard');
     }
   };
 
@@ -463,7 +472,7 @@ export default function ScrapYardsPage() {
                                     <span>Edit</span>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
-                                    onClick={() => handleDelete(yard.id, yard.yardName)}
+                                    onClick={() => handleDelete(yard)}
                                     className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50"
                                   >
                                     <Trash2 className="mr-2 h-4 w-4" />
@@ -515,7 +524,6 @@ export default function ScrapYardsPage() {
         />
       )}
 
-      {/* Form Dialog */}
       <ScrapYardForm
         scrapYard={editingScrapYard}
         isOpen={isFormOpen}
@@ -523,6 +531,28 @@ export default function ScrapYardsPage() {
           setIsFormOpen(false);
           setEditingScrapYard(undefined);
         }}
+      />
+
+      {/* Reusable Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setYardToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Scrap Yard"
+        description="Are you sure you want to delete this scrap yard? This action cannot be undone and will permanently remove the record from the system."
+        confirmText="Delete Yard"
+        isLoading={deleteScrapYardMutation.isPending}
+        itemTitle={yardToDelete?.yardName}
+        itemSubtitle={yardToDelete?.address}
+        icon={yardToDelete && (
+          <ScrapYardAvatar
+            name={yardToDelete.yardName}
+            className="h-10 w-10"
+          />
+        )}
       />
     </div>
   );

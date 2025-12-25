@@ -28,6 +28,7 @@ import { Loader2 } from 'lucide-react';
 import { Pagination } from '@/components/ui/pagination';
 import { RowsPerPage } from '@/components/ui/rows-per-page';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { DeleteConfirmDialog } from '@/components/delete-confirm-dialog';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { isValidPhoneNumber, parsePhoneNumber, CountryCode } from 'libphonenumber-js';
@@ -193,6 +194,17 @@ export default function CollectorAssignmentPage() {
   const [selectedCollector, setSelectedCollector] = useState<Employee | undefined>();
   const [selectedCrew, setSelectedCrew] = useState<Crew | undefined>();
   const [selectedCollectors, setSelectedCollectors] = useState<Set<string>>(new Set());
+
+  // Delete Confirmation State
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deleteData, setDeleteData] = useState<{
+    id: string;
+    type: 'collector' | 'crew' | 'assignment';
+    title: string;
+    itemTitle: string;
+    itemSubtitle?: string;
+    icon?: React.ReactNode;
+  } | null>(null);
 
   const { data: employeesData, isLoading: isLoadingCollectors, refetch: refetchCollectors } = useEmployees({
     page: collectorPage,
@@ -421,15 +433,22 @@ export default function CollectorAssignmentPage() {
     }
   };
 
-  const handleRemoveAssignment = async (assignmentId: string) => {
-    if (confirm('Are you sure you want to remove this assignment?')) {
-      try {
-        await deleteAssignmentMutation.mutateAsync(assignmentId);
-        toast.success('Assignment removed successfully');
-        refetchAssignments();
-      } catch (error: any) {
-        toast.error(error?.response?.data?.message || 'Failed to remove assignment');
-      }
+  const handleRemoveAssignment = (assignmentId: string) => {
+    const assignment = assignments.find((a: any) => a.id === assignmentId);
+    if (assignment) {
+      setDeleteData({
+        id: assignmentId,
+        type: 'assignment',
+        title: 'Remove Assignment',
+        itemTitle: (assignment.collector?.fullName || assignment.crew?.name || 'Unknown resource'),
+        itemSubtitle: `Work Context Assignment`,
+        icon: (
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shadow-sm border border-emerald-100">
+            <MapPin className="h-5 w-5 text-emerald-600" />
+          </div>
+        )
+      });
+      setIsDeleteConfirmOpen(true);
     }
   };
 
@@ -480,27 +499,60 @@ export default function CollectorAssignmentPage() {
     }
   };
 
-  const handleRemoveCrew = async (crewId: string) => {
-    if (confirm('Are you sure you want to delete this crew?')) {
-      try {
-        await deleteCrewMutation.mutateAsync(crewId);
-        toast.success('Crew removed successfully');
-        refetchCrews();
-      } catch (error: any) {
-        toast.error(error?.response?.data?.message || 'Failed to remove crew');
-      }
+  const handleRemoveCrew = (crewId: string) => {
+    const crew = crews.find((c: any) => c.id === crewId);
+    if (crew) {
+      setDeleteData({
+        id: crewId,
+        type: 'crew',
+        title: 'Delete Crew',
+        itemTitle: crew.name,
+        itemSubtitle: `${crew.members?.length || 0} Members assigned`,
+        icon: (
+          <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center shadow-sm border border-purple-100">
+            <Users className="h-5 w-5 text-purple-600" />
+          </div>
+        )
+      });
+      setIsDeleteConfirmOpen(true);
     }
   };
 
-  const handleDeleteCollector = async (id: string) => {
-    if (confirm('Are you sure you want to delete this collector? This action cannot be undone.')) {
-      try {
-        await deleteEmployeeMutation.mutateAsync(id);
+  const handleDeleteCollector = (id: string) => {
+    const collector = collectors.find((c: any) => c.id === id);
+    if (collector) {
+      setDeleteData({
+        id,
+        type: 'collector',
+        title: 'Delete Collector',
+        itemTitle: collector.fullName,
+        itemSubtitle: collector.email,
+        icon: <CollectorAvatar name={collector.fullName} />
+      });
+      setIsDeleteConfirmOpen(true);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteData) return;
+    try {
+      if (deleteData.type === 'collector') {
+        await deleteEmployeeMutation.mutateAsync(deleteData.id);
         toast.success('Collector deleted successfully');
         refetchCollectors();
-      } catch (error: any) {
-        toast.error(error?.response?.data?.message || 'Failed to delete collector');
+      } else if (deleteData.type === 'crew') {
+        await deleteCrewMutation.mutateAsync(deleteData.id);
+        toast.success('Crew removed successfully');
+        refetchCrews();
+      } else {
+        await deleteAssignmentMutation.mutateAsync(deleteData.id);
+        toast.success('Assignment removed successfully');
+        refetchAssignments();
       }
+      setIsDeleteConfirmOpen(false);
+      setDeleteData(null);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || `Failed to remove ${deleteData.type}`);
     }
   };
 
@@ -1181,6 +1233,26 @@ export default function CollectorAssignmentPage() {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Reusable Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => {
+          setIsDeleteConfirmOpen(false);
+          setDeleteData(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title={deleteData?.title}
+        description={`Are you sure you want to delete this ${deleteData?.type}? This action will permanently remove the record and might affect related schedules.`}
+        confirmText={`Delete ${deleteData?.type === 'collector' ? 'Collector' : (deleteData?.type === 'crew' ? 'Crew' : 'Assignment')}`}
+        isLoading={
+          deleteData?.type === 'collector' ? deleteEmployeeMutation.isPending :
+            (deleteData?.type === 'crew' ? deleteCrewMutation.isPending : deleteAssignmentMutation.isPending)
+        }
+        itemTitle={deleteData?.itemTitle}
+        itemSubtitle={deleteData?.itemSubtitle}
+        icon={deleteData?.icon}
+      />
     </div >
   );
 }

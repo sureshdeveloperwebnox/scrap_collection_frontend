@@ -27,6 +27,7 @@ import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
 import { OrderStatusBadge, PaymentStatusBadge, toDisplayOrderStatus, toDisplayPaymentStatus } from '@/components/status-badges';
+import { DeleteConfirmDialog } from '@/components/delete-confirm-dialog';
 
 // Dynamically import Lottie for better performance
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -1833,73 +1834,27 @@ export default function OrdersPage() {
         }}
       />
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent className="sm:max-w-[425px] [&>button]:hidden">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                <Trash2 className="h-5 w-5 text-red-600" />
-              </div>
-              Delete Order
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to delete this order? This action cannot be undone.
-            </p>
-            {orderToDelete && (
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <div className="flex items-center gap-3">
-                  <OrderAvatar
-                    name={orderToDelete.customerName || 'N/A'}
-                    size="md"
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      {orderToDelete.customerName || 'N/A'}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      Order #{orderToDelete.id.slice(0, 8)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDeleteConfirmOpen(false);
-                setOrderToDelete(null);
-              }}
-              disabled={deleteOrderMutation.isPending}
-              className="border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-              disabled={deleteOrderMutation.isPending}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              {deleteOrderMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Order
-                </>
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Reusable Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setOrderToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Order"
+        description="Are you sure you want to delete this order? This action cannot be undone and will permanently remove the record from the system."
+        confirmText="Delete Order"
+        isLoading={deleteOrderMutation.isPending}
+        itemTitle={orderToDelete?.customerName}
+        itemSubtitle={orderToDelete ? `Order #${orderToDelete.id.slice(0, 8)}` : undefined}
+        icon={orderToDelete && (
+          <OrderAvatar
+            name={orderToDelete.customerName || 'N/A'}
+            size="md"
+          />
+        )}
+      />
 
       {/* Collector Info Dialog */}
       <CollectorInfoDialog

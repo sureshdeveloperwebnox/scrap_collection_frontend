@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import {
   Search,
@@ -36,13 +36,13 @@ interface HeaderProps {
   onToggleSidebar?: () => void;
 }
 
-export function Header({ onToggleSidebar }: HeaderProps) {
+export const Header = memo(({ onToggleSidebar }: HeaderProps) => {
   const { user } = useAuthStore();
   const { isCollapsed, toggleCollapsed, toggleMobileOpen } = useSidebarStore();
   const signOutMutation = useSignOut();
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
-  const handleToggle = () => {
+  const handleToggle = useCallback(() => {
     // If a prop is passed, use it, otherwise use store directly
     if (onToggleSidebar) {
       onToggleSidebar();
@@ -54,7 +54,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         toggleCollapsed();
       }
     }
-  };
+  }, [onToggleSidebar, toggleCollapsed, toggleMobileOpen]);
 
   const [appsDropdownOpen, setAppsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -138,7 +138,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
           <input
             type="text"
             placeholder="Search something here..."
-            className="w-full h-11 pl-6 pr-12 bg-gray-100 hover:bg-gray-200/70 border-none rounded-full text-sm font-medium transition-all duration-300 focus:ring-4 focus:ring-cyan-500/10 focus:bg-white focus:shadow-md outline-none"
+            className="w-full h-11 pl-6 pr-12 bg-gray-100 hover:bg-gray-200/70 border-none rounded-full text-sm font-medium transition-[background-color,box-shadow,ring] duration-300 focus:ring-4 focus:ring-cyan-500/10 focus:bg-white focus:shadow-md outline-none"
           />
           <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
             <Search className="text-gray-400 h-5 w-5 group-hover:text-cyan-600 transition-colors" />
@@ -150,7 +150,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
       <div className="flex items-center space-x-2 md:space-x-4">
         <div className="hidden sm:flex items-center space-x-2">
           <button
-            className="relative p-2.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-full transition-all"
+            className="relative p-2.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-full transition-[color,background-color]"
             aria-label="Messages"
             title="Messages"
           >
@@ -159,7 +159,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
           </button>
 
           <button
-            className="relative p-2.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-full transition-all"
+            className="relative p-2.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-full transition-[color,background-color]"
             aria-label="Notifications"
             title="Notifications"
           >
@@ -168,7 +168,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
           </button>
 
           <button
-            className="p-2.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-full transition-all"
+            className="p-2.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-full transition-[color,background-color]"
             aria-label="Settings"
             title="Settings"
           >
@@ -180,7 +180,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         <div className="flex items-center pl-4 border-l border-gray-100">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <div className="flex items-center space-x-3 cursor-pointer group transition-all">
+              <div className="flex items-center space-x-3 cursor-pointer group transition-[transform,color]">
                 <div className="hidden md:block text-right">
                   <div className="text-sm font-bold text-gray-900 leading-none group-hover:text-cyan-600 transition-colors">
                     {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (user?.name || 'Administrator')}
@@ -251,4 +251,6 @@ export function Header({ onToggleSidebar }: HeaderProps) {
       />
     </header>
   );
-}
+});
+
+Header.displayName = 'Header';

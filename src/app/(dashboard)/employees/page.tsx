@@ -35,6 +35,7 @@ import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { employeesApi } from '@/lib/api';
 import { Mail, MapPin, Calendar, Clock } from 'lucide-react';
+import { DeleteConfirmDialog } from '@/components/delete-confirm-dialog';
 
 // Dynamically import Lottie for better performance
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -328,6 +329,17 @@ export default function EmployeesPage() {
   const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
   const [isProfileViewOpen, setIsProfileViewOpen] = useState(false);
 
+  // Delete Confirmation State
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deleteData, setDeleteData] = useState<{
+    id: string;
+    type: 'employee' | 'role';
+    title: string;
+    itemTitle: string;
+    itemSubtitle?: string;
+    icon?: React.ReactNode;
+  } | null>(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -418,14 +430,18 @@ export default function EmployeesPage() {
   }, [rolesData]);
 
   // Handlers
-  const handleDeleteEmployee = async (id: string) => {
-    if (confirm('Are you sure you want to delete this employee?')) {
-      try {
-        await deleteEmployeeMutation.mutateAsync(id);
-        toast.success('Employee deleted successfully');
-      } catch (error: any) {
-        toast.error(error?.response?.data?.message || 'Failed to delete employee');
-      }
+  const handleDeleteEmployee = (id: string) => {
+    const employee = employees.find((e: Employee) => e.id === id);
+    if (employee) {
+      setDeleteData({
+        id,
+        type: 'employee',
+        title: 'Delete Employee',
+        itemTitle: employee.fullName,
+        itemSubtitle: employee.email,
+        icon: <EmployeeAvatar name={employee.fullName} />
+      });
+      setIsDeleteConfirmOpen(true);
     }
   };
 
@@ -444,14 +460,39 @@ export default function EmployeesPage() {
     }
   };
 
-  const handleDeleteRole = async (id: string) => {
-    if (confirm('Are you sure you want to delete this role?')) {
-      try {
-        await deleteRoleMutation.mutateAsync(id.toString());
+  const handleDeleteRole = (id: string) => {
+    const role = roles.find((r: Role) => r.id.toString() === id);
+    if (role) {
+      setDeleteData({
+        id,
+        type: 'role',
+        title: 'Delete Role',
+        itemTitle: role.name,
+        itemSubtitle: `${(role as any)._count?.employees || 0} Members`,
+        icon: (
+          <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center shadow-sm border border-purple-100">
+            <Shield className="h-5 w-5 text-purple-600" />
+          </div>
+        )
+      });
+      setIsDeleteConfirmOpen(true);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteData) return;
+    try {
+      if (deleteData.type === 'employee') {
+        await deleteEmployeeMutation.mutateAsync(deleteData.id);
+        toast.success('Employee deleted successfully');
+      } else {
+        await deleteRoleMutation.mutateAsync(deleteData.id);
         toast.success('Role deleted successfully');
-      } catch (error: any) {
-        toast.error(error?.response?.data?.message || 'Failed to delete role');
       }
+      setIsDeleteConfirmOpen(false);
+      setDeleteData(null);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || `Failed to delete ${deleteData.type}`);
     }
   };
 
@@ -921,7 +962,6 @@ export default function EmployeesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Employee Profile View Dialog */}
       <EmployeeProfileDialog
         employee={viewingEmployee}
         isOpen={isProfileViewOpen}
@@ -930,6 +970,23 @@ export default function EmployeesPage() {
           setViewingEmployee(null);
         }}
         returnTo={searchParams.get('returnTo') || undefined}
+      />
+
+      {/* Reusable Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => {
+          setIsDeleteConfirmOpen(false);
+          setDeleteData(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title={deleteData?.title}
+        description={`Are you sure you want to delete this ${deleteData?.type}? This action cannot be undone and will permanently remove the record from the system.`}
+        confirmText={`Delete ${deleteData?.type === 'employee' ? 'Employee' : 'Role'}`}
+        isLoading={deleteData?.type === 'employee' ? deleteEmployeeMutation.isPending : deleteRoleMutation.isPending}
+        itemTitle={deleteData?.itemTitle}
+        itemSubtitle={deleteData?.itemSubtitle}
+        icon={deleteData?.icon}
       />
     </div>
   );

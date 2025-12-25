@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { DeleteConfirmDialog } from '@/components/delete-confirm-dialog';
 
 // Dynamically import Lottie for better performance
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -1399,75 +1400,27 @@ export default function CustomersPage() {
         }}
       />
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent className="sm:max-w-[425px] [&>button]:hidden">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                <Trash2 className="h-5 w-5 text-red-600" />
-              </div>
-              Delete Customer
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to delete this customer? This action cannot be undone.
-            </p>
-            {customerToDelete && (
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <div className="flex items-center gap-3">
-                  <CustomerAvatar
-                    name={customerToDelete.name || 'N/A'}
-                    size="md"
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      {customerToDelete.name || 'N/A'}
-                    </p>
-                    {customerToDelete.email && (
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {customerToDelete.email}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDeleteConfirmOpen(false);
-                setCustomerToDelete(null);
-              }}
-              disabled={deleteCustomerMutation.isPending}
-              className="border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-              disabled={deleteCustomerMutation.isPending}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              {deleteCustomerMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Customer
-                </>
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Reusable Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setCustomerToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Customer"
+        description="Are you sure you want to delete this customer? This action cannot be undone."
+        confirmText="Delete Customer"
+        isLoading={deleteCustomerMutation.isPending}
+        itemTitle={customerToDelete?.name}
+        itemSubtitle={customerToDelete?.email}
+        icon={customerToDelete && (
+          <CustomerAvatar
+            name={customerToDelete.name || 'N/A'}
+            size="md"
+          />
+        )}
+      />
     </div>
   );
 }

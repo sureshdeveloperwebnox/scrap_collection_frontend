@@ -30,6 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import dynamic from 'next/dynamic';
+import { DeleteConfirmDialog } from '@/components/delete-confirm-dialog';
 
 // Dynamically import Lottie for better performance
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -171,6 +172,17 @@ export default function ScrapManagementPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // Delete Confirmation State
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deleteData, setDeleteData] = useState<{
+    id: string;
+    type: 'category' | 'name';
+    title: string;
+    itemTitle: string;
+    itemSubtitle?: string;
+    icon?: React.ReactNode;
+  } | null>(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -292,27 +304,50 @@ export default function ScrapManagementPage() {
     return { total, active, inactive };
   }, [allNames]);
 
-  const handleDeleteCategory = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this category? All associated scrap names will also be affected.')) {
-      return;
-    }
-    try {
-      await deleteCategoryMutation.mutateAsync(id);
-      toast.success('Category deleted successfully');
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to delete category');
+  const handleDeleteCategory = (id: string) => {
+    const category = categories.find((c: any) => c.id === id);
+    if (category) {
+      setDeleteData({
+        id,
+        type: 'category',
+        title: 'Delete Category',
+        itemTitle: category.name,
+        itemSubtitle: category.description || 'No description',
+        icon: <CategoryIcon />
+      });
+      setIsDeleteConfirmOpen(true);
     }
   };
 
-  const handleDeleteName = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this scrap name?')) {
-      return;
+  const handleDeleteName = (id: string) => {
+    const name = names.find((n: any) => n.id === id);
+    if (name) {
+      setDeleteData({
+        id,
+        type: 'name',
+        title: 'Delete Scrap Name',
+        itemTitle: name.name,
+        itemSubtitle: name.scrapCategory?.name,
+        icon: <ScrapNameIcon />
+      });
+      setIsDeleteConfirmOpen(true);
     }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteData) return;
     try {
-      await deleteNameMutation.mutateAsync(id);
-      toast.success('Scrap name deleted successfully');
+      if (deleteData.type === 'category') {
+        await deleteCategoryMutation.mutateAsync(deleteData.id);
+        toast.success('Category deleted successfully');
+      } else {
+        await deleteNameMutation.mutateAsync(deleteData.id);
+        toast.success('Scrap name deleted successfully');
+      }
+      setIsDeleteConfirmOpen(false);
+      setDeleteData(null);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to delete scrap name');
+      toast.error(error?.response?.data?.message || `Failed to delete ${deleteData.type}`);
     }
   };
 
@@ -1112,6 +1147,26 @@ export default function ScrapManagementPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Reusable Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => {
+          setIsDeleteConfirmOpen(false);
+          setDeleteData(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title={deleteData?.title}
+        description={deleteData?.type === 'category'
+          ? "Are you sure you want to delete this category? All associated scrap names will also be affected and this action cannot be undone."
+          : "Are you sure you want to delete this scrap name? This action cannot be undone and will permanently remove the record."
+        }
+        confirmText={`Delete ${deleteData?.type === 'category' ? 'Category' : 'Name'}`}
+        isLoading={deleteData?.type === 'category' ? deleteCategoryMutation.isPending : deleteNameMutation.isPending}
+        itemTitle={deleteData?.itemTitle}
+        itemSubtitle={deleteData?.itemSubtitle}
+        icon={deleteData?.icon}
+      />
     </div>
   );
 }

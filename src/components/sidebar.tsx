@@ -208,7 +208,7 @@ const NavItem = memo(({
       }}
       aria-current={isActive ? 'page' : undefined}
       className={cn(
-        'group flex items-center relative transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
+        'group flex items-center relative transition-[color,padding,gap] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
         'text-sm font-medium rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white/20',
         'py-3 h-12',
         isActive ? 'text-cyan-700' : 'text-white/80 hover:text-white',
@@ -225,14 +225,14 @@ const NavItem = memo(({
           transition={{
             type: "spring",
             stiffness: 400,
-            damping: 30,
+            damping: 35,
           }}
         />
       )}
 
       {/* Item Icon Wrapper - Fixed width prevents jump */}
       <div className={cn(
-        "flex items-center justify-center flex-shrink-0 relative z-10 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu",
+        "flex items-center justify-center flex-shrink-0 relative z-10 transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] transform-gpu",
         isCollapsed ? "w-12" : "w-5"
       )}>
         <item.icon className={cn(
@@ -248,7 +248,7 @@ const NavItem = memo(({
             initial={{ opacity: 0, width: 0, x: -10 }}
             animate={{ opacity: 1, width: 'auto', x: 0 }}
             exit={{ opacity: 0, width: 0, x: -10 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
             className={cn(
               "truncate relative z-10 font-bold tracking-tight text-[0.9rem] whitespace-nowrap",
               isActive ? "text-cyan-700" : "text-white/80"
@@ -330,19 +330,19 @@ export function Sidebar() {
       {/* Sidebar Main Container */}
       <aside
         className={cn(
-          "fixed left-0 top-0 flex flex-col z-50 h-[100dvh] sidebar-wrapper",
-          "bg-gradient-to-b from-cyan-600 via-cyan-700 to-cyan-800 shadow-2xl shadow-cyan-900/40 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+          "fixed left-0 top-0 flex flex-col z-50 h-[100dvh] sidebar-wrapper transform-gpu",
+          "bg-gradient-to-b from-cyan-600 via-cyan-700 to-cyan-800 shadow-2xl shadow-cyan-900/40 transition-[width,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
           isCollapsed ? "lg:w-20" : "w-[260px]",
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* Brand Section - Unified structure to prevent snapping */}
         <div className={cn(
-          "flex items-center px-6 py-8 flex-shrink-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+          "flex items-center px-6 py-8 flex-shrink-0 transition-[padding,gap] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
           isCollapsed ? "lg:px-3 lg:justify-center" : "gap-3"
         )}>
           <div className="flex items-center">
-            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl border border-white/20 transition-all duration-200 hover:scale-105 active:scale-95 flex-shrink-0">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl border border-white/20 transition-[transform,shadow] duration-200 hover:scale-105 active:scale-95 flex-shrink-0">
               <Image
                 src="/images/logo/scraplogo.png"
                 alt="AussieScrapX"
@@ -358,6 +358,7 @@ export function Sidebar() {
                   initial={{ opacity: 0, width: 0, x: -10 }}
                   animate={{ opacity: 1, width: 'auto', x: 0 }}
                   exit={{ opacity: 0, width: 0, x: -10 }}
+                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                   className="flex items-center ml-3 overflow-hidden"
                 >
                   <span className="text-white font-black text-xl tracking-tighter whitespace-nowrap">
@@ -386,12 +387,12 @@ export function Sidebar() {
         {/* User Account Section - Unified structure for smooth transition */}
         <div className="p-4 mt-auto border-t border-white/10 bg-black/5">
           <div className={cn(
-            "bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+            "bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 transition-[padding,gap] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
             isCollapsed ? "p-2 flex flex-col items-center gap-4 border-transparent bg-transparent" : "p-3"
           )}>
             <div className="flex items-center gap-3 w-full">
               <div className={cn(
-                "rounded-xl bg-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 flex-shrink-0",
+                "rounded-xl bg-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-[transform,shadow] duration-200 flex-shrink-0",
                 isCollapsed ? "w-10 h-10" : "w-10 h-10"
               )}>
                 <span className="text-cyan-700 font-black text-sm">
@@ -417,7 +418,7 @@ export function Sidebar() {
                     </div>
                     <button
                       onClick={() => signOut()}
-                      className="p-2 text-white/40 hover:text-red-300 hover:bg-white/10 rounded-lg transition-all ml-2"
+                      className="p-2 text-white/40 hover:text-red-300 hover:bg-white/10 rounded-lg transition-[color,background-color] ml-2"
                       aria-label="Logout"
                       title="Logout"
                     >

@@ -12,6 +12,7 @@ import { useEmployees } from '@/hooks/use-employees';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { DeleteConfirmDialog } from '@/components/delete-confirm-dialog';
 
 export default function PickupRequestsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,6 +21,8 @@ export default function PickupRequestsPage() {
   const { data: employeesData } = useEmployees({ role: 'COLLECTOR' });
   const deleteMutation = useDeletePickupRequest();
   const assignMutation = useAssignPickupRequest();
+  const [requestToDelete, setRequestToDelete] = useState<PickupRequest | null>(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const pickupRequests = pickupRequestsData?.data?.pickupRequests || [];
   const employees = employeesData?.data?.employees || [];
@@ -31,14 +34,20 @@ export default function PickupRequestsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this pickup request?')) {
-      try {
-        await deleteMutation.mutateAsync(id);
-        toast.success('Pickup request deleted');
-      } catch (error) {
-        toast.error('Failed to delete pickup request');
-      }
+  const handleDelete = (request: PickupRequest) => {
+    setRequestToDelete(request);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!requestToDelete) return;
+    try {
+      await deleteMutation.mutateAsync(requestToDelete.id);
+      toast.success('Pickup request deleted');
+      setIsDeleteConfirmOpen(false);
+      setRequestToDelete(null);
+    } catch (error) {
+      toast.error('Failed to delete pickup request');
     }
   };
 
@@ -222,12 +231,8 @@ export default function PickupRequestsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(request.id)}>
-                          {deleteMutation.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(request)}>
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -238,6 +243,26 @@ export default function PickupRequestsPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+
+      <DeleteConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => {
+          setIsDeleteConfirmOpen(false);
+          setRequestToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Pickup Request"
+        description="Are you sure you want to delete this pickup request? This action cannot be undone."
+        confirmText="Delete Request"
+        isLoading={deleteMutation.isPending}
+        itemTitle={`Request #${requestToDelete?.id.slice(0, 8)}`}
+        itemSubtitle={requestToDelete?.pickupAddress}
+        icon={requestToDelete && (
+          <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center shadow-sm border border-orange-100">
+            <MapPin className="h-5 w-5 text-orange-600" />
+          </div>
+        )}
+      />
+    </div >
   );
 }

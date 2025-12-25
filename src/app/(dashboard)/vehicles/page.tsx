@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { VehicleTypeForm } from '@/components/vehicle-type-form';
+import { DeleteConfirmDialog } from '@/components/delete-confirm-dialog';
 
 // Dynamically import Lottie
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -121,6 +122,17 @@ export default function VehiclesPage() {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
 
+    // Delete Confirmation State
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [deleteData, setDeleteData] = useState<{
+        id: string;
+        type: 'vehicle' | 'type';
+        title: string;
+        itemTitle: string;
+        itemSubtitle?: string;
+        icon?: React.ReactNode;
+    } | null>(null);
+
     useEffect(() => {
         setMounted(true);
     }, []);
@@ -183,14 +195,22 @@ export default function VehiclesPage() {
     const allTypes = useMemo(() => (allTypesData as any)?.data?.vehicleTypes || [], [allTypesData]);
 
     // Handlers
-    const handleDeleteName = async (id: string) => {
-        if (confirm('Are you sure you want to delete this vehicle?')) {
-            try {
-                await deleteNameMutation.mutateAsync(id);
-                toast.success('Vehicle deleted successfully');
-            } catch (error: any) {
-                toast.error(error?.response?.data?.message || 'Failed to delete vehicle');
-            }
+    const handleDeleteName = (id: string) => {
+        const vehicle = names.find((v: VehicleName) => v.id === id);
+        if (vehicle) {
+            setDeleteData({
+                id,
+                type: 'vehicle',
+                title: 'Delete Vehicle',
+                itemTitle: vehicle.name,
+                itemSubtitle: `${vehicle.vehicleNumber || 'No number'} | ${vehicle.make || ''} ${vehicle.model || ''}`,
+                icon: (
+                    <div className="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center shadow-sm border border-cyan-100">
+                        <Car className="h-5 w-5 text-cyan-600" />
+                    </div>
+                )
+            });
+            setIsDeleteConfirmOpen(true);
         }
     };
 
@@ -206,14 +226,39 @@ export default function VehiclesPage() {
         }
     };
 
-    const handleDeleteType = async (id: string) => {
-        if (confirm('Are you sure you want to delete this vehicle type?')) {
-            try {
-                await deleteTypeMutation.mutateAsync(id.toString());
+    const handleDeleteType = (id: string) => {
+        const type = types.find((t: VehicleType) => t.id.toString() === id);
+        if (type) {
+            setDeleteData({
+                id,
+                type: 'type',
+                title: 'Delete Vehicle Type',
+                itemTitle: type.name,
+                itemSubtitle: 'Configuration item',
+                icon: (
+                    <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center shadow-sm border border-purple-100">
+                        <List className="h-5 w-5 text-purple-600" />
+                    </div>
+                )
+            });
+            setIsDeleteConfirmOpen(true);
+        }
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteData) return;
+        try {
+            if (deleteData.type === 'vehicle') {
+                await deleteNameMutation.mutateAsync(deleteData.id);
+                toast.success('Vehicle deleted successfully');
+            } else {
+                await deleteTypeMutation.mutateAsync(deleteData.id);
                 toast.success('Vehicle type deleted successfully');
-            } catch (error: any) {
-                toast.error(error?.response?.data?.message || 'Failed to delete vehicle type');
             }
+            setIsDeleteConfirmOpen(false);
+            setDeleteData(null);
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || `Failed to delete ${deleteData.type}`);
         }
     };
 
@@ -510,6 +555,23 @@ export default function VehiclesPage() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Reusable Delete Confirmation Dialog */}
+            <DeleteConfirmDialog
+                isOpen={isDeleteConfirmOpen}
+                onClose={() => {
+                    setIsDeleteConfirmOpen(false);
+                    setDeleteData(null);
+                }}
+                onConfirm={handleConfirmDelete}
+                title={deleteData?.title}
+                description={`Are you sure you want to delete this ${deleteData?.type}? This action cannot be undone and will permanently remove the record from the system.`}
+                confirmText={`Delete ${deleteData?.type === 'vehicle' ? 'Vehicle' : 'Type'}`}
+                isLoading={deleteData?.type === 'vehicle' ? deleteNameMutation.isPending : deleteTypeMutation.isPending}
+                itemTitle={deleteData?.itemTitle}
+                itemSubtitle={deleteData?.itemSubtitle}
+                icon={deleteData?.icon}
+            />
         </div>
     );
 }

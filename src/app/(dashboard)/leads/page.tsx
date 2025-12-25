@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { DeleteConfirmDialog } from '@/components/delete-confirm-dialog';
 
 // Dynamically import Lottie for better performance
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -1394,76 +1395,27 @@ export default function LeadsPage() {
         }}
       />
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent className="sm:max-w-[425px] [&>button]:hidden">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                <Trash2 className="h-5 w-5 text-red-600" />
-              </div>
-              Delete Lead
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to delete this lead? This action cannot be undone.
-            </p>
-            {leadToDelete && (
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <div className="flex items-center gap-3">
-                  <LeadAvatar
-                    name={leadToDelete.fullName || 'N/A'}
-                    imageUrl={leadToDelete.photos && leadToDelete.photos.length > 0 ? getImageUrl(leadToDelete.photos[0]) : null}
-                    size="md"
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      {leadToDelete.fullName || 'N/A'}
-                    </p>
-                    {leadToDelete.email && (
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {leadToDelete.email}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDeleteConfirmOpen(false);
-                setLeadToDelete(null);
-              }}
-              disabled={deleteLeadMutation.isPending}
-              className="border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-              disabled={deleteLeadMutation.isPending}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              {deleteLeadMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Lead
-                </>
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Reusable Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setLeadToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Lead"
+        description="Are you sure you want to delete this lead? This action cannot be undone."
+        confirmText="Delete Lead"
+        isLoading={deleteLeadMutation.isPending}
+        itemTitle={leadToDelete?.fullName}
+        itemSubtitle={leadToDelete?.email}
+        icon={leadToDelete && (
+          <LeadAvatar
+            name={leadToDelete.fullName || 'N/A'}
+            size="md"
+          />
+        )}
+      />
     </div >
   );
 }

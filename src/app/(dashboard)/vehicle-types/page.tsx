@@ -13,8 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { VehicleTypeForm } from '@/components/vehicle-type-form';
 import { Pagination } from '@/components/ui/pagination';
 import { RowsPerPage } from '@/components/ui/rows-per-page';
+import { DeleteConfirmDialog } from '@/components/delete-confirm-dialog';
 import { toast } from 'sonner';
-import { Plus, Search, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown, MoreVertical } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown, MoreVertical, Car } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,6 +56,10 @@ export default function VehicleTypesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingVehicleType, setEditingVehicleType] = useState<VehicleType | undefined>();
   const [detailsVehicleType, setDetailsVehicleType] = useState<VehicleType | null>(null);
+
+  // Delete Confirmation State
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [vehicleTypeToDelete, setVehicleTypeToDelete] = useState<VehicleType | null>(null);
 
   // Debounce search term
   useEffect(() => {
@@ -104,14 +109,20 @@ export default function VehicleTypesPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this vehicle type?')) {
-      try {
-        await deleteVehicleTypeMutation.mutateAsync(id);
-        toast.success('Vehicle type deleted successfully');
-      } catch (error) {
-        toast.error('Failed to delete vehicle type');
-      }
+  const handleDelete = (vehicleType: VehicleType) => {
+    setVehicleTypeToDelete(vehicleType);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!vehicleTypeToDelete) return;
+    try {
+      await deleteVehicleTypeMutation.mutateAsync(vehicleTypeToDelete.id.toString());
+      toast.success('Vehicle type deleted successfully');
+      setIsDeleteConfirmOpen(false);
+      setVehicleTypeToDelete(null);
+    } catch (error) {
+      toast.error('Failed to delete vehicle type');
     }
   };
 
@@ -288,7 +299,7 @@ export default function VehicleTypesPage() {
                                   Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                  onClick={() => handleDelete(vehicleType.id.toString())}
+                                  onClick={() => handleDelete(vehicleType)}
                                   className="text-red-600"
                                 >
                                   <Trash2 className="mr-2 h-4 w-4" />
@@ -335,6 +346,27 @@ export default function VehicleTypesPage() {
           setIsFormOpen(false);
           setEditingVehicleType(undefined);
         }}
+      />
+
+      {/* Reusable Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => {
+          setIsDeleteConfirmOpen(false);
+          setVehicleTypeToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Vehicle Type"
+        description="Are you sure you want to delete this vehicle type? This action cannot be undone and will permanently remove the record from the system."
+        confirmText="Delete Type"
+        isLoading={deleteVehicleTypeMutation.isPending}
+        itemTitle={vehicleTypeToDelete?.name}
+        itemSubtitle={`Created on ${vehicleTypeToDelete ? new Date(vehicleTypeToDelete.createdAt).toLocaleDateString() : ''}`}
+        icon={vehicleTypeToDelete && (
+          <div className="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center shadow-sm border border-cyan-100">
+            <Car className="h-5 w-5 text-cyan-600" />
+          </div>
+        )}
       />
     </div>
   );
