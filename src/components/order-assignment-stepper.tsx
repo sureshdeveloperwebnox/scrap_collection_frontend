@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useEmployees } from '@/hooks/use-employees';
 import { useCrews } from '@/hooks/use-crews';
@@ -19,7 +20,9 @@ import {
     ArrowRight,
     ArrowLeft,
     Navigation,
-    Loader2
+    Loader2,
+    Clock,
+    Info
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RouteMap } from '@/components/route-map';
@@ -35,6 +38,9 @@ interface AssignmentData {
     yardId: string;
     collectorIds: string[];
     crewId: string;
+    startTime?: string;
+    endTime?: string;
+    notes?: string;
     routeDistance?: string;
     routeDuration?: string;
 }
@@ -53,6 +59,13 @@ export function OrderAssignmentStepper({
             ? (order as any).assignOrders.map((ao: any) => ao.collectorId).filter((id: any) => !!id)
             : (order.assignedCollectorId ? [order.assignedCollectorId] : []),
         crewId: order.crewId || '',
+        startTime: (order as any).assignOrders?.[0]?.startTime
+            ? new Date((order as any).assignOrders[0].startTime).toISOString().slice(0, 16)
+            : undefined,
+        endTime: (order as any).assignOrders?.[0]?.endTime
+            ? new Date((order as any).assignOrders[0].endTime).toISOString().slice(0, 16)
+            : undefined,
+        notes: (order as any).assignOrders?.[0]?.notes || '',
         routeDistance: undefined,
         routeDuration: undefined,
     });
@@ -165,13 +178,16 @@ export function OrderAssignmentStepper({
         setAssignmentData(prev => ({ ...prev, crewId }));
     };
 
-    const handleRouteCalculated = (distance: string, duration: string) => {
-        setAssignmentData(prev => ({
-            ...prev,
-            routeDistance: distance,
-            routeDuration: duration,
-        }));
-    };
+    const handleRouteCalculated = useCallback((distance: string, duration: string) => {
+        setAssignmentData(prev => {
+            if (prev.routeDistance === distance && prev.routeDuration === duration) return prev;
+            return {
+                ...prev,
+                routeDistance: distance,
+                routeDuration: duration,
+            };
+        });
+    }, []);
 
     const handleNext = () => {
         if (currentStep === 1 && !assignmentData.yardId) {
@@ -197,6 +213,9 @@ export function OrderAssignmentStepper({
                     yardId: assignmentData.yardId,
                     collectorIds: assignmentData.collectorIds,
                     crewId: assignmentData.crewId || undefined,
+                    startTime: assignmentData.startTime ? new Date(assignmentData.startTime).toISOString() : undefined,
+                    endTime: assignmentData.endTime ? new Date(assignmentData.endTime).toISOString() : undefined,
+                    notes: assignmentData.notes,
                     routeDistance: assignmentData.routeDistance,
                     routeDuration: assignmentData.routeDuration,
                 },
@@ -320,22 +339,22 @@ export function OrderAssignmentStepper({
                                             return (
                                                 <div
                                                     key={yard.id}
-                                                    onClick={() => handleYardSelect(yard.id)}
-                                                    className={`p-6 rounded-xl border-2 cursor-pointer transition-all ${isSelected
-                                                        ? 'border-cyan-500 bg-cyan-50 shadow-lg'
-                                                        : 'border-gray-200 hover:border-cyan-300 hover:shadow-md'
+                                                    onClick={() => setAssignmentData({ ...assignmentData, yardId: yard.id })}
+                                                    className={`p-5 rounded-2xl border-2 transition-all duration-300 cursor-pointer shadow-sm relative overflow-hidden group ${isSelected
+                                                        ? 'border-cyan-500 bg-cyan-50/50 shadow-cyan-500/10'
+                                                        : 'border-gray-100 bg-white hover:border-cyan-200 hover:shadow-md'
                                                         }`}
                                                 >
-                                                    <div className="flex items-start justify-between mb-3">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isSelected ? 'bg-cyan-500' : 'bg-gray-200'
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 duration-500 ${isSelected ? 'bg-cyan-500 shadow-lg shadow-cyan-200' : 'bg-gray-100'
                                                                 }`}>
-                                                                <Building2 className={`h-5 w-5 ${isSelected ? 'text-white' : 'text-gray-600'}`} />
+                                                                <Building2 className={`h-6 w-6 ${isSelected ? 'text-white' : 'text-gray-500'}`} />
                                                             </div>
                                                             <div>
-                                                                <h4 className="font-semibold text-gray-900">{yard.yardName}</h4>
+                                                                <h4 className="text-base font-black text-gray-900 tracking-tight">{yard.yardName}</h4>
                                                                 {distance && (
-                                                                    <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                                                                    <p className="text-[10px] font-bold text-cyan-600 uppercase tracking-widest flex items-center gap-1.5 mt-1">
                                                                         <Navigation className="h-3 w-3" />
                                                                         {distance} km away
                                                                     </p>
@@ -343,11 +362,13 @@ export function OrderAssignmentStepper({
                                                             </div>
                                                         </div>
                                                         {isSelected && (
-                                                            <CheckCircle2 className="h-6 w-6 text-cyan-500" />
+                                                            <div className="bg-cyan-500 rounded-full p-1 shadow-sm">
+                                                                <CheckCircle2 className="h-5 w-5 text-white" />
+                                                            </div>
                                                         )}
                                                     </div>
-                                                    <p className="text-sm text-gray-600 mb-2">{yard.address}</p>
-                                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                    <p className="text-sm font-medium text-gray-500 leading-snug mb-3">{yard.address}</p>
+                                                    <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-tighter">
                                                         <MapPin className="h-3 w-3" />
                                                         {yard.city}, {yard.state}
                                                     </div>
@@ -390,23 +411,23 @@ export function OrderAssignmentStepper({
                                                     <div
                                                         key={collector.id}
                                                         onClick={() => handleCollectorToggle(collector.id)}
-                                                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${isSelected
-                                                            ? 'border-cyan-500 bg-cyan-50'
-                                                            : 'border-gray-200 hover:border-cyan-300'
+                                                        className={`p-5 rounded-2xl border-2 transition-all duration-300 cursor-pointer shadow-sm relative overflow-hidden group ${isSelected
+                                                            ? 'border-cyan-500 bg-cyan-50/50 shadow-cyan-500/10'
+                                                            : 'border-gray-100 bg-white hover:border-cyan-200 hover:shadow-md'
                                                             }`}
                                                     >
-                                                        <div className="flex items-center gap-3">
+                                                        <div className="flex items-center gap-4">
                                                             <Checkbox
                                                                 checked={isSelected}
                                                                 onCheckedChange={() => handleCollectorToggle(collector.id)}
-                                                                className="h-5 w-5"
+                                                                className="h-5 w-5 rounded-lg border-2 border-gray-200 data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
                                                             />
-                                                            <div className="flex-1">
-                                                                <h4 className="font-semibold text-gray-900">{collector.fullName}</h4>
-                                                                <p className="text-sm text-gray-600">{collector.email}</p>
-                                                                <p className="text-xs text-gray-500 mt-1">
-                                                                    {collector.workZone || 'No zone assigned'}
-                                                                </p>
+                                                            <div className="flex-1 min-w-0">
+                                                                <h4 className="text-base font-black text-gray-900 tracking-tight truncate">{collector.fullName}</h4>
+                                                                <p className="text-xs font-medium text-gray-500 truncate">{collector.email}</p>
+                                                                <div className="mt-2 text-[10px] font-black text-cyan-600 uppercase tracking-widest bg-cyan-50 w-fit px-2 py-0.5 rounded-md">
+                                                                    {collector.workZone || 'External Taskforce'}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -472,6 +493,44 @@ export function OrderAssignmentStepper({
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Mission Details */}
+                                    <div className="mt-8 pt-8 border-t border-gray-100">
+                                        <h4 className="text-base font-semibold text-gray-900 mb-4">Mission Details</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="startTime" className="text-sm font-medium text-gray-700">Scheduled Start Time</Label>
+                                                <input
+                                                    type="datetime-local"
+                                                    id="startTime"
+                                                    value={assignmentData.startTime || ''}
+                                                    onChange={(e) => setAssignmentData(prev => ({ ...prev, startTime: e.target.value }))}
+                                                    className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all text-sm"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="endTime" className="text-sm font-medium text-gray-700">Expected End Time</Label>
+                                                <input
+                                                    type="datetime-local"
+                                                    id="endTime"
+                                                    value={assignmentData.endTime || ''}
+                                                    onChange={(e) => setAssignmentData(prev => ({ ...prev, endTime: e.target.value }))}
+                                                    className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all text-sm"
+                                                />
+                                            </div>
+                                            <div className="space-y-2 md:col-span-2">
+                                                <Label htmlFor="notes" className="text-sm font-medium text-gray-700">Internal Tactical Notes</Label>
+                                                <textarea
+                                                    id="notes"
+                                                    value={assignmentData.notes || ''}
+                                                    onChange={(e) => setAssignmentData(prev => ({ ...prev, notes: e.target.value }))}
+                                                    placeholder="Priority instructions, site-specific hazards, or gate codes..."
+                                                    className="w-full min-h-[100px] px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all text-sm resize-none"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
                                 </div>
                             )}
 
@@ -523,49 +582,89 @@ export function OrderAssignmentStepper({
                                                 )}
                                             </div>
 
-                                            <div className="bg-green-50 rounded-xl p-6">
-                                                <h4 className="font-semibold text-gray-900 mb-4">Assigned Team</h4>
-                                                {assignmentData.collectorIds.length > 0 && (
-                                                    <div className="mb-3">
-                                                        <p className="text-sm text-gray-600 mb-2">Collectors:</p>
-                                                        <ul className="space-y-1">
-                                                            {assignmentData.collectorIds.map(id => {
-                                                                const collector = allCollectors.find((c: any) => c.id === id);
-                                                                // Use order object as a fallback if available
-                                                                const name = collector?.fullName ||
-                                                                    (order.assignedCollectorId === id ? order.assignedCollector?.fullName : null) ||
-                                                                    'Unknown Collector';
-                                                                return (
-                                                                    <li key={id} className="text-sm font-medium text-gray-900">
-                                                                        • {name}
-                                                                    </li>
-                                                                );
-                                                            })}
-                                                        </ul>
-                                                    </div>
-                                                )}
-                                                {assignmentData.crewId && (
-                                                    <div>
-                                                        <p className="text-sm text-gray-600 mb-2">Crew:</p>
-                                                        {(() => {
-                                                            const crew = allCrews.find((c: any) => c.id === assignmentData.crewId);
-                                                            const name = crew?.name ||
-                                                                (order.crewId === assignmentData.crewId ? order.crew?.name : null) ||
-                                                                'Selected Crew';
-                                                            const members = crew?.members?.length ||
-                                                                (order.crewId === assignmentData.crewId ? order.crew?.members?.length : 0);
+                                            <div className="bg-emerald-50 rounded-[1.5rem] p-6 border border-emerald-100/50 relative overflow-hidden group">
+                                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                                                    <Users className="h-10 w-10 text-emerald-600" />
+                                                </div>
+                                                <h4 className="text-[10px] font-black text-emerald-700 uppercase tracking-[0.2em] mb-4">Assigned Team & Timing</h4>
 
-                                                            return (
-                                                                <p className="text-sm font-medium text-gray-900">
-                                                                    {name} {members > 0 ? `(${members} members)` : ''}
-                                                                </p>
-                                                            );
-                                                        })()}
-                                                    </div>
-                                                )}
-                                                {assignmentData.collectorIds.length === 0 && !assignmentData.crewId && (
-                                                    <p className="text-gray-600">No team assigned</p>
-                                                )}
+                                                <div className="space-y-4">
+                                                    {(assignmentData.collectorIds.length > 0 || assignmentData.crewId) ? (
+                                                        <div className="space-y-3">
+                                                            {assignmentData.collectorIds.length > 0 && (
+                                                                <div>
+                                                                    <p className="text-[9px] font-black text-emerald-600/60 uppercase tracking-widest mb-1.5">Collectors</p>
+                                                                    <div className="flex flex-wrap gap-2">
+                                                                        {assignmentData.collectorIds.map(id => {
+                                                                            const collector = allCollectors.find((c: any) => c.id === id);
+                                                                            const name = collector?.fullName || (order.assignedCollectorId === id ? order.assignedCollector?.fullName : null) || 'Unknown Collector';
+                                                                            return (
+                                                                                <Badge key={id} className="bg-white text-emerald-700 text-[10px] font-bold py-1 px-3 border border-emerald-100 rounded-lg shadow-sm">
+                                                                                    {name}
+                                                                                </Badge>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            {assignmentData.crewId && (
+                                                                <div>
+                                                                    <p className="text-[9px] font-black text-emerald-600/60 uppercase tracking-widest mb-1.5">Tactical Unit</p>
+                                                                    {(() => {
+                                                                        const crew = allCrews.find((c: any) => c.id === assignmentData.crewId);
+                                                                        const name = crew?.name || (order.crewId === assignmentData.crewId ? order.crew?.name : null) || 'Selected Crew';
+                                                                        return (
+                                                                            <Badge className="bg-emerald-600 text-white text-[10px] font-bold py-1 px-3 border-none rounded-lg shadow-md">
+                                                                                {name}
+                                                                            </Badge>
+                                                                        );
+                                                                    })()}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-sm font-medium text-emerald-600/60 italic">No team assigned yet</p>
+                                                    )}
+
+                                                    {(assignmentData.startTime || assignmentData.endTime || assignmentData.notes) && (
+                                                        <div className="mt-5 pt-5 border-t border-emerald-200/50 grid grid-cols-2 gap-6">
+                                                            {assignmentData.startTime && (
+                                                                <div className="space-y-1">
+                                                                    <p className="text-[9px] font-black text-emerald-700 uppercase tracking-widest flex items-center gap-1.5">
+                                                                        <Clock className="h-3 w-3" />
+                                                                        Mission Start
+                                                                    </p>
+                                                                    <p className="text-xs font-bold text-emerald-900">
+                                                                        {new Date(assignmentData.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                            {assignmentData.endTime && (
+                                                                <div className="space-y-1">
+                                                                    <p className="text-[9px] font-black text-emerald-700 uppercase tracking-widest flex items-center gap-1.5">
+                                                                        <ArrowRight className="h-3 w-3" />
+                                                                        End Time
+                                                                    </p>
+                                                                    <p className="text-xs font-bold text-emerald-900">
+                                                                        {new Date(assignmentData.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                            {assignmentData.notes && (
+                                                                <div className="col-span-2 mt-2">
+                                                                    <p className="text-[9px] font-black text-emerald-700 uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                                                                        <Info className="h-3 w-3" />
+                                                                        Tac-Directives
+                                                                    </p>
+                                                                    <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl border border-emerald-100 text-xs font-medium text-emerald-900 italic leading-relaxed">
+                                                                        "{assignmentData.notes}"
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             {/* Route Information */}
@@ -654,6 +753,6 @@ export function OrderAssignmentStepper({
                     )}
                 </div>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }

@@ -1,10 +1,47 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { useLoadScript } from '@react-google-maps/api';
-import { Loader2, Navigation, Clock } from 'lucide-react';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { GoogleMap, DirectionsRenderer, Marker, Polyline } from '@react-google-maps/api';
+import { Loader2, Navigation, Clock, Info, MapPin, Zap } from 'lucide-react';
 
-const libraries: ("places" | "geometry" | "routes")[] = ['places', 'geometry', 'routes'];
+const mapContainerStyle = {
+    width: '100%',
+    height: '100%',
+};
+
+// Premium "Silver" Map Styling
+const silverMapStyle = [
+    {
+        "featureType": "all",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#7c93a3" }, { "lightness": "-10" }]
+    },
+    {
+        "featureType": "administrative.locality",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#1f2937" }, { "weight": "bold" }]
+    },
+    {
+        "featureType": "landscape",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#f8fafc" }]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#f1f5f9" }]
+    },
+    {
+        "featureType": "road",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#ffffff" }]
+    },
+    {
+        "featureType": "water",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#e2e8f0" }]
+    }
+];
 
 interface RouteMapProps {
     collectionAddress: string;
@@ -16,11 +53,6 @@ interface RouteMapProps {
     onRouteCalculated?: (distance: string, duration: string) => void;
 }
 
-interface RouteInfo {
-    distance: string;
-    duration: string;
-}
-
 export function RouteMap({
     collectionAddress,
     collectionLat,
@@ -30,356 +62,247 @@ export function RouteMap({
     yardLng,
     onRouteCalculated,
 }: RouteMapProps) {
-    const { isLoaded, loadError } = useLoadScript({
-        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-        libraries,
-    });
-    const mapRef = useRef<HTMLDivElement>(null);
-    const [map, setMap] = useState<google.maps.Map | null>(null);
+    const [response, setResponse] = useState<google.maps.DirectionsResult | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
+    const [isFallback, setIsFallback] = useState(false);
+    const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string } | null>(null);
+    const [locations, setLocations] = useState<{
+        start?: google.maps.LatLngLiteral;
+        end?: google.maps.LatLngLiteral;
+    }>({});
 
-    // Debug logging
+    const calculationInProgress = useRef<string | null>(null);
+
+    // Coordinate resolution
     useEffect(() => {
-        console.log('RouteMap state:', { routeInfo, isLoading, isLoaded, loadError });
-    }, [routeInfo, isLoading, isLoaded, loadError]);
+        if (typeof google === 'undefined') return;
 
+        const resolveLocations = async () => {
+            const geocoder = new google.maps.Geocoder();
 
+            const lat1 = Number(collectionLat);
+            const lng1 = Number(collectionLng);
+            const lat2 = Number(yardLat);
+            const lng2 = Number(yardLng);
+
+            const startPos = (lat1 !== 0 && lng1 !== 0 && !isNaN(lat1))
+                ? { lat: lat1, lng: lng1 }
+                : await geocoder.geocode({ address: collectionAddress })
+                    .then(res => res.results[0]?.geometry.location.toJSON())
+                    .catch(() => undefined);
+
+            const endPos = (lat2 !== 0 && lng2 !== 0 && !isNaN(lat2))
+                ? { lat: lat2, lng: lng2 }
+                : await geocoder.geocode({ address: yardAddress })
+                    .then(res => res.results[0]?.geometry.location.toJSON())
+                    .catch(() => undefined);
+
+            setLocations({ start: startPos, end: endPos });
+        };
+
+        resolveLocations();
+    }, [collectionAddress, yardAddress, collectionLat, collectionLng, yardLat, yardLng]);
+
+    // Route Logic
     useEffect(() => {
-        // Wait for Google Maps to load
-        if (!isLoaded) return;
+        if (typeof google === 'undefined' || !locations.start || !locations.end) return;
 
-        if (loadError) {
-            setError('Failed to load Google Maps');
-            setIsLoading(false);
-            return;
-        }
+        const routeKey = `${locations.start.lat},${locations.start.lng}->${locations.end.lat},${locations.end.lng}`;
+        if (calculationInProgress.current === routeKey) return;
 
-        if (!mapRef.current) return;
+        calculationInProgress.current = routeKey;
+        setIsLoading(true);
 
-        // Initialize map
-        const initMap = async () => {
-            try {
-                const { Map } = await google.maps.importLibrary('maps') as google.maps.MapsLibrary;
-                const { DirectionsService, DirectionsRenderer } = await google.maps.importLibrary('routes') as google.maps.RoutesLibrary;
+        const directionsService = new google.maps.DirectionsService();
 
-                // Geocode addresses if coordinates are missing
-                let finalCollectionLat = collectionLat;
-                let finalCollectionLng = collectionLng;
-                let finalYardLat = yardLat;
-                let finalYardLng = yardLng;
-
-                const geocoder = new google.maps.Geocoder();
-
-                // Geocode collection address if no coordinates
-                if ((!collectionLat || !collectionLng) && collectionAddress) {
-                    try {
-                        const result = await geocoder.geocode({ address: collectionAddress });
-                        if (result.results[0]) {
-                            finalCollectionLat = result.results[0].geometry.location.lat();
-                            finalCollectionLng = result.results[0].geometry.location.lng();
-                            console.log('Geocoded collection:', finalCollectionLat, finalCollectionLng);
-                        }
-                    } catch (err) {
-                        console.error('Failed to geocode collection address:', err);
+        directionsService.route(
+            {
+                origin: locations.start,
+                destination: locations.end,
+                travelMode: google.maps.TravelMode.DRIVING,
+            },
+            (result, status) => {
+                if (status === google.maps.DirectionsStatus.OK && result) {
+                    setResponse(result);
+                    setIsLoading(false);
+                    const leg = result.routes[0]?.legs[0];
+                    if (leg) {
+                        const info = {
+                            distance: leg.distance?.text || 'N/A',
+                            duration: leg.duration?.text || 'N/A'
+                        };
+                        setRouteInfo(info);
+                        onRouteCalculated?.(info.distance, info.duration);
                     }
-                }
-
-                // Geocode yard address if no coordinates
-                if ((!yardLat || !yardLng) && yardAddress) {
-                    try {
-                        const result = await geocoder.geocode({ address: yardAddress });
-                        if (result.results[0]) {
-                            finalYardLat = result.results[0].geometry.location.lat();
-                            finalYardLng = result.results[0].geometry.location.lng();
-                            console.log('Geocoded yard:', finalYardLat, finalYardLng);
-                        }
-                    } catch (err) {
-                        console.error('Failed to geocode yard address:', err);
-                    }
-                }
-
-                // Create map centered between collection and yard
-                const centerLat = finalCollectionLat && finalYardLat ? (finalCollectionLat + finalYardLat) / 2 : finalCollectionLat || finalYardLat || 0;
-                const centerLng = finalCollectionLng && finalYardLng ? (finalCollectionLng + finalYardLng) / 2 : finalCollectionLng || finalYardLng || 0;
-
-                const mapInstance = new Map(mapRef.current!, {
-                    center: { lat: centerLat, lng: centerLng },
-                    zoom: 12,
-                    mapTypeControl: true,
-                    mapTypeControlOptions: {
-                        position: google.maps.ControlPosition.TOP_RIGHT,
-                    },
-                    fullscreenControl: true,
-                    streetViewControl: false,
-                    zoomControl: true,
-                });
-
-                setMap(mapInstance);
-
-                // Create bounds to fit both markers
-                const bounds = new google.maps.LatLngBounds();
-
-                // If we have coordinates, show route
-                if (finalCollectionLat && finalCollectionLng && finalYardLat && finalYardLng) {
-                    // Add coordinates to bounds
-                    bounds.extend({ lat: finalCollectionLat, lng: finalCollectionLng });
-                    bounds.extend({ lat: finalYardLat, lng: finalYardLng });
-
-                    const directionsService = new DirectionsService();
-                    const directionsRenderer = new DirectionsRenderer({
-                        map: mapInstance,
-                        suppressMarkers: true, // We'll add custom markers
-                        polylineOptions: {
-                            strokeColor: '#06b6d4', // cyan-500
-                            strokeWeight: 6,
-                            strokeOpacity: 0.9,
-                        },
-                    });
-
-                    // Calculate route
-                    directionsService.route(
-                        {
-                            origin: { lat: finalCollectionLat, lng: finalCollectionLng },
-                            destination: { lat: finalYardLat, lng: finalYardLng },
-                            travelMode: google.maps.TravelMode.DRIVING,
-                        },
-                        (result, status) => {
-                            console.log('Directions API status:', status);
-                            if (status === 'OK' && result) {
-                                directionsRenderer.setDirections(result);
-
-                                // Extract distance and duration
-                                const route = result.routes[0];
-                                console.log('Route data:', route);
-                                if (route && route.legs && route.legs[0]) {
-                                    const leg = route.legs[0];
-                                    const distance = leg.distance?.text || 'N/A';
-                                    const duration = leg.duration?.text || 'N/A';
-
-                                    console.log('Setting route info:', { distance, duration });
-                                    setRouteInfo({
-                                        distance,
-                                        duration,
-                                    });
-
-                                    // Call callback to pass data to parent
-                                    if (onRouteCalculated) {
-                                        onRouteCalculated(distance, duration);
-                                    }
-                                } else {
-                                    console.error('No route legs found');
-                                }
-
-                                // Add custom markers AFTER route is set
-                                // Collection point marker (Green - Start)
-                                new google.maps.Marker({
-                                    position: { lat: finalCollectionLat!, lng: finalCollectionLng! },
-                                    map: mapInstance,
-                                    title: 'Collection Point',
-                                    label: {
-                                        text: 'A',
-                                        color: 'white',
-                                        fontSize: '16px',
-                                        fontWeight: 'bold',
-                                    },
-                                    icon: {
-                                        path: google.maps.SymbolPath.CIRCLE,
-                                        scale: 20,
-                                        fillColor: '#10b981', // green-500
-                                        fillOpacity: 1,
-                                        strokeColor: '#ffffff',
-                                        strokeWeight: 3,
-                                    },
-                                    zIndex: 1000,
-                                });
-
-                                // Scrap yard marker (Cyan - Destination)
-                                new google.maps.Marker({
-                                    position: { lat: finalYardLat!, lng: finalYardLng! },
-                                    map: mapInstance,
-                                    title: 'Scrap Yard',
-                                    label: {
-                                        text: 'B',
-                                        color: 'white',
-                                        fontSize: '16px',
-                                        fontWeight: 'bold',
-                                    },
-                                    icon: {
-                                        path: google.maps.SymbolPath.CIRCLE,
-                                        scale: 20,
-                                        fillColor: '#06b6d4', // cyan-500
-                                        fillOpacity: 1,
-                                        strokeColor: '#ffffff',
-                                        strokeWeight: 3,
-                                    },
-                                    zIndex: 1000,
-                                });
-
-                                // Fit map to show both markers
-                                mapInstance.fitBounds(bounds);
-                                setIsLoading(false);
-                            } else {
-                                console.error('Directions request failed:', status);
-                                // Fallback to markers only if route fails
-                                showMarkersOnly(mapInstance, finalCollectionLat, finalCollectionLng, finalYardLat, finalYardLng, bounds);
-                            }
-                        }
-                    );
                 } else {
-                    // No coordinates, just show markers if we have them
-                    showMarkersOnly(mapInstance, finalCollectionLat, finalCollectionLng, finalYardLat, finalYardLng, bounds);
+                    setIsLoading(false);
+                    setIsFallback(true);
+                    if (google.maps.geometry) {
+                        const meters = google.maps.geometry.spherical.computeDistanceBetween(
+                            new google.maps.LatLng(locations.start!),
+                            new google.maps.LatLng(locations.end!)
+                        );
+                        const distanceText = (meters / 1000).toFixed(1) + ' km (Direct)';
+                        const info = { distance: distanceText, duration: 'Est. N/A' };
+                        setRouteInfo(info);
+                        onRouteCalculated?.(info.distance, info.duration);
+                    }
                 }
-            } catch (err) {
-                console.error('Error initializing map:', err);
-                setError('Failed to load map');
-                setIsLoading(false);
             }
-        };
-
-        const showMarkersOnly = (
-            mapInstance: google.maps.Map,
-            lat1?: number,
-            lng1?: number,
-            lat2?: number,
-            lng2?: number,
-            bounds?: google.maps.LatLngBounds
-        ) => {
-            const mapBounds = bounds || new google.maps.LatLngBounds();
-
-            // Add markers if we have coordinates
-            if (lat1 && lng1) {
-                new google.maps.Marker({
-                    position: { lat: lat1, lng: lng1 },
-                    map: mapInstance,
-                    title: 'Collection Point',
-                    label: {
-                        text: 'A',
-                        color: 'white',
-                        fontSize: '16px',
-                        fontWeight: 'bold',
-                    },
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 20,
-                        fillColor: '#10b981',
-                        fillOpacity: 1,
-                        strokeColor: '#ffffff',
-                        strokeWeight: 3,
-                    },
-                    zIndex: 1000,
-                });
-                mapBounds.extend({ lat: lat1, lng: lng1 });
-            }
-
-            if (lat2 && lng2) {
-                new google.maps.Marker({
-                    position: { lat: lat2, lng: lng2 },
-                    map: mapInstance,
-                    title: 'Scrap Yard',
-                    label: {
-                        text: 'B',
-                        color: 'white',
-                        fontSize: '16px',
-                        fontWeight: 'bold',
-                    },
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 20,
-                        fillColor: '#06b6d4',
-                        fillOpacity: 1,
-                        strokeColor: '#ffffff',
-                        strokeWeight: 3,
-                    },
-                    zIndex: 1000,
-                });
-                mapBounds.extend({ lat: lat2, lng: lng2 });
-            }
-
-            // Fit map to show all markers
-            if (!mapBounds.isEmpty()) {
-                mapInstance.fitBounds(mapBounds);
-            }
-
-            setIsLoading(false);
-        };
-
-        initMap();
-    }, [isLoaded, loadError, collectionLat, collectionLng, yardLat, yardLng, collectionAddress, yardAddress]);
-
-
-    if (error) {
-        return (
-            <div className="w-full h-full bg-gray-100 rounded-xl flex items-center justify-center p-6">
-                <div className="text-center">
-                    <p className="text-gray-600 font-medium">Map Unavailable</p>
-                    <p className="text-sm text-gray-500 mt-2">{error}</p>
-                    <div className="mt-4 text-left bg-white rounded-lg p-4 shadow-sm">
-                        <div className="mb-3">
-                            <p className="text-xs font-medium text-gray-600">Collection Point:</p>
-                            <p className="text-sm text-gray-900">{collectionAddress}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs font-medium text-gray-600">Scrap Yard:</p>
-                            <p className="text-sm text-gray-900">{yardAddress}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
         );
-    }
+    }, [locations.start, locations.end, onRouteCalculated]);
+
+    const center = useMemo(() => {
+        if (locations.start && locations.end) {
+            return {
+                lat: (locations.start.lat + locations.end.lat) / 2,
+                lng: (locations.start.lng + locations.end.lng) / 2,
+            };
+        }
+        if (locations.start) return locations.start;
+        return { lat: -25.2744, lng: 133.7751 };
+    }, [locations]);
+
+    if (typeof google === 'undefined') return null;
 
     return (
-        <div className="relative w-full h-full rounded-xl overflow-hidden">
+        <div className="relative w-full h-full rounded-3xl overflow-hidden bg-[#f0f4f8] border-8 border-white/50 shadow-[0_20px_50px_rgba(0,0,0,0.1)]">
             {isLoading && (
-                <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-10">
-                    <div className="text-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-cyan-500 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600">Loading route...</p>
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/40 backdrop-blur-xl">
+                    <div className="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-4 border border-gray-100 scale-110">
+                        <Loader2 className="h-10 w-10 animate-spin text-cyan-600" />
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Mapping Route</p>
                     </div>
                 </div>
             )}
 
+            <GoogleMap
+                mapContainerStyle={mapContainerStyle}
+                zoom={locations.start && locations.end ? 5 : 4}
+                center={center}
+                options={{
+                    disableDefaultUI: true,
+                    zoomControl: true,
+                    styles: silverMapStyle,
+                    backgroundColor: '#f8fafc'
+                }}
+            >
+                {/* Ideal Road Route */}
+                {response && (
+                    <DirectionsRenderer
+                        directions={response}
+                        options={{
+                            polylineOptions: {
+                                strokeColor: '#0ea5e9',
+                                strokeWeight: 8,
+                                strokeOpacity: 0.8,
+                                zIndex: 100
+                            },
+                            suppressMarkers: true
+                        }}
+                    />
+                )}
 
-            {/* Distance and Duration Info */}
-            {routeInfo && !isLoading && (
-                <div className="absolute top-auto bottom-4 left-4 right-4 lg:top-4 lg:bottom-auto lg:left-4 lg:right-auto z-[1000] bg-white rounded-lg shadow-2xl p-4 min-w-0 lg:min-w-[250px] max-w-full lg:max-w-[350px] border-2 border-cyan-500 mx-auto">
-                    <h4 className="font-semibold text-gray-900 mb-3 text-sm">Route Information</h4>
-                    <div className="space-y-2">
+                {/* Animated Direct Fallback Line */}
+                {isFallback && locations.start && locations.end && (
+                    <Polyline
+                        path={[locations.start, locations.end]}
+                        options={{
+                            strokeColor: '#f43f5e',
+                            strokeWeight: 4,
+                            strokeOpacity: 0.6,
+                            icons: [{
+                                icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 3, fillOpacity: 1, fillColor: '#f43f5e', strokeColor: '#fff', strokeWeight: 1 },
+                                offset: '100%',
+                                repeat: '120px'
+                            }],
+                            geodesic: true,
+                            zIndex: 90
+                        }}
+                    />
+                )}
+
+                {/* Pickup Marker (Point A) with Pulse Effect */}
+                {locations.start && (
+                    <>
+                        {/* Hidden pulse effect via a second marker with a expanding stroke? 
+                            Actually, Google Maps markers don't easily support CSS animations.
+                            We'll use a scaled circle symbol with a high fill opacity to make it pop.
+                        */}
+                        <Marker
+                            position={locations.start}
+                            icon={{
+                                path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+                                fillColor: '#10b981',
+                                fillOpacity: 1,
+                                strokeColor: '#ffffff',
+                                strokeWeight: 3,
+                                scale: 1.8,
+                                anchor: new google.maps.Point(12, 22)
+                            }}
+                        />
+                    </>
+                )}
+
+                {/* Yard Marker */}
+                {locations.end && (
+                    <Marker
+                        position={locations.end}
+                        icon={{
+                            path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+                            fillColor: isFallback ? '#f43f5e' : '#0ea5e9',
+                            fillOpacity: 1,
+                            strokeColor: '#ffffff',
+                            strokeWeight: 2,
+                            scale: 1.5,
+                            anchor: new google.maps.Point(12, 22)
+                        }}
+                    />
+                )}
+            </GoogleMap>
+
+            {/* Premium Dynamic Data Panel */}
+            <div className="absolute top-6 left-6 right-6 z-40 flex flex-col md:flex-row items-stretch md:items-center gap-4 pointer-events-none">
+                <div className="bg-white/90 backdrop-blur-3xl p-4 rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.12)] border border-white flex items-center gap-5 pointer-events-auto">
+                    <div className={`h-14 w-14 rounded-2xl flex items-center justify-center shadow-lg transform rotate-[-5deg] ${isFallback ? 'bg-rose-500 shadow-rose-200' : 'bg-cyan-500 shadow-cyan-200'}`}>
+                        {isFallback ? <Zap className="h-6 w-6 text-white" /> : <Navigation className="h-6 w-6 text-white" />}
+                    </div>
+
+                    <div className="border-r border-gray-100 pr-5">
+                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">
+                            {isFallback ? 'Fast Connect' : 'Smart Routing'}
+                        </h4>
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                                <span className="text-green-600 font-bold text-xs">A</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-xs text-gray-600">Collection Point</p>
-                                <p className="text-xs font-medium text-gray-900 truncate">{collectionAddress}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center flex-shrink-0">
-                                <span className="text-cyan-600 font-bold text-xs">B</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-xs text-gray-600">Scrap Yard</p>
-                                <p className="text-xs font-medium text-gray-900 truncate">{yardAddress}</p>
-                            </div>
-                        </div>
-                        <div className="pt-2 border-t border-gray-200">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Navigation className="h-4 w-4 text-cyan-600 flex-shrink-0" />
-                                <span className="text-sm font-semibold text-gray-900">{routeInfo.distance}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-cyan-600 flex-shrink-0" />
-                                <span className="text-sm font-semibold text-gray-900">{routeInfo.duration}</span>
-                            </div>
+                            <span className="text-xl font-black text-gray-900 tracking-tighter">
+                                {routeInfo?.distance || '--'}
+                            </span>
+                            {isFallback && <p className="text-[9px] font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full uppercase">Direct</p>}
                         </div>
                     </div>
-                </div>
-            )}
 
-            <div ref={mapRef} className="w-full h-full min-h-[400px]" />
+                    <div className="pr-2">
+                        <div className="flex items-center gap-2 text-emerald-600 mb-1">
+                            <Clock className="h-4 w-4" />
+                            <span className="text-[10px] font-black uppercase tracking-wider">Estimate</span>
+                        </div>
+                        <p className="text-sm font-black text-gray-800 tracking-tight">
+                            {routeInfo?.duration || 'Calculating...'}
+                        </p>
+                    </div>
+                </div>
+
+                {isFallback && (
+                    <div className="hidden lg:flex items-center gap-2 bg-amber-50/90 backdrop-blur-md px-5 py-3 rounded-full border border-amber-200/50 shadow-sm pointer-events-auto group">
+                        <Info className="h-4 w-4 text-amber-500 group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-bold text-amber-900 uppercase tracking-widest leading-none">Directions API (Not Enabled)</span>
+                    </div>
+                )}
+            </div>
+
+            {/* Bottom Tag */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 bg-gray-900/10 backdrop-blur-sm px-4 py-1.5 rounded-full border border-white/20">
+                <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.3em]">Scrap Management Logistics Interface v1.0</p>
+            </div>
         </div>
     );
 }

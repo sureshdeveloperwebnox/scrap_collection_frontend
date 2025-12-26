@@ -17,7 +17,7 @@ export function GoogleMapsProvider({ children }: GoogleMapsProviderProps) {
   return (
     <LoadScript
       googleMapsApiKey={apiKey}
-      libraries={['places', 'geocoding']}
+      libraries={['places', 'geometry']}
       loadingElement={<div />}
     >
       {children}
