@@ -73,6 +73,9 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                     assignedAt: new Date(ao.assignedAt),
                     startTime: ao.startTime ? new Date(ao.startTime) : undefined,
                     endTime: ao.endTime ? new Date(ao.endTime) : undefined,
+                    completedAt: ao.completedAt ? new Date(ao.completedAt) : undefined,
+                    completionNotes: ao.completionNotes,
+                    completionPhotos: ao.completionPhotos,
                 })),
             };
 
@@ -178,7 +181,17 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 
     const assignedCollectors = order.assignOrders?.filter(ao => ao.collector).map(ao => ({
         ...ao.collector!,
-        assignment: { startTime: ao.startTime, endTime: ao.endTime, notes: ao.notes }
+        assignment: {
+            ...ao,
+            id: ao.id,
+            status: ao.status,
+            startTime: ao.startTime,
+            endTime: ao.endTime,
+            completedAt: ao.completedAt,
+            notes: ao.notes,
+            completionNotes: ao.completionNotes || (ao as any).completion_notes,
+            completionPhotos: ao.completionPhotos || (ao as any).completion_photos
+        }
     })) || [];
 
     if (assignedCollectors.length === 0 && order.assignedCollector) {
@@ -188,7 +201,17 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
     // Crews logic
     const assignedCrews = order.assignOrders?.filter(ao => ao.crew).map(ao => ({
         ...ao.crew!,
-        assignment: { startTime: ao.startTime, endTime: ao.endTime, notes: ao.notes }
+        assignment: {
+            ...ao,
+            id: ao.id,
+            status: ao.status,
+            startTime: ao.startTime,
+            endTime: ao.endTime,
+            completedAt: ao.completedAt,
+            notes: ao.notes,
+            completionNotes: ao.completionNotes || (ao as any).completion_notes,
+            completionPhotos: ao.completionPhotos || (ao as any).completion_photos
+        }
     })) || [];
 
     if (assignedCrews.length === 0 && (order.crew || crew)) {
@@ -422,6 +445,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                                                             </div>
                                                         )}
 
+
                                                         {/* Notes */}
                                                         {(collector as any).assignment.notes && (
                                                             <div className="col-span-2 mt-2 bg-white p-2 rounded-lg border border-gray-100">
@@ -429,6 +453,46 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                                                                 <p className="italic text-gray-700">"{(collector as any).assignment.notes}"</p>
                                                             </div>
                                                         )}
+
+                                                        {/* Completion Notes */}
+                                                        {((collector as any).assignment.completionNotes || (collector as any).assignment.completion_notes) && (
+                                                            <div className="col-span-2 mt-2 bg-green-50 p-3 rounded-lg border border-green-200">
+                                                                <p className="text-[10px] font-semibold text-green-900 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                                                    <CheckCircle2 className="h-3 w-3" />
+                                                                    Completion Notes
+                                                                </p>
+                                                                <p className="text-xs text-green-800">
+                                                                    {(collector as any).assignment.completionNotes || (collector as any).assignment.completion_notes}
+                                                                </p>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Completion Photos */}
+                                                        {((collector as any).assignment.completionPhotos || (collector as any).assignment.completion_photos) &&
+                                                            ((collector as any).assignment.completionPhotos || (collector as any).assignment.completion_photos).length > 0 && (
+                                                                <div className="col-span-2 mt-2">
+                                                                    <p className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide mb-2">
+                                                                        Completion Photos ({((collector as any).assignment.completionPhotos || (collector as any).assignment.completion_photos).length})
+                                                                    </p>
+                                                                    <div className="grid grid-cols-2 gap-2">
+                                                                        {((collector as any).assignment.completionPhotos || (collector as any).assignment.completion_photos).map((photo: string, photoIndex: number) => (
+                                                                            <a
+                                                                                key={photoIndex}
+                                                                                href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9645'}/uploads/${photo}`}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 hover:ring-2 hover:ring-cyan-500 transition-all"
+                                                                            >
+                                                                                <img
+                                                                                    src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9645'}/uploads/${photo}`}
+                                                                                    alt={`Completion photo ${photoIndex + 1}`}
+                                                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                                                                />
+                                                                            </a>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                     </div>
                                                 )}
                                             </div>
@@ -490,6 +554,43 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                                                             <div className="col-span-2 mt-2 bg-white/60 p-2 rounded-lg border border-emerald-100/50">
                                                                 <p className="text-[10px] font-semibold opacity-70 uppercase tracking-wide mb-1">Notes</p>
                                                                 <p className="italic">"{(crewItem as any).assignment.notes}"</p>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Completion Notes */}
+                                                        {(crewItem as any).assignment.completionNotes && (
+                                                            <div className="col-span-2 mt-2 bg-green-50/50 p-3 rounded-lg border border-green-200/50">
+                                                                <p className="text-[10px] font-semibold text-green-900 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                                                    <CheckCircle2 className="h-3 w-3" />
+                                                                    Completion Notes
+                                                                </p>
+                                                                <p className="text-xs text-green-800">{(crewItem as any).assignment.completionNotes}</p>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Completion Photos */}
+                                                        {(crewItem as any).assignment.completionPhotos && (crewItem as any).assignment.completionPhotos.length > 0 && (
+                                                            <div className="col-span-2 mt-2">
+                                                                <p className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide mb-2">
+                                                                    Completion Photos ({(crewItem as any).assignment.completionPhotos.length})
+                                                                </p>
+                                                                <div className="grid grid-cols-2 gap-2">
+                                                                    {(crewItem as any).assignment.completionPhotos.map((photo: string, photoIndex: number) => (
+                                                                        <a
+                                                                            key={photoIndex}
+                                                                            href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9645'}/uploads/${photo}`}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 hover:ring-2 hover:ring-emerald-500 transition-all"
+                                                                        >
+                                                                            <img
+                                                                                src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9645'}/uploads/${photo}`}
+                                                                                alt={`Completion photo ${photoIndex + 1}`}
+                                                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                                                            />
+                                                                        </a>
+                                                                    ))}
+                                                                </div>
                                                             </div>
                                                         )}
                                                     </div>

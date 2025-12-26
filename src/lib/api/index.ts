@@ -14,6 +14,7 @@ export { vehicleTypesApi } from './vehicleTypes';
 export * from './crews';
 export { vehicleNamesApi } from './vehicle-names';
 export { collectorAssignmentsApi } from './collector-assignments';
+export { assignmentsApi } from './assignments';
 export { citiesApi } from './cities';
 export { apiClient } from './client';
 export * from './auth';

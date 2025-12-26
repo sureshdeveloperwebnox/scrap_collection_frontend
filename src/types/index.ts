@@ -98,10 +98,14 @@ export interface AssignOrder {
   collector?: Employee;
   crewId?: string;
   crew?: Crew;
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
   assignedAt: Date;
   startTime?: Date;
   endTime?: Date;
+  completedAt?: Date;
   notes?: string;
+  completionNotes?: string;
+  completionPhotos?: string[];
 }
 
 // Employee Interface
