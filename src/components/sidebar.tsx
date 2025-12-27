@@ -38,6 +38,9 @@ import {
   CircleUserRound,
   Car,
   X,
+  XCircle,
+  ChevronLeft,
+  Menu,
   LogOut,
   ArrowUpRight
 } from 'lucide-react';
@@ -331,12 +334,27 @@ export function Sidebar() {
       {/* Sidebar Main Container */}
       <aside
         className={cn(
-          "fixed left-0 top-0 flex flex-col z-50 h-[100dvh] sidebar-wrapper transform-gpu",
+          "fixed left-0 top-0 flex flex-col z-50 h-[100dvh] transform-gpu",
           "bg-gradient-to-b from-cyan-600 via-cyan-700 to-cyan-800 shadow-2xl shadow-cyan-900/40 transition-[width,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-          isCollapsed ? "lg:w-20" : "w-[260px]",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          // Width: collapsed on desktop, full width on mobile
+          isCollapsed ? "lg:w-20" : "lg:w-[260px]",
+          "w-[260px]",
+          // Transform: hidden on mobile by default, visible when open or on desktop
+          "-translate-x-full",
+          isMobileOpen && "translate-x-0",
+          "lg:translate-x-0"
         )}
       >
+        {/* Close Button - Top Right Corner */}
+        <button
+          onClick={toggleMobileOpen}
+          className="lg:hidden absolute top-3 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all duration-200 hover:rotate-90 z-50"
+          aria-label="Close sidebar"
+          title="Close sidebar"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
         {/* Brand Section - Unified structure to prevent snapping */}
         <div className={cn(
           "flex items-center px-6 py-8 flex-shrink-0 transition-[padding,gap] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
@@ -370,14 +388,7 @@ export function Sidebar() {
             </AnimatePresence>
           </div>
 
-          <button
-            onClick={toggleMobileOpen}
-            className="lg:hidden absolute top-8 right-4 text-white/80 hover:text-white transition-colors"
-            aria-label="Close sidebar"
-            title="Close sidebar"
-          >
-            <X className="w-6 h-6" />
-          </button>
+
         </div>
 
         {/* Optimized Navigation Content */}
