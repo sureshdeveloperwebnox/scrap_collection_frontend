@@ -46,6 +46,7 @@ import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { getImageUrl } from '@/utils/image-utils';
 import { Eye } from 'lucide-react';
+import { ScrapCollectionCard } from '@/components/scrap-collection-card';
 
 export default function OrderDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -750,6 +751,9 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                                     </CardContent>
                                 </Card>
                             )}
+
+                            {/* Scrap Collection Forms Card */}
+                            <ScrapCollectionCard workOrderId={order.id} />
                         </div>
 
                         <Card className="border-none shadow-[0_25px_50px_-12px_rgba(0,0,0,0.06)] bg-white overflow-hidden rounded-[2.5rem] group">
