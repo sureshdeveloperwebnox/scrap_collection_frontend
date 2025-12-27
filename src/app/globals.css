@@ -727,12 +727,12 @@ svg {
 }
 
 /* GPU acceleration for transitions and animations */
-[class*="transition"],
-[class*="animate"],
-[class*="motion"],
-.sidebar,
+/* Exclude aside (sidebar) to prevent transform conflicts */
+[class*="transition"]:not(aside),
+[class*="animate"]:not(aside),
+[class*="motion"]:not(aside),
 .header,
-nav,
+nav:not(aside nav),
 button {
   transform: translateZ(0);
   backface-visibility: hidden;

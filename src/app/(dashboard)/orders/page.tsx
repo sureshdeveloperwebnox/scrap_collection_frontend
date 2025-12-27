@@ -1588,10 +1588,6 @@ export default function OrdersPage() {
         )}
       </motion.div>
 
-      {/* Sticky Add button for mobile */}
-      <Button onClick={() => setIsFormOpen(true)} className="sm:hidden fixed bottom-6 right-6 rounded-full shadow-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white transform hover:scale-110 transition-all duration-200 hover:shadow-2xl">
-        <Plus className="mr-2 h-4 w-4" /> Add Order
-      </Button>
 
       {/* Quick View Dialog */}
       <Dialog open={!!detailsOrder} onOpenChange={(open) => !open && setDetailsOrder(null)}>
