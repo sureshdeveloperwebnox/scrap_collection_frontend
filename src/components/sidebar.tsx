@@ -42,7 +42,8 @@ import {
   ChevronLeft,
   Menu,
   LogOut,
-  ArrowUpRight
+  ArrowUpRight,
+  FileText
 } from 'lucide-react';
 import { useSignOut } from '@/hooks/use-auth';
 import { getImageUrl } from '@/utils/image-utils';
@@ -172,6 +173,7 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
   { name: 'Leads', href: '/leads', icon: Users, prefetchKey: 'leads' },
   { name: 'Customers', href: '/customers', icon: CircleUserRound, prefetchKey: 'customers' },
   { name: 'Orders', href: '/orders', icon: ShoppingCart, prefetchKey: 'orders' },
+  { name: 'Invoices', href: '/invoices', icon: FileText },
   { name: 'Scrap Management', href: '/scrap', icon: Truck, prefetchKey: 'scrap' },
   { name: 'Vehicles', href: '/vehicles', icon: Car, prefetchKey: 'vehicles' },
   { name: 'Pickup Requests', href: '/pickup-requests', icon: ClipboardList, prefetchKey: 'pickupRequests' },

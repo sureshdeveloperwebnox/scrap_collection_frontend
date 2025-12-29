@@ -20,6 +20,7 @@ export const useOrders = (params?: {
   dateTo?: string;
   sortBy?: 'customerName' | 'createdAt' | 'orderStatus' | 'paymentStatus';
   sortOrder?: 'asc' | 'desc';
+  customerId?: string;
 }) => {
   const { user } = useAuthStore();
   const organizationId = user?.organizationId;

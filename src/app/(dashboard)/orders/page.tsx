@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { OrderForm } from '@/components/order-form';
 import { OrderAssignmentStepper } from '@/components/order-assignment-stepper';
 import { Order, OrderStatus, PaymentStatusEnum } from '@/types';
-import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal, Download, Filter, Check, X, Package, MapPin, User, Users, DollarSign, Calendar, Map as MapIcon, Share2, Printer, Mail, Phone, ShoppingCart, Activity } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Loader2, CheckCircle2, Clock, ChevronDown, ArrowUpDown, Eye, MoreHorizontal, Download, Filter, Check, X, Package, MapPin, User, Users, DollarSign, Calendar, Map as MapIcon, Share2, Printer, Mail, Phone, ShoppingCart, Activity, FileText } from 'lucide-react';
 import { useOrders, useDeleteOrder, useUpdateOrder, useUpdateOrderStatus, useAssignCollector, useOrderStats } from '@/hooks/use-orders';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -1432,6 +1432,12 @@ export default function OrdersPage() {
                                     <Edit2 className="h-4 w-4 mr-2" />
                                     Edit
                                   </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => {
+                                    router.push(`/invoices?workOrderId=${order.id}&action=create`);
+                                  }}>
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    Create Invoice
+                                  </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
                                     onClick={(e) => {
@@ -1599,6 +1605,17 @@ export default function OrdersPage() {
                               className="h-8 w-8 rounded-full bg-gray-50 hover:bg-amber-100 text-gray-600 hover:text-amber-600 transition-all p-0"
                             >
                               <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/invoices?workOrderId=${order.id}&action=create`);
+                              }}
+                              className="h-8 w-8 rounded-full bg-gray-50 hover:bg-blue-100 text-gray-600 hover:text-blue-600 transition-all p-0"
+                            >
+                              <FileText className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
