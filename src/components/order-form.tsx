@@ -43,8 +43,7 @@ interface OrderFormProps {
 }
 
 export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) {
-  const [phoneError, setPhoneError] = useState<string | undefined>(undefined);
-  const [phoneTouched, setPhoneTouched] = useState(false);
+
   const [currentStep, setCurrentStep] = useState(1);
   const [showAssignmentStepper, setShowAssignmentStepper] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
@@ -99,7 +98,6 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
     organizationId: organizationId,
     leadId: '',
     customerName: '',
-    customerPhone: '',
     address: '',
     latitude: undefined as number | undefined,
     longitude: undefined as number | undefined,
@@ -130,12 +128,9 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
   // Auto-fill from customer
   useEffect(() => {
     if (selectedCustomer && formData.customerId && isOpen) {
-      let phoneValue = selectedCustomer.phone || '';
-
       setFormData(prev => ({
         ...prev,
         customerName: selectedCustomer.name || prev.customerName,
-        customerPhone: phoneValue,
         address: selectedCustomer.address || prev.address,
         latitude: selectedCustomer.latitude !== undefined ? selectedCustomer.latitude : prev.latitude,
         longitude: selectedCustomer.longitude !== undefined ? selectedCustomer.longitude : prev.longitude,
@@ -148,23 +143,16 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
           condition: selectedCustomer.vehicleCondition || prev.vehicleDetails.condition,
         },
       }));
-
-      if (phoneValue) {
-        setPhoneError(undefined);
-      }
     }
   }, [selectedCustomer, formData.customerId, isOpen]);
 
   // Initialize form for edit
   useEffect(() => {
     if (order && isOpen) {
-      let phoneValue = order.customerPhone || '';
-
       setFormData({
         organizationId: order.organizationId || organizationId,
         leadId: order.leadId || '',
         customerName: order.customerName || '',
-        customerPhone: phoneValue,
         address: order.address || '',
         latitude: order.latitude,
         longitude: order.longitude,
@@ -189,14 +177,11 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
         orderStatus: order.orderStatus || 'PENDING',
         paymentStatus: order.paymentStatus || 'UNPAID',
       });
-      setPhoneError(undefined);
-      setPhoneTouched(false);
     } else if (isOpen) {
       setFormData({
         organizationId: organizationId,
         leadId: '',
         customerName: '',
-        customerPhone: '',
         address: '',
         latitude: undefined,
         longitude: undefined,
@@ -211,8 +196,7 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
         orderStatus: 'PENDING',
         paymentStatus: 'UNPAID',
       });
-      setPhoneError(undefined);
-      setPhoneTouched(false);
+
       setCurrentStep(1);
     }
   }, [order, isOpen, organizationId]);
@@ -227,20 +211,7 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
         toast.error('Customer name is required');
         return false;
       }
-      if (!formData.customerPhone || formData.customerPhone.trim() === '' || formData.customerPhone === '+') {
-        toast.error('Customer phone is required');
-        return false;
-      }
-      try {
-        const isValid = isValidPhoneNumber(formData.customerPhone.trim());
-        if (!isValid) {
-          toast.error('Please enter a valid phone number');
-          return false;
-        }
-      } catch (error) {
-        toast.error('Please enter a valid phone number');
-        return false;
-      }
+
       return true;
     }
 
@@ -267,31 +238,11 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
   };
 
   const handleSubmit = async (shouldDispatch: boolean = false) => {
-    // Validate phone number
-    setPhoneTouched(true);
-    if (formData.customerPhone && formData.customerPhone.trim() !== '' && formData.customerPhone !== '+') {
-      try {
-        const isValid = isValidPhoneNumber(formData.customerPhone.trim());
-        if (!isValid) {
-          setPhoneError('Please enter a valid phone number');
-          toast.error('Please enter a valid phone number');
-          return;
-        }
-      } catch (error) {
-        setPhoneError('Please enter a valid phone number');
-        toast.error('Please enter a valid phone number');
-        return;
-      }
-    } else {
-      setPhoneError('Phone number is required');
-      toast.error('Phone number is required');
-      return;
-    }
+
 
     const submitData: any = {
       organizationId: formData.organizationId,
       customerName: formData.customerName.trim(),
-      customerPhone: formData.customerPhone.trim(),
       address: formData.address.trim(),
       vehicleDetails: formData.vehicleDetails,
       orderStatus: formData.orderStatus,
@@ -353,9 +304,6 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (field === 'customerPhone' && phoneError) {
-      setPhoneError(undefined);
-    }
   };
 
   const handleVehicleDetailChange = (field: string, value: any) => {
@@ -372,6 +320,7 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
     { number: 2, title: 'Location & Scrap', icon: MapPin },
     { number: 3, title: 'Details & Review', icon: CheckCircle2 },
   ];
+
 
   return (
     <>
@@ -452,7 +401,7 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
                           if (value === 'none') {
                             handleInputChange('customerId', '');
                             handleInputChange('customerName', '');
-                            handleInputChange('customerPhone', '');
+
                             handleInputChange('address', '');
                             handleInputChange('latitude', undefined);
                             handleInputChange('longitude', undefined);
@@ -472,7 +421,8 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
                           <SelectItem value="none">None (New Customer)</SelectItem>
                           {customers.map((customer) => (
                             <SelectItem key={customer.id} value={customer.id}>
-                              {customer.name} {customer.phone ? `(${customer.phone})` : ''}
+                              {customer.name}
+
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -503,51 +453,7 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="customerPhone" className="text-sm font-medium text-gray-700">Customer Phone *</Label>
-                      <PhoneInput
-                        country={(() => {
-                          if (formData.customerPhone) {
-                            try {
-                              const phoneNumber = formData.customerPhone.startsWith('+') ? formData.customerPhone : `+${formData.customerPhone}`;
-                              const parsed = parsePhoneNumber(phoneNumber);
-                              if (parsed && parsed.country) {
-                                return parsed.country.toLowerCase();
-                              }
-                            } catch (e) { }
-                          }
-                          return 'au';
-                        })()}
-                        value={formData.customerPhone?.replace(/^\+/, '') || ''}
-                        preferredCountries={['au', 'us', 'gb', 'in', 'nz', 'ca']}
-                        onChange={(value) => {
-                          const phoneWithPlus = value ? `+${value}` : '';
-                          handleInputChange('customerPhone', phoneWithPlus);
-                          if (phoneError) setPhoneError(undefined);
-                        }}
-                        onBlur={() => {
-                          setPhoneTouched(true);
-                          if (formData.customerPhone && formData.customerPhone.trim() !== '' && formData.customerPhone !== '+') {
-                            try {
-                              const isValid = isValidPhoneNumber(formData.customerPhone);
-                              setPhoneError(isValid ? undefined : 'Please enter a valid phone number');
-                            } catch (error) {
-                              setPhoneError('Please enter a valid phone number');
-                            }
-                          } else {
-                            setPhoneError('Phone number is required');
-                          }
-                        }}
-                        inputProps={{ required: true, autoComplete: 'tel' }}
-                        inputClass={`!w-full !h-12 !rounded-xl !border-gray-200 !bg-white !shadow-sm ${phoneError && phoneTouched ? '!border-red-500' : ''
-                          }`}
-                        disabled={isLoading}
-                        placeholder="Enter phone number"
-                      />
-                      {phoneError && phoneTouched && (
-                        <p className="text-sm text-red-600 mt-1">{phoneError}</p>
-                      )}
-                    </div>
+
                   </div>
                 </div>
               )}
@@ -732,10 +638,7 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
                         <p className="text-gray-600">Customer</p>
                         <p className="font-medium text-gray-900">{formData.customerName || '-'}</p>
                       </div>
-                      <div>
-                        <p className="text-gray-600">Phone</p>
-                        <p className="font-medium text-gray-900">{formData.customerPhone || '-'}</p>
-                      </div>
+
                       <div className="md:col-span-2">
                         <p className="text-gray-600">Address</p>
                         <p className="font-medium text-gray-900">{formData.address || '-'}</p>
@@ -766,8 +669,7 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                disabled={isLoading}
-                className="h-12 px-6 rounded-xl"
+                className="h-12 px-6 rounded-xl border-gray-200 hover:bg-gray-50 text-gray-700 font-medium transition-all"
               >
                 Cancel
               </Button>

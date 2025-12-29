@@ -30,7 +30,7 @@ export const ordersApi = {
     organizationId: number;
     leadId?: string;
     customerName: string;
-    customerPhone: string;
+
     address: string;
     latitude?: number;
     longitude?: number;

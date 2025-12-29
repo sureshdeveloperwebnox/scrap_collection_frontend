@@ -38,14 +38,10 @@ const createLeadSchema = z.object({
     .max(100, 'Full name cannot exceed 100 characters')
     .trim(),
   phone: z.string()
-    .min(1, 'Phone number is required')
+    .optional()
     .superRefine((val, ctx) => {
       if (!val || val.trim() === '' || val === '+') {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Phone number is required',
-        });
-        return;
+        return; // Optional
       }
       const validation = validatePhoneNumber(val);
       if (!validation.isValid) {
@@ -98,14 +94,10 @@ const updateLeadSchema = createLeadSchema.partial().extend({
     .trim()
     .optional(),
   phone: z.string()
-    .min(1, 'Phone number is required')
+    .optional()
     .superRefine((val, ctx) => {
       if (!val || val.trim() === '' || val === '+') {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Phone number is required',
-        });
-        return;
+        return; // Optional
       }
       const validation = validatePhoneNumber(val);
       if (!validation.isValid) {
@@ -705,7 +697,7 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-sm font-medium text-gray-700">Phone *</Label>
+                      <Label htmlFor="phone" className="text-sm font-medium text-gray-700">Phone</Label>
                       <div className="flex flex-col gap-2">
                         <PhoneInput
                           country={selectedCountry.toLowerCase()}
@@ -742,13 +734,13 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
                                 }
                               }
                             } else {
-                              setPhoneError('Phone number is required');
+                              setPhoneError(undefined);
                             }
                           }}
                           // Country code will appear inside the input field by default
                           disableCountryCode={false} // Include country code in the value
                           inputProps={{
-                            required: true,
+                            required: false,
                             autoComplete: 'tel'
                           }}
                           inputClass={`!w-full !h-12 !rounded-xl !border-gray-200 !bg-white !shadow-sm focus:!border-cyan-400 focus:!ring-cyan-200 focus:!ring-2 transition-all ${phoneError && phoneTouched ? '!border-red-500 focus:!border-red-500 focus:!ring-red-200' : ''

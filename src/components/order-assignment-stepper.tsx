@@ -556,10 +556,7 @@ export function OrderAssignmentStepper({
                                                         <p className="text-sm text-gray-600">Customer</p>
                                                         <p className="font-medium text-gray-900">{order.customerName}</p>
                                                     </div>
-                                                    <div>
-                                                        <p className="text-sm text-gray-600">Phone</p>
-                                                        <p className="font-medium text-gray-900">{order.customerPhone}</p>
-                                                    </div>
+
                                                     <div>
                                                         <p className="text-sm text-gray-600">Collection Address</p>
                                                         <p className="font-medium text-gray-900">{order.address}</p>

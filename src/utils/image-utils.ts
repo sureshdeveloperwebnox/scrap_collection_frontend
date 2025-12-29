@@ -4,7 +4,13 @@
  */
 
 // Base URL for images - should match backend BASE_URL (without trailing slash)
-const BASE_URL = (process.env.NEXT_PUBLIC_IMAGE_BASE_URL || 'https://webnox.blr1.digitaloceanspaces.com').trim().replace(/\/$/, '');
+// Derive API base URL from NEXT_PUBLIC_API_URL (e.g., http://localhost:9645/api/v1 -> http://localhost:9645)
+const getApiBaseUrl = () => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9645/api/v1';
+  return apiUrl.replace(/\/api\/v1\/?$/, '');
+};
+
+const BASE_URL = (process.env.NEXT_PUBLIC_IMAGE_BASE_URL || `${getApiBaseUrl()}/uploads`).trim().replace(/\/$/, '');
 
 /**
  * Get the base URL for images from environment variables
@@ -20,12 +26,12 @@ export function getImageBaseUrl(): string {
  */
 export function getImageUrl(relativePath: string | null | undefined): string {
   if (!relativePath) return '';
-  
+
   // If already a full URL, return as is (for backward compatibility)
   if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
     return relativePath;
   }
-  
+
   // Construct full URL (baseUrl has no trailing slash)
   const baseUrl = getImageBaseUrl();
   const cleanPath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
@@ -50,12 +56,12 @@ export function getImageUrls(relativePaths: (string | null | undefined)[]): stri
  */
 export function getRelativePath(fullUrl: string | null | undefined): string {
   if (!fullUrl) return '';
-  
+
   // If already a relative path, return as is
   if (!fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
     return fullUrl;
   }
-  
+
   // Extract path from URL
   try {
     const url = new URL(fullUrl);

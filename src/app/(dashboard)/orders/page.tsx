@@ -94,7 +94,6 @@ interface ApiOrder {
   leadId?: string;
   customerId?: string;
   customerName: string;
-  customerPhone: string;
   customerCountryCode?: string;
   address: string;
   latitude?: number;
@@ -535,7 +534,7 @@ function CollectorInfoDialog({
                     Customer
                   </p>
                   <p className="text-base font-bold text-gray-900">{order.customerName}</p>
-                  <p className="text-sm text-gray-600 mt-1">{order.customerPhone}</p>
+
                 </div>
               </div>
             </div>
@@ -690,7 +689,7 @@ export default function OrdersPage() {
               leadId: o.leadId,
               customerId: o.customerId,
               customerName: o.customerName,
-              customerPhone: o.customerPhone,
+
               customerCountryCode: o.customerCountryCode,
               address: o.address,
               latitude: o.latitude,
@@ -1201,7 +1200,7 @@ export default function OrdersPage() {
                                 />
                                 <div className="flex flex-col">
                                   <span className="font-medium text-gray-900">{order.customerName || 'N/A'}</span>
-                                  <span className="text-xs text-gray-500">{order.customerPhone || 'N/A'}</span>
+
                                 </div>
                               </div>
                             </TableCell>
@@ -1340,7 +1339,7 @@ export default function OrdersPage() {
                                       leadId: order.leadId,
                                       customerId: order.customerId,
                                       customerName: order.customerName,
-                                      customerPhone: order.customerPhone,
+
                                       customerCountryCode: order.customerCountryCode,
                                       address: order.address,
                                       latitude: order.latitude,
@@ -1510,7 +1509,7 @@ export default function OrdersPage() {
                                   leadId: order.leadId,
                                   customerId: order.customerId,
                                   customerName: order.customerName,
-                                  customerPhone: order.customerPhone,
+
                                   customerCountryCode: order.customerCountryCode,
                                   address: order.address,
                                   latitude: order.latitude,
@@ -1603,7 +1602,7 @@ export default function OrdersPage() {
                       leadId: detailsOrder.leadId,
                       customerId: detailsOrder.customerId,
                       customerName: detailsOrder.customerName,
-                      customerPhone: detailsOrder.customerPhone,
+
                       customerCountryCode: detailsOrder.customerCountryCode,
                       address: detailsOrder.address,
                       latitude: detailsOrder.latitude,
@@ -1661,10 +1660,7 @@ export default function OrdersPage() {
                       <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Customer Name</span>
                       <span className="text-sm font-medium text-gray-900">{detailsOrder.customerName}</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                      <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Phone</span>
-                      <span className="text-sm font-medium text-gray-900">{detailsOrder.customerPhone}</span>
-                    </div>
+
                     <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
                       <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Address</span>
                       <span className="text-sm font-medium text-gray-900 text-right max-w-[60%]">{detailsOrder.address}</span>
@@ -1824,7 +1820,7 @@ export default function OrdersPage() {
             leadId: assignmentOrder.leadId,
             customerId: assignmentOrder.customerId,
             customerName: assignmentOrder.customerName,
-            customerPhone: assignmentOrder.customerPhone,
+
             customerCountryCode: assignmentOrder.customerCountryCode,
             address: assignmentOrder.address,
             latitude: assignmentOrder.latitude,

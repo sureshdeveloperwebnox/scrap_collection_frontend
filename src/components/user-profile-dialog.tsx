@@ -155,8 +155,7 @@ export function UserProfileDialog({ isOpen, onClose }: UserProfileDialogProps) {
                                 type="button"
                                 variant="outline"
                                 onClick={onClose}
-                                disabled={isLoading}
-                                className="h-10 px-4 rounded-xl border-gray-200 bg-white hover:bg-gray-50 text-gray-600 font-medium transition-all"
+                                className="h-10 px-4 rounded-xl border-gray-200 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 font-medium transition-all shadow-sm"
                             >
                                 Cancel
                             </Button>

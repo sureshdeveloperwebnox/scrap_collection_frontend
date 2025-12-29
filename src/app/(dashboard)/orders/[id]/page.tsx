@@ -840,12 +840,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                                             </h2>
                                         </div>
                                         <div className="flex flex-col gap-1.5 mt-2">
-                                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-semibold">
-                                                <div className="h-5 w-5 rounded-md bg-gray-50 flex items-center justify-center border border-gray-100">
-                                                    <Phone className="h-3 w-3 text-cyan-500" />
-                                                </div>
-                                                {order.customerPhone}
-                                            </div>
+
                                             {order.customerEmail && (
                                                 <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-semibold truncate">
                                                     <div className="h-5 w-5 rounded-md bg-gray-50 flex items-center justify-center border border-gray-100">

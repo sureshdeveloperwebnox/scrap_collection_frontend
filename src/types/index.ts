@@ -42,7 +42,6 @@ export interface Order {
   orderNumber?: string; // Format: WO-DDMMYYYY-N
   leadId?: string;
   customerName: string;
-  customerPhone: string;
   customerEmail?: string;
   customerCountryCode?: string;
   address: string;

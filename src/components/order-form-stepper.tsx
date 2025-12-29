@@ -47,8 +47,6 @@ interface OrderFormStepperProps {
 }
 
 export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderFormStepperProps) {
-    const [phoneError, setPhoneError] = useState<string | undefined>(undefined);
-    const [phoneTouched, setPhoneTouched] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
     const [showAssignmentStepper, setShowAssignmentStepper] = useState(false);
     const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
@@ -107,7 +105,6 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
         organizationId: organizationId,
         leadId: '',
         customerName: '',
-        customerPhone: '',
         address: '',
         latitude: undefined as number | undefined,
         longitude: undefined as number | undefined,
@@ -138,41 +135,31 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
     // Auto-fill from customer
     useEffect(() => {
         if (selectedCustomer && formData.customerId && isOpen) {
-            let phoneValue = selectedCustomer.phone || '';
-
             setFormData(prev => ({
                 ...prev,
                 customerName: selectedCustomer.name || prev.customerName,
-                customerPhone: phoneValue,
                 address: selectedCustomer.address || prev.address,
                 latitude: selectedCustomer.latitude !== undefined ? selectedCustomer.latitude : prev.latitude,
                 longitude: selectedCustomer.longitude !== undefined ? selectedCustomer.longitude : prev.longitude,
                 vehicleDetails: {
+                    ...prev.vehicleDetails,
                     type: selectedCustomer.vehicleType || prev.vehicleDetails.type,
                     make: selectedCustomer.vehicleMake || prev.vehicleDetails.make,
                     model: selectedCustomer.vehicleModel || prev.vehicleDetails.model,
                     year: selectedCustomer.vehicleYear || prev.vehicleDetails.year,
                     condition: selectedCustomer.vehicleCondition || prev.vehicleDetails.condition,
-                    description: prev.vehicleDetails.description,
                 },
             }));
-
-            if (phoneValue) {
-                setPhoneError(undefined);
-            }
         }
     }, [selectedCustomer, formData.customerId, isOpen]);
 
     // Initialize form for edit
     useEffect(() => {
         if (order && isOpen) {
-            let phoneValue = order.customerPhone || '';
-
             setFormData({
                 organizationId: order.organizationId || organizationId,
                 leadId: order.leadId || '',
                 customerName: order.customerName || '',
-                customerPhone: phoneValue,
                 address: order.address || '',
                 latitude: order.latitude,
                 longitude: order.longitude,
@@ -197,14 +184,11 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
                 orderStatus: order.orderStatus || 'PENDING',
                 paymentStatus: order.paymentStatus || 'UNPAID',
             });
-            setPhoneError(undefined);
-            setPhoneTouched(false);
         } else if (isOpen) {
             setFormData({
                 organizationId: organizationId,
                 leadId: '',
                 customerName: '',
-                customerPhone: '',
                 address: '',
                 latitude: undefined,
                 longitude: undefined,
@@ -219,8 +203,6 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
                 orderStatus: 'PENDING',
                 paymentStatus: 'UNPAID',
             });
-            setPhoneError(undefined);
-            setPhoneTouched(false);
             setCurrentStep(1);
             setValidationErrors({});
             setTouchedFields(new Set());
@@ -237,15 +219,6 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
                 if (!value || value.trim().length === 0) return 'Customer name is required';
                 if (value.trim().length < 2) return 'Customer name must be at least 2 characters long';
                 if (value.length > 100) return 'Customer name cannot exceed 100 characters';
-                break;
-            case 'customerPhone':
-                if (!value || value.trim() === '' || value === '+') return 'Phone number is required';
-                try {
-                    const isValid = isValidPhoneNumber(value.trim());
-                    if (!isValid) return 'Please enter a valid phone number';
-                } catch (error) {
-                    return 'Please enter a valid phone number';
-                }
                 break;
             case 'address':
                 if (!value || value.trim().length === 0) return 'Collection address is required';
@@ -277,9 +250,6 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
             // Validate customer info
             const nameError = validateField('customerName', formData.customerName);
             if (nameError) errors.customerName = nameError;
-
-            const phoneError = validateField('customerPhone', formData.customerPhone);
-            if (phoneError) errors.customerPhone = phoneError;
 
             if (Object.keys(errors).length > 0) {
                 setValidationErrors(errors);
@@ -348,31 +318,9 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
     };
 
     const handleSubmit = async (shouldDispatch: boolean = false) => {
-        // Validate phone number
-        setPhoneTouched(true);
-        if (formData.customerPhone && formData.customerPhone.trim() !== '' && formData.customerPhone !== '+') {
-            try {
-                const isValid = isValidPhoneNumber(formData.customerPhone.trim());
-                if (!isValid) {
-                    setPhoneError('Please enter a valid phone number');
-                    toast.error('Please enter a valid phone number');
-                    return;
-                }
-            } catch (error) {
-                setPhoneError('Please enter a valid phone number');
-                toast.error('Please enter a valid phone number');
-                return;
-            }
-        } else {
-            setPhoneError('Phone number is required');
-            toast.error('Phone number is required');
-            return;
-        }
-
         const submitData: any = {
             organizationId: formData.organizationId,
             customerName: formData.customerName.trim(),
-            customerPhone: formData.customerPhone.trim(),
             address: formData.address.trim(),
             vehicleDetails: formData.vehicleDetails,
             orderStatus: formData.orderStatus,
@@ -445,10 +393,6 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
                 delete newErrors[field];
                 return newErrors;
             });
-        }
-
-        if (field === 'customerPhone' && phoneError) {
-            setPhoneError(undefined);
         }
 
         // Real-time validation for specific fields
@@ -571,7 +515,6 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
                                                     if (value === 'none') {
                                                         handleInputChange('customerId', '');
                                                         handleInputChange('customerName', '');
-                                                        handleInputChange('customerPhone', '');
                                                         handleInputChange('address', '');
                                                         handleInputChange('latitude', undefined);
                                                         handleInputChange('longitude', undefined);
@@ -591,7 +534,7 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
                                                     <SelectItem value="none">None (New Customer)</SelectItem>
                                                     {customers.map((customer) => (
                                                         <SelectItem key={customer.id} value={customer.id}>
-                                                            {customer.name} {customer.phone ? `(${customer.phone})` : ''}
+                                                            {customer.name}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
@@ -631,51 +574,6 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
                                             </p>
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <Label htmlFor="customerPhone" className="text-sm font-medium text-gray-700">Customer Phone *</Label>
-                                            <PhoneInput
-                                                country={(() => {
-                                                    if (formData.customerPhone) {
-                                                        try {
-                                                            const phoneNumber = formData.customerPhone.startsWith('+') ? formData.customerPhone : `+${formData.customerPhone}`;
-                                                            const parsed = parsePhoneNumber(phoneNumber);
-                                                            if (parsed && parsed.country) {
-                                                                return parsed.country.toLowerCase();
-                                                            }
-                                                        } catch (e) { }
-                                                    }
-                                                    return 'au';
-                                                })()}
-                                                value={formData.customerPhone?.replace(/^\+/, '') || ''}
-                                                preferredCountries={['au', 'us', 'gb', 'in', 'nz', 'ca']}
-                                                onChange={(value) => {
-                                                    const phoneWithPlus = value ? `+${value}` : '';
-                                                    handleInputChange('customerPhone', phoneWithPlus);
-                                                    if (phoneError) setPhoneError(undefined);
-                                                }}
-                                                onBlur={() => {
-                                                    setPhoneTouched(true);
-                                                    if (formData.customerPhone && formData.customerPhone.trim() !== '' && formData.customerPhone !== '+') {
-                                                        try {
-                                                            const isValid = isValidPhoneNumber(formData.customerPhone);
-                                                            setPhoneError(isValid ? undefined : 'Please enter a valid phone number');
-                                                        } catch (error) {
-                                                            setPhoneError('Please enter a valid phone number');
-                                                        }
-                                                    } else {
-                                                        setPhoneError('Phone number is required');
-                                                    }
-                                                }}
-                                                inputProps={{ required: true, autoComplete: 'tel' }}
-                                                inputClass={`!w-full !h-12 !rounded-xl !border-gray-200 !bg-white !shadow-sm ${phoneError && phoneTouched ? '!border-red-500' : ''
-                                                    }`}
-                                                disabled={isLoading}
-                                                placeholder="Enter phone number"
-                                            />
-                                            {phoneError && phoneTouched && (
-                                                <p className="text-sm text-red-600 mt-1">{phoneError}</p>
-                                            )}
-                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -900,10 +798,7 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
                                                 <p className="text-gray-600">Customer</p>
                                                 <p className="font-medium text-gray-900">{formData.customerName || '-'}</p>
                                             </div>
-                                            <div>
-                                                <p className="text-gray-600">Phone</p>
-                                                <p className="font-medium text-gray-900">{formData.customerPhone || '-'}</p>
-                                            </div>
+
                                             <div className="md:col-span-2">
                                                 <p className="text-gray-600">Address</p>
                                                 <p className="font-medium text-gray-900">{formData.address || '-'}</p>
@@ -1009,24 +904,26 @@ export function OrderFormStepper({ order, isOpen, onClose, onSubmit }: OrderForm
                             )}
                         </div>
                     </div>
-                </DialogContent>
-            </Dialog>
+                </DialogContent >
+            </Dialog >
 
             {/* Assignment Stepper */}
-            {createdOrder && (
-                <OrderAssignmentStepper
-                    order={createdOrder}
-                    isOpen={showAssignmentStepper}
-                    onClose={() => {
-                        setShowAssignmentStepper(false);
-                        onClose();
-                    }}
-                    onSuccess={() => {
-                        setShowAssignmentStepper(false);
-                        onClose();
-                    }}
-                />
-            )}
+            {
+                createdOrder && (
+                    <OrderAssignmentStepper
+                        order={createdOrder}
+                        isOpen={showAssignmentStepper}
+                        onClose={() => {
+                            setShowAssignmentStepper(false);
+                            onClose();
+                        }}
+                        onSuccess={() => {
+                            setShowAssignmentStepper(false);
+                            onClose();
+                        }}
+                    />
+                )
+            }
         </>
     );
 }
