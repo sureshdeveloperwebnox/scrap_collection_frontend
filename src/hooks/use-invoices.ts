@@ -55,3 +55,11 @@ export const useUpdateInvoiceStatus = () => {
         },
     });
 };
+
+export const useInvoiceHistory = (id: string | null) => {
+    return useQuery({
+        queryKey: ['invoices', 'history', id],
+        queryFn: () => (id ? invoicesApi.getInvoiceHistory(id) : null),
+        enabled: !!id,
+    });
+};

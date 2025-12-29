@@ -8,10 +8,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { Plus, Trash2, User, FileText, DollarSign, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 import { useCustomers } from '@/hooks/use-customers';
 import { useOrders, useOrder } from '@/hooks/use-orders';
+import { useInvoiceHistory } from '@/hooks/use-invoices';
+import { toast } from 'sonner';
+import {
+    Plus,
+    Trash2,
+    User,
+    FileText,
+    DollarSign,
+    Calendar as CalendarIcon,
+    Loader2,
+    History,
+    Clock,
+    ArrowRight,
+    Search
+} from 'lucide-react';
 
 interface LineItem {
     description: string;
@@ -44,6 +57,10 @@ interface InvoiceFormProps {
 
 export function InvoiceForm({ prefillWorkOrderId, initialData, onSubmit, onCancel }: InvoiceFormProps) {
     const isEditing = !!initialData;
+
+    // Fetch history if editing
+    const { data: historyRes, isLoading: isLoadingHistory } = useInvoiceHistory(initialData?.id || null);
+    const history = historyRes?.data || [];
 
     const [customerId, setCustomerId] = useState(initialData?.customerId || '');
     const [workOrderId, setWorkOrderId] = useState(initialData?.workOrderId || prefillWorkOrderId || '');
@@ -462,6 +479,92 @@ export function InvoiceForm({ prefillWorkOrderId, initialData, onSubmit, onCance
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Audit Log / Edit History Section */}
+            {isEditing && (
+                <div className="mt-12 space-y-4">
+                    <div className="flex items-center gap-2 px-1">
+                        <History className="h-4 w-4 text-blue-600" />
+                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Amendment History</h3>
+                    </div>
+
+                    <div className="border border-slate-200 rounded-[24px] overflow-hidden bg-white shadow-sm">
+                        <table className="w-full border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50 border-b border-slate-100/80">
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-left w-[20%]">Date & Time</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center w-[15%]">Action</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-left">Description of Changes</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {isLoadingHistory ? (
+                                    <tr>
+                                        <td colSpan={3} className="px-6 py-12 text-center">
+                                            <Loader2 className="h-6 w-6 text-blue-500 animate-spin mx-auto" />
+                                        </td>
+                                    </tr>
+                                ) : history.length > 0 ? (
+                                    history.map((log: any) => (
+                                        <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-4 align-top">
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-black text-slate-800">
+                                                        {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                    <span className="text-[10px] font-bold text-slate-400">
+                                                        {new Date(log.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 align-top text-center">
+                                                <Badge className={cn(
+                                                    "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter border-none",
+                                                    log.action === 'CREATED' ? "bg-emerald-100 text-emerald-700" :
+                                                        log.action === 'STATUS_CHANGE' ? "bg-amber-100 text-amber-700" :
+                                                            "bg-blue-100 text-blue-700"
+                                                )}>
+                                                    {log.action.replace('_', ' ')}
+                                                </Badge>
+                                            </td>
+                                            <td className="px-6 py-4 align-top">
+                                                <div className="space-y-2">
+                                                    {log.action === 'CREATED' ? (
+                                                        <span className="text-xs font-bold text-slate-500 italic">Invoice initial state created</span>
+                                                    ) : (
+                                                        log.changedFields?.map((field: string) => (
+                                                            <div key={field} className="flex items-center gap-3 text-xs">
+                                                                <span className="font-black text-slate-400 uppercase text-[9px] bg-slate-100 px-1.5 py-0.5 rounded leading-none min-w-[80px] text-center">
+                                                                    {field.replace(/([A-Z])/g, ' $1')}
+                                                                </span>
+                                                                <div className="flex items-center gap-2 flex-grow">
+                                                                    <span className="text-slate-400 line-through font-medium truncate max-w-[150px]">
+                                                                        {typeof log.previousData?.[field] === 'object' ? 'Items' : String(log.previousData?.[field] || 'None')}
+                                                                    </span>
+                                                                    <ArrowRight className="h-3 w-3 text-slate-300" />
+                                                                    <span className="text-slate-900 font-black truncate max-w-[200px]">
+                                                                        {typeof log.newData?.[field] === 'object' ? 'Items Updated' : String(log.newData?.[field] || 'None')}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={3} className="px-6 py-12 text-center">
+                                            <p className="text-xs font-bold text-slate-400">No modification records found.</p>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
 
             {/* Form Actions */}
             <div className="flex items-center justify-end gap-4 pt-8">

@@ -65,5 +65,10 @@ export const invoicesApi = {
     downloadInvoice: async (id: string) => {
         const response = await apiClient.get(`/invoices/${id}/download`);
         return response.data;
+    },
+
+    getInvoiceHistory: async (id: string) => {
+        const response = await apiClient.get(`/invoices/${id}/history`);
+        return response.data;
     }
 };
