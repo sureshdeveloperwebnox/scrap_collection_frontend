@@ -212,6 +212,44 @@
     animation: shine-sweep 3s ease-in-out infinite;
   }
 
+  /* Button shine effect */
+  @keyframes button-shine {
+    0% {
+      transform: translateX(-100%) translateY(-100%) rotate(30deg);
+    }
+    100% {
+      transform: translateX(100%) translateY(100%) rotate(30deg);
+    }
+  }
+
+  .btn-shine {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-shine::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      to bottom right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.1) 40%,
+      rgba(255, 255, 255, 0.4) 50%,
+      rgba(255, 255, 255, 0.1) 60%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    animation: button-shine 3s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .btn-shine:hover::before {
+    animation: button-shine 1.5s ease-in-out infinite;
+  }
+
   /* Sidebar performance optimizations */
   .sidebar-wrapper {
     contain: layout style;

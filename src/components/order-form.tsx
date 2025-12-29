@@ -704,19 +704,22 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
                     type="button"
                     onClick={() => handleSubmit(false)}
                     disabled={isLoading}
-                    className="h-12 px-8 rounded-xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
+                    variant="outline"
+                    className="btn-shine relative overflow-hidden group h-12 px-8 rounded-xl border-2 border-cyan-500 text-cyan-600 hover:bg-cyan-50 hover:text-cyan-700 hover:border-cyan-600 font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 active:scale-95 bg-white backdrop-blur-sm"
                   >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                        {order ? 'Updating...' : 'Creating...'}
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="h-5 w-5 mr-2" />
-                        {order ? 'Update Order' : 'Create Order'}
-                      </>
-                    )}
+                    <span className="relative z-10 flex items-center gap-2">
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                          {order ? 'Updating...' : 'Creating...'}
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="h-5 w-5 mr-2" />
+                          {order ? 'Update Order' : 'Create Order'}
+                        </>
+                      )}
+                    </span>
                   </Button>
 
                   {!order && (
@@ -724,19 +727,22 @@ export function OrderForm({ order, isOpen, onClose, onSubmit }: OrderFormProps) 
                       type="button"
                       onClick={() => handleSubmit(true)}
                       disabled={isLoading}
-                      className="h-12 px-8 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
+                      variant="outline"
+                      className="btn-shine relative overflow-hidden group h-12 px-8 rounded-xl border-2 border-purple-500 text-purple-600 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-600 font-bold shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:shadow-[0_0_25px_rgba(168,85,247,0.5)] transition-all transform hover:scale-105 active:scale-95 bg-white backdrop-blur-sm"
                     >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                          Creating...
-                        </>
-                      ) : (
-                        <>
-                          <Truck className="h-5 w-5 mr-2" />
-                          Create & Dispatch
-                        </>
-                      )}
+                      <span className="relative z-10 flex items-center gap-2">
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                            Creating...
+                          </>
+                        ) : (
+                          <>
+                            <Truck className="h-5 w-5 mr-2" />
+                            Create & Dispatch
+                          </>
+                        )}
+                      </span>
                     </Button>
                   )}
                 </>

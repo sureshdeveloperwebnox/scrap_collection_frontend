@@ -649,16 +649,19 @@ export function LeadForm({ lead, isOpen, onClose, onSubmit }: LeadFormProps) {
                 type="submit"
                 form="lead-form"
                 disabled={isLoading}
-                className="h-12 px-8 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95"
+                variant="outline"
+                className="btn-shine relative overflow-hidden group h-12 px-8 rounded-xl border-2 border-cyan-500 text-cyan-600 hover:bg-cyan-50 hover:text-cyan-700 hover:border-cyan-600 font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 active:scale-95 bg-white backdrop-blur-sm"
               >
-                {isLoading ? (
-                  <>
-                    <div className="mr-2 h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    {lead ? 'Updating...' : 'Creating...'}
-                  </>
-                ) : (
-                  lead ? 'Update Lead' : 'Create Lead'
-                )}
+                <span className="relative z-10 flex items-center gap-2">
+                  {isLoading ? (
+                    <>
+                      <div className="mr-2 h-5 w-5 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin" />
+                      {lead ? 'Updating...' : 'Creating...'}
+                    </>
+                  ) : (
+                    lead ? 'Update Lead' : 'Create Lead'
+                  )}
+                </span>
               </Button>
             </div>
           </div>
