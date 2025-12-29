@@ -28,6 +28,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
 import { OrderStatusBadge, PaymentStatusBadge, toDisplayOrderStatus, toDisplayPaymentStatus } from '@/components/status-badges';
 import { DeleteConfirmDialog } from '@/components/delete-confirm-dialog';
+import { DatePicker } from '@/components/ui/date-picker';
 
 // Dynamically import Lottie for better performance
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -651,6 +652,8 @@ export default function OrdersPage() {
   const [editingOrder, setEditingOrder] = useState<Order | undefined>();
   const [activeTab, setActiveTab] = useState<'All' | 'Pending' | 'Assigned' | 'In Progress' | 'Completed' | 'Cancelled'>('All');
   const [paymentFilter, setPaymentFilter] = useState<string>('ALL');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
 
   // Sorting state
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
@@ -791,8 +794,10 @@ export default function OrdersPage() {
       paymentStatus: paymentFilterValue,
       sortBy: sortBy,
       sortOrder: sortDir,
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
     };
-  }, [currentPage, rowsPerPage, debouncedSearchTerm, activeTab, paymentFilterValue, sortKey, sortDir]);
+  }, [currentPage, rowsPerPage, debouncedSearchTerm, activeTab, paymentFilterValue, sortKey, sortDir, dateFrom, dateTo]);
 
   // API hooks with server-side pagination, filtering, and sorting
   const { data: ordersData, isLoading, error } = useOrders(queryParams);
@@ -1024,12 +1029,14 @@ export default function OrdersPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`border-gray-200 bg-white hover:bg-gray-100 hover:border-gray-300 text-gray-700 hover:text-gray-900 active:bg-gray-200 transition-all h-9 w-9 p-0 ${paymentFilter !== 'ALL' ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : ''
-                  } ${isFilterOpen ? 'border-cyan-500 bg-cyan-50' : ''
+                className={`h-9 w-9 p-0 transition-all ${paymentFilter !== 'ALL' || dateFrom || dateTo
+                  ? 'bg-cyan-50 border-cyan-500 hover:bg-cyan-100 text-cyan-700'
+                  : 'hover:bg-gray-100'
                   }`}
                 title={isFilterOpen ? "Hide filters" : "Show filters"}
               >
-                <Filter className={`h-4 w-4 ${paymentFilter !== 'ALL' ? 'text-cyan-700' : ''}`} />
+                <Filter className={`h-4 w-4 ${paymentFilter !== 'ALL' || dateFrom || dateTo ? 'text-cyan-700' : ''
+                  }`} />
               </Button>
 
               <Button
@@ -1042,55 +1049,113 @@ export default function OrdersPage() {
             </div>
           </div>
 
-          {/* Payment Filter - Only shown when filter icon is clicked */}
+          {/* Filters - Only shown when filter icon is clicked */}
           {isFilterOpen && (
-            <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200 animate-in slide-in-from-top-2 duration-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 flex-1">
-                  <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter by Payment:</Label>
-                  <Select
-                    value={paymentFilter || 'ALL'}
-                    onValueChange={(v) => {
-                      setPaymentFilter(v);
+            <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200 animate-in slide-in-from-top-2 duration-200 space-y-3">
+              {/* Payment Filter */}
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-medium text-gray-700 whitespace-nowrap min-w-[120px]">Payment Status:</Label>
+                <Select
+                  value={paymentFilter || 'ALL'}
+                  onValueChange={(v) => {
+                    setPaymentFilter(v);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className={`w-[200px] bg-white border-gray-200 hover:border-gray-300 transition-all ${paymentFilter !== 'ALL' ? 'border-cyan-500 ring-2 ring-cyan-200' : ''}`}>
+                    <SelectValue placeholder="All Payment Status">
+                      {paymentFilter === 'ALL' ? 'All Payment Status' : toDisplayPaymentStatus(paymentFilter)}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Payment Status</SelectItem>
+                    <SelectItem value="UNPAID">Unpaid</SelectItem>
+                    <SelectItem value="PAID">Paid</SelectItem>
+                    <SelectItem value="REFUNDED">Refunded</SelectItem>
+                  </SelectContent>
+                </Select>
+                {paymentFilter !== 'ALL' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setPaymentFilter('ALL');
                       setCurrentPage(1);
                     }}
+                    className="h-8 px-2 text-gray-500 hover:text-gray-700"
+                    title="Clear payment filter"
                   >
-                    <SelectTrigger className={`w-[200px] bg-white border-gray-200 hover:border-gray-300 transition-all ${paymentFilter !== 'ALL' ? 'border-cyan-500 ring-2 ring-cyan-200' : ''
-                      }`}>
-                      <SelectValue placeholder="All Payment Status">
-                        {paymentFilter === 'ALL' ? 'All Payment Status' : toDisplayPaymentStatus(paymentFilter)}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL">All Payment Status</SelectItem>
-                      <SelectItem value="UNPAID">Unpaid</SelectItem>
-                      <SelectItem value="PAID">Paid</SelectItem>
-                      <SelectItem value="REFUNDED">Refunded</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {paymentFilter !== 'ALL' && (
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+
+              {/* Date Range Filter */}
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-medium text-gray-700 whitespace-nowrap min-w-[120px]">Date Range:</Label>
+                <div className="flex items-center gap-2">
+                  <DatePicker
+                    date={dateFrom ? new Date(dateFrom) : undefined}
+                    onDateChange={(date) => {
+                      setDateFrom(date ? date.toISOString().split('T')[0] : '');
+                      setCurrentPage(1);
+                    }}
+                    placeholder="From date"
+                    className="w-[180px]"
+                    maxDate={dateTo ? new Date(dateTo) : undefined}
+                  />
+                  <span className="text-gray-400 font-medium">to</span>
+                  <DatePicker
+                    date={dateTo ? new Date(dateTo) : undefined}
+                    onDateChange={(date) => {
+                      setDateTo(date ? date.toISOString().split('T')[0] : '');
+                      setCurrentPage(1);
+                    }}
+                    placeholder="To date"
+                    className="w-[180px]"
+                    minDate={dateFrom ? new Date(dateFrom) : undefined}
+                  />
+                  {(dateFrom || dateTo) && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        setPaymentFilter('ALL');
+                        setDateFrom('');
+                        setDateTo('');
                         setCurrentPage(1);
                       }}
                       className="h-8 px-2 text-gray-500 hover:text-gray-700"
-                      title="Clear filter"
+                      title="Clear date filter"
                     >
                       <X className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
+              </div>
+
+              {/* Clear All & Close */}
+              <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setPaymentFilter('ALL');
+                    setDateFrom('');
+                    setDateTo('');
+                    setCurrentPage(1);
+                  }}
+                  className="h-8 text-gray-600 hover:text-gray-900"
+                >
+                  Clear All Filters
+                </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsFilterOpen(false)}
-                  className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
-                  title="Close filter panel"
+                  className="h-8 px-3 text-gray-500 hover:text-gray-700"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4 mr-1" />
+                  Close
                 </Button>
               </div>
             </div>
