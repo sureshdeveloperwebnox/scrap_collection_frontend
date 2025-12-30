@@ -35,10 +35,10 @@ export const useUpdateInvoice = () => {
     });
 };
 
-export const useDeleteInvoice = () => {
+export const useCancelInvoice = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: string) => invoicesApi.deleteInvoice(id),
+        mutationFn: ({ id, reason }: { id: string; reason: string }) => invoicesApi.cancelInvoice(id, reason),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['invoices'] });
         },
@@ -56,10 +56,10 @@ export const useUpdateInvoiceStatus = () => {
     });
 };
 
-export const useInvoiceHistory = (id: string | null) => {
+export const useInvoiceHistory = (id: string | null, params?: { page?: number; limit?: number }) => {
     return useQuery({
-        queryKey: ['invoices', 'history', id],
-        queryFn: () => (id ? invoicesApi.getInvoiceHistory(id) : null),
+        queryKey: ['invoices', 'history', id, params],
+        queryFn: () => (id ? invoicesApi.getInvoiceHistory(id, params) : null),
         enabled: !!id,
     });
 };

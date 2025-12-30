@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { useCustomers } from '@/hooks/use-customers';
@@ -23,8 +22,15 @@ import {
     History,
     Clock,
     ArrowRight,
-    Search
+    ArrowLeft,
+    CheckCircle2,
+    Info,
+    Package,
+    ShoppingCart,
+    X
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { motion } from 'framer-motion';
 
 interface LineItem {
     description: string;
@@ -45,22 +51,27 @@ interface InvoiceFormData {
     discount: number;
     total: number;
     notes?: string;
-    terms?: string;
 }
 
 interface InvoiceFormProps {
+    onCancel: () => void;
     prefillWorkOrderId?: string | null;
     initialData?: any;
     onSubmit: (data: InvoiceFormData) => void;
-    onCancel: () => void;
 }
 
-export function InvoiceForm({ prefillWorkOrderId, initialData, onSubmit, onCancel }: InvoiceFormProps) {
+export function InvoiceForm({ onCancel, prefillWorkOrderId, initialData, onSubmit }: InvoiceFormProps) {
     const isEditing = !!initialData;
+    const [currentStep, setCurrentStep] = useState(1);
+    const [historyPage, setHistoryPage] = useState(1);
 
     // Fetch history if editing
-    const { data: historyRes, isLoading: isLoadingHistory } = useInvoiceHistory(initialData?.id || null);
-    const history = historyRes?.data || [];
+    const { data: historyRes, isLoading: isLoadingHistory } = useInvoiceHistory(initialData?.id || null, {
+        page: historyPage,
+        limit: 5
+    });
+    const history = historyRes?.data?.history || [];
+    const pagination = historyRes?.data?.pagination;
 
     const [customerId, setCustomerId] = useState(initialData?.customerId || '');
     const [workOrderId, setWorkOrderId] = useState(initialData?.workOrderId || prefillWorkOrderId || '');
@@ -86,7 +97,6 @@ export function InvoiceForm({ prefillWorkOrderId, initialData, onSubmit, onCance
     const [taxRate, setTaxRate] = useState(initialData ? (initialData.tax / initialData.subtotal) * 100 : 10);
     const [discount, setDiscount] = useState(initialData?.discount || 0);
     const [notes, setNotes] = useState(initialData?.notes || '');
-    const [terms, setTerms] = useState(initialData?.terms || '');
 
     // Fetch customers
     const { data: customersData, isLoading: isLoadingCustomers } = useCustomers({ limit: 100 });
@@ -96,7 +106,6 @@ export function InvoiceForm({ prefillWorkOrderId, initialData, onSubmit, onCance
     const { data: ordersData, isLoading: isLoadingOrders } = useOrders({
         customerId: customerId || undefined,
         limit: 100,
-        organizationId: undefined // Let hook handle it
     });
     const orders = ordersData?.data?.orders || [];
 
@@ -121,8 +130,8 @@ export function InvoiceForm({ prefillWorkOrderId, initialData, onSubmit, onCance
                 setItems([{
                     description: desc || 'Scrap Collection',
                     quantity: 1,
-                    unitPrice: prefilledOrder.quotedPrice || 0,
-                    amount: prefilledOrder.quotedPrice || 0
+                    unitPrice: prefilledOrder.actualPrice || prefilledOrder.quotedPrice || 0,
+                    amount: prefilledOrder.actualPrice || prefilledOrder.quotedPrice || 0
                 }]);
             }
         }
@@ -131,50 +140,24 @@ export function InvoiceForm({ prefillWorkOrderId, initialData, onSubmit, onCance
     // Calculate totals
     const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
     const taxAmount = (subtotal * taxRate) / 100;
-    const total = subtotal + taxAmount - discount;
+    const totalValue = subtotal + taxAmount - discount;
 
-    // Handle item changes
     const handleItemChange = (index: number, field: keyof LineItem, value: string | number) => {
         const newItems = [...items];
         newItems[index] = { ...newItems[index], [field]: value };
-
-        // Recalculate amount
         if (field === 'quantity' || field === 'unitPrice') {
             newItems[index].amount = newItems[index].quantity * newItems[index].unitPrice;
         }
-
         setItems(newItems);
     };
 
-    const addItem = () => {
-        setItems([...items, { description: '', quantity: 1, unitPrice: 0, amount: 0 }]);
-    };
+    const addItem = () => setItems([...items, { description: '', quantity: 1, unitPrice: 0, amount: 0 }]);
+    const removeItem = (index: number) => items.length > 1 && setItems(items.filter((_, i) => i !== index));
 
-    const removeItem = (index: number) => {
-        if (items.length > 1) {
-            setItems(items.filter((_, i) => i !== index));
-        }
-    };
-
-    // Handle form submission
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        // Basic validation
-        if (!customerId) {
-            toast.error('Please select a customer');
-            return;
-        }
-
-        if (!invoiceNumber) {
-            toast.error('Please enter an invoice number');
-            return;
-        }
-
-        if (items.some(item => !item.description)) {
-            toast.error('Please fill in all item descriptions');
-            return;
-        }
+    const handleSubmit = () => {
+        if (!customerId) return toast.error('Please select a customer');
+        if (!invoiceNumber) return toast.error('Please enter an invoice number');
+        if (items.some(item => !item.description)) return toast.error('Please fill in all item descriptions');
 
         const formData: InvoiceFormData = {
             customerId,
@@ -186,406 +169,469 @@ export function InvoiceForm({ prefillWorkOrderId, initialData, onSubmit, onCance
             subtotal,
             tax: taxAmount,
             discount,
-            total,
-            notes: notes || undefined,
-            terms: terms || undefined
+            total: totalValue,
+            notes: notes || undefined
         };
 
         onSubmit(formData);
     };
 
-    if (isLoadingPrefilledOrder) {
-        return (
-            <div className="flex flex-col items-center justify-center p-12 space-y-4">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                <p className="text-gray-500 font-medium">Loading work order details...</p>
-            </div>
-        );
-    }
+    const steps = [
+        { id: 1, title: 'Customer', icon: User },
+        { id: 2, title: 'Invoice Details', icon: FileText },
+        { id: 3, title: 'Service Items', icon: ShoppingCart },
+    ];
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-black text-slate-900">
-                    {isEditing ? 'Edit Invoice' : 'Create New Invoice'}
-                </h2>
-                {isEditing && (
-                    <Badge className="bg-blue-100 text-blue-700 border-none font-bold">
-                        Editing: {initialData.invoiceNumber}
-                    </Badge>
-                )}
+        <div className="w-full pb-32">
+            <div className="flex items-center gap-4 mb-8 pb-6 border-b border-slate-100 px-12 pt-10">
+                <Button variant="ghost" size="icon" onClick={onCancel} className="rounded-xl h-10 w-10 hover:bg-slate-100 transition-all">
+                    <ArrowLeft className="h-5 w-5 text-slate-400" />
+                </Button>
+                <div>
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                        {isEditing ? 'Modify Invoice Record' : 'Generate New Invoice'}
+                    </h2>
+                    <p className="text-sm text-slate-500 font-medium">
+                        {isEditing ? `Refining ${initialData.invoiceNumber}` : 'Complete the multi-step process to creates a professional bill'}
+                    </p>
+                </div>
             </div>
 
-            {/* Header Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Customer Information */}
-                <Card className="border-2 border-blue-100/50 rounded-[24px] shadow-sm overflow-hidden">
-                    <CardHeader className="bg-slate-50/50 border-b border-slate-100">
-                        <CardTitle className="text-sm font-black text-slate-900 flex items-center gap-2 uppercase tracking-widest">
-                            <User className="h-4 w-4 text-blue-600" />
-                            Customer Information
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4 p-6">
-                        <div>
-                            <Label htmlFor="customerId" className="text-xs font-bold text-slate-500 uppercase">Customer *</Label>
-                            <Select value={customerId} onValueChange={setCustomerId}>
-                                <SelectTrigger className="mt-1.5 h-11 rounded-xl border-slate-200">
-                                    <SelectValue placeholder={isLoadingCustomers ? "Loading customers..." : "Select customer"} />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl border-none shadow-2xl">
-                                    {customers.map((customer: any) => (
-                                        <SelectItem key={customer.id} value={customer.id} className="rounded-lg">
-                                            <div className="flex flex-col py-0.5">
-                                                <span className="font-bold">{customer.name}</span>
-                                                <span className="text-[10px] text-slate-400 font-medium tracking-tight">{customer.phone}</span>
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+            {/* Stepper */}
+            <div className="max-w-2xl mx-auto mb-12">
+                <div className="flex items-center justify-between">
+                    {steps.map((step, index) => {
+                        const Icon = step.icon;
+                        const isActive = currentStep === step.id;
+                        const isCompleted = currentStep > step.id;
 
-                        <div>
-                            <Label htmlFor="workOrderId" className="text-xs font-bold text-slate-500 uppercase">Work Order (Optional)</Label>
-                            <Select
-                                value={workOrderId || 'none'}
-                                onValueChange={setWorkOrderId}
-                                disabled={!customerId}
-                            >
-                                <SelectTrigger className="mt-1.5 h-11 rounded-xl border-slate-200">
-                                    <SelectValue placeholder={
-                                        !customerId
-                                            ? "Select customer first"
-                                            : isLoadingOrders
-                                                ? "Loading orders..."
-                                                : "Select work order"
-                                    } />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl border-none shadow-2xl">
-                                    <SelectItem value="none" className="rounded-lg">None</SelectItem>
-                                    {orders.map((order: any) => (
-                                        <SelectItem key={order.id} value={order.id} className="rounded-lg">
-                                            <span className="font-bold">{order.orderNumber || order.id.substring(0, 8)}</span>
-                                            <span className="ml-2 text-[10px] uppercase font-black tracking-widest text-slate-400">{order.orderStatus}</span>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {!customerId && (
-                                <p className="text-[10px] text-slate-400 mt-2 italic font-medium">
-                                    Select a customer to see their work orders
-                                </p>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Invoice Details */}
-                <Card className="border-2 border-slate-100 rounded-[24px] shadow-sm overflow-hidden">
-                    <CardHeader className="bg-slate-50/50 border-b border-slate-100">
-                        <CardTitle className="text-sm font-black text-slate-900 flex items-center gap-2 uppercase tracking-widest">
-                            <FileText className="h-4 w-4 text-slate-600" />
-                            Invoice Details
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4 p-6">
-                        <div>
-                            <Label htmlFor="invoiceNumber" className="text-xs font-bold text-slate-500 uppercase">Invoice Number *</Label>
-                            <Input
-                                id="invoiceNumber"
-                                value={invoiceNumber}
-                                onChange={(e) => setInvoiceNumber(e.target.value)}
-                                className="mt-1.5 h-11 rounded-xl border-slate-200 font-bold"
-                                placeholder="INV-001"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="invoiceDate" className="text-xs font-bold text-slate-500 uppercase">Issue Date *</Label>
-                                <Input
-                                    id="invoiceDate"
-                                    type="date"
-                                    value={invoiceDate}
-                                    onChange={(e) => setInvoiceDate(e.target.value)}
-                                    className="mt-1.5 h-11 rounded-xl border-slate-200 font-bold"
-                                />
+                        return (
+                            <div key={step.id} className="flex items-center flex-1">
+                                <div className="flex flex-col items-center flex-1">
+                                    <button
+                                        onClick={() => isCompleted && setCurrentStep(step.id)}
+                                        className={cn(
+                                            "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm",
+                                            isCompleted ? "bg-emerald-500 text-white" :
+                                                isActive ? "bg-cyan-500 text-white shadow-cyan-200" :
+                                                    "bg-white border border-slate-200 text-slate-400"
+                                        )}
+                                    >
+                                        {isCompleted ? <CheckCircle2 className="h-6 w-6" /> : <Icon className="h-6 w-6" />}
+                                    </button>
+                                    <p className={cn(
+                                        "mt-2 text-[10px] font-black uppercase tracking-widest",
+                                        isActive ? "text-cyan-600" : isCompleted ? "text-emerald-600" : "text-slate-400"
+                                    )}>
+                                        {step.title}
+                                    </p>
+                                </div>
+                                {index < steps.length - 1 && (
+                                    <div className={cn(
+                                        "h-1 flex-1 mx-4 rounded-full transition-all duration-500 mb-6",
+                                        currentStep > step.id + 0.5 ? "bg-emerald-500" : "bg-slate-200"
+                                    )} />
+                                )}
                             </div>
-
-                            <div>
-                                <Label htmlFor="dueDate" className="text-xs font-bold text-slate-500 uppercase">Due Date *</Label>
-                                <Input
-                                    id="dueDate"
-                                    type="date"
-                                    value={dueDate}
-                                    onChange={(e) => setDueDate(e.target.value)}
-                                    className="mt-1.5 h-11 rounded-xl border-slate-200 font-bold"
-                                />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        );
+                    })}
+                </div>
             </div>
 
-            {/* Line Items */}
-            <Card className="border-2 border-slate-100 rounded-[32px] shadow-sm overflow-hidden">
-                <CardHeader className="bg-slate-50/50 border-b border-slate-100 px-8 py-6">
-                    <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm font-black text-slate-900 flex items-center gap-2 uppercase tracking-widest">
-                            <DollarSign className="h-4 w-4 text-emerald-600" />
-                            Service Items
-                        </CardTitle>
-                        <Button type="button" onClick={addItem} size="sm" className="rounded-xl font-bold bg-white border-slate-200 text-slate-700 hover:bg-slate-100 shadow-sm border h-9 px-4">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Item
-                        </Button>
-                    </div>
-                </CardHeader>
-                <CardContent className="p-8">
-                    <div className="space-y-4">
-                        {items.map((item, index) => (
-                            <div key={index} className="grid grid-cols-12 gap-4 items-start p-6 bg-slate-50/50 border border-slate-100 rounded-[24px] relative group/item">
-                                <div className="col-span-12 md:col-span-5">
-                                    <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Description *</Label>
-                                    <Input
-                                        value={item.description}
-                                        onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                                        placeholder="Item description"
-                                        className="mt-1.5 h-11 rounded-xl border-slate-200 bg-white font-bold"
-                                    />
-                                </div>
-                                <div className="col-span-4 md:col-span-2">
-                                    <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Qty *</Label>
-                                    <Input
-                                        type="number"
-                                        value={item.quantity}
-                                        onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
-                                        min="1"
-                                        className="mt-1.5 h-11 rounded-xl border-slate-200 bg-white font-bold text-center"
-                                    />
-                                </div>
-                                <div className="col-span-4 md:col-span-2">
-                                    <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Rate *</Label>
+            <div className="w-full px-12 pb-12">
+                {currentStep === 1 && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="bg-white border border-slate-200 rounded-[32px] p-10 shadow-xl shadow-slate-100/50">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                <div className="space-y-3">
+                                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Select Customer</Label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">$</span>
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+                                            <User className="h-5 w-5 text-cyan-500" />
+                                        </div>
+                                        <Select value={customerId} onValueChange={setCustomerId}>
+                                            <SelectTrigger className="pl-12 h-14 rounded-2xl border-slate-200 bg-white shadow-sm focus:ring-cyan-500 transition-all font-bold text-slate-700">
+                                                <SelectValue placeholder={isLoadingCustomers ? "Loading..." : "Find a customer..."} />
+                                            </SelectTrigger>
+                                            <SelectContent className="max-h-[300px] rounded-2xl shadow-2xl border-none">
+                                                {customers.map((c: any) => (
+                                                    <SelectItem key={c.id} value={c.id} className="rounded-xl py-3">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-bold text-slate-900">{c.name}</span>
+                                                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{c.phone || c.email}</span>
+                                                        </div>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Related Work Order</Label>
+                                    <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+                                            <Package className="h-5 w-5 text-cyan-500" />
+                                        </div>
+                                        <Select
+                                            value={workOrderId || 'none'}
+                                            onValueChange={setWorkOrderId}
+                                            disabled={!customerId}
+                                        >
+                                            <SelectTrigger className="pl-12 h-14 rounded-2xl border-slate-200 bg-white shadow-sm disabled:bg-slate-50 font-bold text-slate-700">
+                                                <SelectValue placeholder={!customerId ? "Select customer first" : "Find an active order..."} />
+                                            </SelectTrigger>
+                                            <SelectContent className="max-h-[300px] rounded-2xl shadow-2xl border-none">
+                                                <SelectItem value="none" className="rounded-xl py-3 font-bold text-slate-400 italic">No Work Order</SelectItem>
+                                                {orders.map((o: any) => (
+                                                    <SelectItem key={o.id} value={o.id} className="rounded-xl py-3">
+                                                        <div className="flex items-center justify-between gap-4">
+                                                            <span className="font-extrabold text-slate-900">{o.orderNumber || o.id.slice(0, 8)}</span>
+                                                            <Badge className="bg-cyan-50 text-cyan-600 border-none text-[8px] font-black uppercase tracking-widest px-2 py-0.5">{o.orderStatus}</Badge>
+                                                        </div>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {currentStep === 2 && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="bg-white border border-slate-200 rounded-[32px] p-10 shadow-xl shadow-slate-100/50 space-y-10">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                <div className="space-y-3">
+                                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Ref ID / Invoice Number</Label>
+                                    <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                                            <FileText className="h-5 w-5 text-cyan-500" />
+                                        </div>
                                         <Input
-                                            type="number"
-                                            value={item.unitPrice}
-                                            onChange={(e) => handleItemChange(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                                            min="0"
-                                            step="0.01"
-                                            className="mt-1.5 h-11 rounded-xl border-slate-200 bg-white font-bold pl-7"
+                                            value={invoiceNumber}
+                                            onChange={(e) => setInvoiceNumber(e.target.value)}
+                                            className="pl-12 h-14 rounded-2xl border-slate-200 font-black text-slate-900 focus:ring-cyan-500 transition-all"
+                                            placeholder="INV-XXXXX"
                                         />
                                     </div>
                                 </div>
-                                <div className="col-span-3 md:col-span-2">
-                                    <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Total</Label>
-                                    <div className="mt-1.5 h-11 rounded-xl bg-slate-100 flex items-center px-4 font-black text-slate-900 border border-slate-200">
-                                        ${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-3">
+                                        <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Date Issued</Label>
+                                        <Input
+                                            type="date"
+                                            value={invoiceDate}
+                                            onChange={(e) => setInvoiceDate(e.target.value)}
+                                            className="h-14 rounded-2xl border-slate-200 font-bold text-slate-700 focus:ring-cyan-500"
+                                        />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Due By</Label>
+                                        <Input
+                                            type="date"
+                                            value={dueDate}
+                                            onChange={(e) => setDueDate(e.target.value)}
+                                            className="h-14 rounded-2xl border-slate-200 font-bold text-slate-700 focus:ring-cyan-500"
+                                        />
                                     </div>
                                 </div>
-                                <div className="col-span-1 flex items-end h-full pt-6">
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => removeItem(index)}
-                                        disabled={items.length === 1}
-                                        className="h-11 w-11 rounded-xl text-rose-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                                    >
-                                        <Trash2 className="h-5 w-5" />
-                                    </Button>
-                                </div>
                             </div>
-                        ))}
-                    </div>
 
-                    {/* Totals Section */}
-                    <div className="mt-12 flex flex-col md:flex-row gap-8 items-start">
-                        <div className="flex-1 space-y-6 w-full">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-medium">
-                                <div>
-                                    <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Notes</Label>
-                                    <Textarea
-                                        value={notes}
-                                        onChange={(e) => setNotes(e.target.value)}
-                                        placeholder="Internal notes or special instructions..."
-                                        className="mt-1.5 rounded-2xl border-slate-200 min-h-[120px] bg-slate-50/30"
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Terms</Label>
-                                    <Textarea
-                                        value={terms}
-                                        onChange={(e) => setTerms(e.target.value)}
-                                        placeholder="Payment terms, bank details, etc..."
-                                        className="mt-1.5 rounded-2xl border-slate-200 min-h-[120px] bg-slate-50/30"
-                                    />
-                                </div>
+                            <div className="space-y-3">
+                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Administrative Notes</Label>
+                                <Textarea
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    placeholder="Add any internal administrative notes here..."
+                                    className="rounded-2xl border-slate-200 min-h-[140px] bg-slate-50/50 focus:bg-white transition-all font-medium p-6"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Step 3: Service Items & History */}
+                {currentStep === 3 && (
+                    <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="space-y-4">
+                                    <div className="grid grid-cols-12 gap-4 mb-4 px-2">
+                                        <div className="col-span-1 text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">S.No</div>
+                                        <div className="col-span-11 flex items-center justify-between">
+                                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                                                <ShoppingCart className="h-4 w-4 text-emerald-500" />
+                                                Line Items
+                                            </h3>
+                                            <Button type="button" onClick={addItem} size="sm" className="rounded-xl font-black bg-cyan-500 hover:bg-cyan-600 text-white shadow-lg shadow-cyan-100 h-9 px-4 transition-all active:scale-95">
+                                                <Plus className="h-4 w-4 mr-2" />
+                                                Add Entry
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                            <div className="space-y-4">
+                                {items.map((item, index) => (
+                                    <div key={index} className="grid grid-cols-12 gap-4 items-start p-6 bg-slate-50/50 border border-slate-100 rounded-[28px] relative group/item hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
+                                        <div className="col-span-1 pt-8 text-center text-xs font-black text-slate-400">
+                                            {String(index + 1).padStart(2, '0')}
+                                        </div>
+                                        <div className="col-span-11 md:col-span-5 space-y-2">
+                                            <Label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-1">Description</Label>
+                                            <Input
+                                                value={item.description}
+                                                onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                                                placeholder="e.g., Scrap Metal Collection - Grade A"
+                                                className="h-12 rounded-xl border-slate-200 bg-white font-bold focus:ring-cyan-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-4 md:col-span-1.5 space-y-2">
+                                            <Label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-1">Qty</Label>
+                                            <Input
+                                                type="number"
+                                                value={item.quantity}
+                                                onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
+                                                className="h-12 rounded-xl border-slate-200 bg-white font-black text-center focus:ring-cyan-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-4 md:col-span-2 space-y-2">
+                                            <Label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-1">Rate</Label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">$</span>
+                                                <Input
+                                                    type="number"
+                                                    value={item.unitPrice}
+                                                    onChange={(e) => handleItemChange(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                                                    className="h-12 rounded-xl border-slate-200 bg-white font-black pl-8 focus:ring-cyan-500"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="col-span-3 md:col-span-2 space-y-2">
+                                            <Label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-1">Amount</Label>
+                                            <div className="h-12 rounded-xl bg-white flex items-center px-4 font-black text-slate-900 border border-slate-200 shadow-sm">
+                                                ${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                            </div>
+                                        </div>
+                                        <div className="col-span-1 flex items-end justify-end h-full pt-6">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => removeItem(index)}
+                                                disabled={items.length === 1}
+                                                className="h-12 w-12 rounded-xl text-rose-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                                            >
+                                                <Trash2 className="h-5 w-5" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
-                        <div className="w-full md:w-[350px] bg-slate-900 text-white p-8 rounded-[32px] shadow-2xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 blur-3xl opacity-50" />
-                            <div className="space-y-6 relative z-10">
-                                <div className="flex justify-between items-center text-slate-400">
-                                    <span className="text-xs font-bold uppercase tracking-wider">Subtotal</span>
-                                    <span className="text-sm font-black">${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        {/* Simplified Totals Section */}
+                        <div className="flex flex-col md:flex-row gap-8 items-start justify-end mt-12 bg-white border border-slate-200 p-10 rounded-[40px] shadow-2xl relative overflow-hidden">
+                            <div className="absolute -top-10 -right-10 w-40 h-40 bg-cyan-500/5 rounded-full blur-3xl" />
+                            <div className="w-full max-w-md space-y-6 relative z-10">
+                                <div className="flex justify-between items-center text-slate-500">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Subtotal</span>
+                                    <span className="text-lg font-black text-slate-900">${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                                 </div>
 
-                                <div className="flex justify-between items-center group">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-blue-400">Tax</span>
+                                <div className="flex justify-between items-center text-cyan-600">
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Tax</span>
                                         <div className="relative">
                                             <input
                                                 type="number"
                                                 value={taxRate}
                                                 onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                                                className="w-12 h-6 bg-blue-500/10 border border-blue-500/20 rounded-lg text-[10px] font-black text-center text-blue-300 outline-none"
+                                                className="w-16 h-8 bg-cyan-50 border border-cyan-100 rounded-xl text-xs font-black text-center text-cyan-700 outline-none focus:ring-1 focus:ring-cyan-500"
                                             />
-                                            <span className="absolute -right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-blue-400">%</span>
+                                            <span className="absolute -right-4 top-1/2 -translate-y-1/2 text-xs font-black">%</span>
                                         </div>
                                     </div>
-                                    <span className="text-sm font-black text-blue-400">+ ${taxAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                    <span className="text-lg font-black">+ ${taxAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                                 </div>
 
-                                <div className="flex justify-between items-center">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-rose-400">Discount</span>
+                                <div className="flex justify-between items-center text-rose-600">
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Deductions</span>
                                         <div className="relative">
-                                            <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-rose-400">$</span>
+                                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-black">$</span>
                                             <input
                                                 type="number"
                                                 value={discount}
                                                 onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
-                                                className="w-20 h-6 bg-rose-500/10 border border-rose-500/20 rounded-lg text-[10px] font-black pl-4 text-rose-300 outline-none"
+                                                className="w-24 h-8 bg-rose-50 border border-rose-100 rounded-xl text-xs font-black pl-6 text-rose-700 outline-none focus:ring-1 focus:ring-rose-500"
                                             />
                                         </div>
                                     </div>
-                                    <span className="text-sm font-black text-rose-400">- ${discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                    <span className="text-lg font-black">- ${discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                                 </div>
 
-                                <div className="pt-6 border-t border-white/10 mt-6">
+                                <div className="pt-8 border-t border-slate-100 mt-8">
                                     <div className="flex justify-between items-end">
                                         <div>
-                                            <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Grand Total Due</p>
-                                            <span className="text-3xl font-black text-white">${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] mb-2">Total Outstanding</p>
+                                            <span className="text-5xl font-black text-slate-900 tracking-tighter">${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <Badge className="bg-cyan-100 text-cyan-700 border-none text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-lg shadow-sm">Verified Amount</Badge>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </CardContent>
-            </Card>
 
-            {/* Audit Log / Edit History Section */}
-            {isEditing && (
-                <div className="mt-12 space-y-4">
-                    <div className="flex items-center gap-2 px-1">
-                        <History className="h-4 w-4 text-blue-600" />
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Amendment History</h3>
-                    </div>
+                        {/* History Section */}
+                        {isEditing && (
+                            <div className="pt-10 border-t border-slate-100">
+                                <div className="flex items-center justify-between mb-6 px-2">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-8 w-8 rounded-xl bg-blue-50 flex items-center justify-center">
+                                            <History className="h-4 w-4 text-blue-600" />
+                                        </div>
+                                        <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em]">Amendment Records</h3>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                                            className="h-8 px-4 rounded-lg text-[10px] font-black uppercase tracking-widest border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30"
+                                            disabled={historyPage === 1 || isLoadingHistory}
+                                        >
+                                            Prev
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setHistoryPage(p => p + 1)}
+                                            className="h-8 px-4 rounded-lg text-[10px] font-black uppercase tracking-widest border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30"
+                                            disabled={!pagination || historyPage >= pagination.totalPages || isLoadingHistory}
+                                        >
+                                            Next
+                                        </Button>
+                                    </div>
+                                </div>
 
-                    <div className="border border-slate-200 rounded-[24px] overflow-hidden bg-white shadow-sm">
-                        <table className="w-full border-collapse">
-                            <thead>
-                                <tr className="bg-slate-50 border-b border-slate-100/80">
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-left w-[20%]">Date & Time</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center w-[15%]">Action</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-left">Description of Changes</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {isLoadingHistory ? (
-                                    <tr>
-                                        <td colSpan={3} className="px-6 py-12 text-center">
-                                            <Loader2 className="h-6 w-6 text-blue-500 animate-spin mx-auto" />
-                                        </td>
-                                    </tr>
-                                ) : history.length > 0 ? (
-                                    history.map((log: any) => (
-                                        <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="px-6 py-4 align-top">
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-black text-slate-800">
-                                                        {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
-                                                    <span className="text-[10px] font-bold text-slate-400">
-                                                        {new Date(log.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 align-top text-center">
-                                                <Badge className={cn(
-                                                    "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter border-none",
-                                                    log.action === 'CREATED' ? "bg-emerald-100 text-emerald-700" :
-                                                        log.action === 'STATUS_CHANGE' ? "bg-amber-100 text-amber-700" :
-                                                            "bg-blue-100 text-blue-700"
-                                                )}>
-                                                    {log.action.replace('_', ' ')}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-6 py-4 align-top">
-                                                <div className="space-y-2">
-                                                    {log.action === 'CREATED' ? (
-                                                        <span className="text-xs font-bold text-slate-500 italic">Invoice initial state created</span>
-                                                    ) : (
-                                                        log.changedFields?.map((field: string) => (
-                                                            <div key={field} className="flex items-center gap-3 text-xs">
-                                                                <span className="font-black text-slate-400 uppercase text-[9px] bg-slate-100 px-1.5 py-0.5 rounded leading-none min-w-[80px] text-center">
-                                                                    {field.replace(/([A-Z])/g, ' $1')}
-                                                                </span>
-                                                                <div className="flex items-center gap-2 flex-grow">
-                                                                    <span className="text-slate-400 line-through font-medium truncate max-w-[150px]">
-                                                                        {typeof log.previousData?.[field] === 'object' ? 'Items' : String(log.previousData?.[field] || 'None')}
+                                <div className="border border-slate-200 rounded-[32px] overflow-hidden bg-white shadow-2xl shadow-slate-200/50 w-full mb-12">
+                                    <div className="overflow-x-auto w-full">
+                                        <table className="w-full min-w-full border-collapse table-fixed">
+                                            <thead>
+                                                <tr className="bg-slate-900 border-b border-slate-800">
+                                                    <th className="w-[80px] px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-left">S.No</th>
+                                                    <th className="w-[180px] px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-left">Timestamp</th>
+                                                    <th className="w-[160px] px-4 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Operation</th>
+                                                    <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-left">Change Details</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {isLoadingHistory ? (
+                                                    <tr><td colSpan={3} className="px-8 py-12 text-center"><Loader2 className="h-8 w-8 text-blue-500 animate-spin mx-auto" /></td></tr>
+                                                ) : history.length > 0 ? (
+                                                    history.map((log: any, idx: number) => (
+                                                        <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                                                            <td className="px-6 py-5 align-top text-xs font-black text-slate-400">
+                                                                {String(idx + 1).padStart(2, '0')}
+                                                            </td>
+                                                            <td className="px-6 py-5 align-top whitespace-nowrap">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-xs font-black text-slate-900">
+                                                                        {new Date(log.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                                                                     </span>
-                                                                    <ArrowRight className="h-3 w-3 text-slate-300" />
-                                                                    <span className="text-slate-900 font-black truncate max-w-[200px]">
-                                                                        {typeof log.newData?.[field] === 'object' ? 'Items Updated' : String(log.newData?.[field] || 'None')}
-                                                                    </span>
+                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{new Date(log.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                                                                 </div>
+                                                            </td>
+                                                            <td className="px-4 py-5 align-top text-center">
+                                                                <Badge className={cn(
+                                                                    "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border-none whitespace-nowrap",
+                                                                    log.action === 'CREATED' ? "bg-emerald-100 text-emerald-700" :
+                                                                        log.action === 'STATUS_CHANGE' ? "bg-amber-100 text-amber-700" :
+                                                                            "bg-blue-100 text-blue-700"
+                                                                )}>
+                                                                    {log.action.replace('_', ' ')}
+                                                                </Badge>
+                                                            </td>
+                                                        <td className="px-6 py-5 align-top">
+                                                            <div className="space-y-3">
+                                                                {log.action === 'CREATED' ? (
+                                                                    <span className="text-xs font-bold text-slate-400 italic tracking-tight">Initial record instantiation successful.</span>
+                                                                ) : (
+                                                                    log.changedFields?.map((field: string) => {
+                                                                        const formatVal = (val: any) => {
+                                                                            if (val === null || val === undefined) return 'None';
+                                                                            if (typeof val === 'object') return 'Complex Object';
+                                                                            const str = String(val);
+                                                                            if (str.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)) {
+                                                                                return new Date(str).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                                                                            }
+                                                                            return str;
+                                                                        };
+
+                                                                        return (
+                                                                            <div key={field} className="flex items-center gap-4 text-xs font-bold">
+                                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-1 rounded-lg leading-none min-w-[120px] text-center">
+                                                                                    {field.replace(/([A-Z])/g, ' $1')}
+                                                                                </span>
+                                                                                <div className="flex items-center gap-3">
+                                                                                    <span className="text-slate-400 line-through truncate max-w-[150px]">{formatVal(log.previousData?.[field])}</span>
+                                                                                    <ArrowRight className="h-3 w-3 text-slate-300" />
+                                                                                    <span className="text-slate-900 truncate max-w-[200px]">{formatVal(log.newData?.[field])}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    })
+                                                                )}
                                                             </div>
-                                                        ))
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={3} className="px-6 py-12 text-center">
-                                            <p className="text-xs font-bold text-slate-400">No modification records found.</p>
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                                                        </td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr><td colSpan={3} className="px-8 py-12 text-center text-xs font-black text-slate-300 uppercase tracking-widest">No audit logs available for this record.</td></tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
-                </div>
-            )}
-
-            {/* Form Actions */}
-            <div className="flex items-center justify-end gap-4 pt-8">
-                <Button type="button" variant="ghost" onClick={onCancel} className="rounded-2xl font-bold h-12 px-8 text-slate-500 hover:bg-slate-100">
-                    Cancel
-                </Button>
-                <Button
-                    type="submit"
-                    className="rounded-2xl h-12 px-10 font-black text-sm uppercase tracking-widest bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-200 transition-all active:scale-95"
-                >
-                    {isEditing ? 'Update Invoice' : 'Create Invoice'}
-                </Button>
+                )}
             </div>
-        </form>
-    );
-}
 
-function Badge({ children, className }: { children: React.ReactNode; className?: string }) {
-    return (
-        <span className={cn("px-2 py-1 rounded text-xs font-medium", className)}>
-            {children}
-        </span>
+            <div className="flex items-center justify-between mt-12 pt-8 border-t border-slate-100 px-12">
+                <Button type="button" variant="outline" onClick={onCancel} className="h-14 px-8 rounded-2xl border-2 border-slate-100 font-extrabold text-rose-500 uppercase tracking-widest hover:bg-rose-50 hover:text-rose-700 transition-all flex items-center gap-2 bg-white shadow-sm">
+                    <X className="h-5 w-5" /> Cancel & Discard
+                </Button>
+
+                <div className="flex items-center gap-4">
+                    {currentStep > 1 && (
+                        <Button type="button" variant="outline" onClick={() => setCurrentStep(prev => prev - 1)} className="h-14 px-10 rounded-2xl border-2 border-slate-100 font-extrabold text-slate-600 uppercase tracking-widest hover:bg-slate-50 hover:text-slate-900 transition-all bg-white shadow-sm">
+                            <ArrowLeft className="h-5 w-5 mr-3" /> Go Back
+                        </Button>
+                    )}
+
+                    {currentStep < 3 ? (
+                        <Button type="button" onClick={() => setCurrentStep(prev => prev + 1)} className="h-14 px-14 rounded-2xl bg-cyan-600 hover:bg-cyan-700 text-white font-extrabold uppercase tracking-widest shadow-xl shadow-cyan-100 transition-all active:scale-95 flex items-center gap-3">
+                            Next Stage <ArrowRight className="h-5 w-5" />
+                        </Button>
+                    ) : (
+                        <Button
+                            type="button"
+                            onClick={handleSubmit}
+                            className="h-14 px-16 rounded-2xl bg-slate-900 hover:bg-black text-white font-extrabold uppercase tracking-widest shadow-2xl transition-all active:scale-95 flex items-center gap-3"
+                        >
+                            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                            {isEditing ? 'Confirm Updates' : 'Issue Invoice'}
+                        </Button>
+                    )}
+                </div>
+            </div>
+        </div>
     );
 }

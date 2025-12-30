@@ -9,6 +9,8 @@ export const invoicesApi = {
         customerId?: string;
         workOrderId?: string;
         search?: string;
+        startDate?: string;
+        endDate?: string;
     }) => {
         const response = await apiClient.get('/invoices', { params });
         return response.data;
@@ -37,9 +39,9 @@ export const invoicesApi = {
         return response.data;
     },
 
-    // Delete invoice
-    deleteInvoice: async (id: string) => {
-        const response = await apiClient.delete(`/invoices/${id}`);
+    // Cancel invoice
+    cancelInvoice: async (id: string, reason: string) => {
+        const response = await apiClient.post(`/invoices/${id}/cancel`, { reason });
         return response.data;
     },
 
@@ -67,8 +69,8 @@ export const invoicesApi = {
         return response.data;
     },
 
-    getInvoiceHistory: async (id: string) => {
-        const response = await apiClient.get(`/invoices/${id}/history`);
+    getInvoiceHistory: async (id: string, params?: { page?: number; limit?: number }) => {
+        const response = await apiClient.get(`/invoices/${id}/history`, { params });
         return response.data;
     }
 };
