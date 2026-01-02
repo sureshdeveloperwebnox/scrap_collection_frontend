@@ -34,6 +34,7 @@ import { InvoiceForm } from '@/components/invoice-form';
 import { InvoiceDetail } from '@/components/invoice-detail-modal';
 import { toast } from 'sonner';
 import { useInvoices, useCreateInvoice, useInvoiceStats, useCancelInvoice, useUpdateInvoiceStatus, useUpdateInvoice } from '@/hooks/use-invoices';
+import { useCustomers } from '@/hooks/use-customers';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -176,8 +177,8 @@ function StatCard({ title, value, color, icon: Icon, delay = 0 }: { title: strin
             case 'blue': return 'from-blue-500 to-indigo-600 shadow-blue-200/50';
             case 'orange': return 'from-orange-400 to-red-500 shadow-red-200/50';
             case 'green': return 'from-emerald-400 to-green-600 shadow-green-200/50';
-            case 'red': return 'from-rose-500 to-red-700 shadow-red-200/50';
-            default: return 'from-gray-400 to-gray-600 shadow-gray-200/50';
+            case 'red': return 'from-rose-500 to-red-600 shadow-red-200/50';
+            default: return 'from-slate-400 to-slate-500 shadow-slate-200/50';
         }
     };
 
@@ -240,6 +241,7 @@ export default function InvoicesPage() {
     const [dateTo, setDateTo] = useState('');
     const [invoiceToCancel, setInvoiceToCancel] = useState<any>(null);
     const [cancelReason, setCancelReason] = useState('');
+    const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -257,6 +259,7 @@ export default function InvoicesPage() {
         search: debouncedSearch || undefined,
         startDate: dateFrom || undefined,
         endDate: dateTo || undefined,
+        customerId: (selectedCustomerId && selectedCustomerId !== 'all-customers') ? selectedCustomerId : undefined,
         limit: 50
     });
     const invoices = invoicesData?.data?.invoices || [];
@@ -273,6 +276,10 @@ export default function InvoicesPage() {
         totalRevenue: 0,
         pendingRevenue: 0
     };
+    
+    // Fetch customers for filter
+    const { data: customersData } = useCustomers({ limit: 100 });
+    const customers = customersData?.data?.customers || [];
 
     // Mutations
     const createInvoiceMutation = useCreateInvoice();
@@ -496,16 +503,16 @@ export default function InvoicesPage() {
                                             onClick={() => setIsFilterOpen(!isFilterOpen)}
                                             className={cn(
                                                 "h-9 w-9 p-0 transition-all",
-                                                (dateFrom || dateTo)
+                                                (dateFrom || dateTo || selectedCustomerId)
                                                     ? "bg-cyan-50 border-cyan-500 text-cyan-700 hover:bg-cyan-100"
                                                     : "hover:bg-gray-100 hover:text-cyan-600"
                                             )}
                                             title={isFilterOpen ? "Hide filters" : "Show filters"}
                                         >
-                                            <Filter className={cn("h-4 w-4", (dateFrom || dateTo) && "text-cyan-700")} />
+                                            <Filter className={cn("h-4 w-4", (dateFrom || dateTo || selectedCustomerId) && "text-cyan-700")} />
                                         </Button>
 
-                                        <Button onClick={() => setIsCreating(true)} className="bg-cyan-500 hover:bg-cyan-600 text-white h-9 w-9 p-0" title="Add Invoice">
+                                        <Button onClick={() => setIsCreating(true)} className="bg-cyan-600 hover:bg-cyan-700 text-white h-9 w-9 p-0" title="Add Invoice">
                                             <Plus className="h-4 w-4" />
                                         </Button>
                                      </div>
@@ -540,13 +547,31 @@ export default function InvoicesPage() {
                                                     </div>
                                                 </div>
 
-                                                {(dateFrom || dateTo) && (
+                                                <div className="flex items-center gap-3">
+                                                    <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Customer</Label>
+                                                    <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                                                        <SelectTrigger className="h-9 w-[200px] rounded-xl border-slate-200 bg-white text-xs font-bold focus:ring-cyan-500 shadow-sm">
+                                                            <SelectValue placeholder="All Customers" />
+                                                        </SelectTrigger>
+                                                        <SelectContent className="rounded-xl border-none shadow-2xl">
+                                                            <SelectItem value="all-customers" className="text-xs font-bold">All Customers</SelectItem>
+                                                            {customers.map((c: any) => (
+                                                                <SelectItem key={c.id} value={c.id} className="text-xs font-bold">
+                                                                    {c.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+
+                                                {(dateFrom || dateTo || selectedCustomerId) && (
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => {
                                                             setDateFrom('');
                                                             setDateTo('');
+                                                            setSelectedCustomerId('');
                                                         }}
                                                         className="h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50"
                                                     >
@@ -648,8 +673,8 @@ export default function InvoicesPage() {
                                                                                 {invoice.WorkOrder?.orderNumber || 'Standalone'}
                                                                             </Badge>
                                                                         </td>
-                                                                        <td className="py-5 px-2 font-bold text-sm text-slate-500 uppercase">
-                                                                            {new Date(invoice.invoiceDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                                        <td className="py-5 px-2 font-bold text-xs text-slate-500">
+                                                                            {new Date(invoice.invoiceDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                                         </td>
                                                                         <td className="py-5 px-2 font-black text-sm text-slate-900">
                                                                             ${invoice.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -682,7 +707,7 @@ export default function InvoicesPage() {
                                                                         <td className="py-5 px-6 text-right" onClick={(e) => e.stopPropagation()}>
                                                                             <DropdownMenu>
                                                                                 <DropdownMenuTrigger asChild>
-                                                                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-slate-100 text-slate-400">
+                                                                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-cyan-50 text-slate-400 hover:text-cyan-600 transition-colors">
                                                                                         <MoreHorizontal className="h-5 w-5" />
                                                                                     </Button>
                                                                                 </DropdownMenuTrigger>

@@ -39,7 +39,7 @@ export function InvoiceDetail({ invoice, isOpen, onClose, onDownload, onEdit, on
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-GB', {
             day: '2-digit',
-            month: 'short',
+            month: '2-digit',
             year: 'numeric'
         });
     };
@@ -105,7 +105,7 @@ export function InvoiceDetail({ invoice, isOpen, onClose, onDownload, onEdit, on
                         )}
                         <Button
                             onClick={() => onDownload(invoice.id, invoice.invoiceNumber)}
-                            className="bg-slate-900 hover:bg-black text-white font-black rounded-2xl h-12 px-8 shadow-xl shadow-slate-200 transition-all active:scale-95"
+                            className="bg-cyan-600 hover:bg-cyan-700 text-white font-black rounded-2xl h-12 px-8 shadow-xl shadow-cyan-100 transition-all active:scale-95"
                         >
                             <Download className="h-4 w-4 mr-3" />
                             GET PDF
@@ -121,8 +121,8 @@ export function InvoiceDetail({ invoice, isOpen, onClose, onDownload, onEdit, on
                             <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 blur-3xl rounded-full -mr-16 -mt-16" />
                             <div className="relative z-10 space-y-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center">
-                                        <Building2 className="h-5 w-5 text-white" />
+                                    <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                                        <Building2 className="h-5 w-5 text-slate-600" />
                                     </div>
                                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Issuer</h3>
                                 </div>
@@ -186,7 +186,7 @@ export function InvoiceDetail({ invoice, isOpen, onClose, onDownload, onEdit, on
                     {/* Table Section */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-3 px-2">
-                            <div className="h-8 w-8 rounded-xl bg-slate-900 flex items-center justify-center">
+                            <div className="h-8 w-8 rounded-xl bg-cyan-500 flex items-center justify-center">
                                 <ShoppingCart className="h-4 w-4 text-white" />
                             </div>
                             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Itemized Service Breakdown</h3>
@@ -264,16 +264,16 @@ export function InvoiceDetail({ invoice, isOpen, onClose, onDownload, onEdit, on
                             <div className="space-y-5 relative z-10">
                                 <div className="flex justify-between items-center text-slate-500">
                                     <span className="text-[10px] font-black uppercase tracking-widest">Base Amount</span>
-                                    <span className="text-lg font-black text-slate-900">${invoice.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                    <span className="text-base font-bold text-slate-900">${invoice.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-cyan-600">
                                     <span className="text-[10px] font-black uppercase tracking-widest">Tax</span>
-                                    <span className="text-lg font-black">+ ${invoice.tax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                    <span className="text-base font-bold">+ ${invoice.tax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                                 </div>
                                 {invoice.discount > 0 && (
                                     <div className="flex justify-between items-center text-rose-600">
                                         <span className="text-[10px] font-black uppercase tracking-widest">Total Adjustments</span>
-                                        <span className="text-lg font-black">- ${invoice.discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                        <span className="text-base font-bold">- ${invoice.discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                                     </div>
                                 )}
 
@@ -281,7 +281,7 @@ export function InvoiceDetail({ invoice, isOpen, onClose, onDownload, onEdit, on
                                     <div className="flex justify-between items-center">
                                         <div>
                                             <span className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] block mb-2">Final Settlement</span>
-                                            <span className="text-5xl font-black text-slate-900 tracking-tighter">
+                                            <span className="text-3xl font-bold text-slate-900 tracking-tight">
                                                 ${invoice.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                             </span>
                                         </div>
