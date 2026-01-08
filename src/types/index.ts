@@ -43,6 +43,7 @@ export interface Order {
   leadId?: string;
   customerName: string;
   customerEmail?: string;
+  customerPhone?: string;
   customerCountryCode?: string;
   address: string;
   latitude?: number;
