@@ -1,0 +1,23 @@
+# Development Dockerfile for Next.js with hot-reload
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install development tools
+RUN apk add --no-cache git libc6-compat
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies
+RUN npm install
+
+# Expose frontend port
+EXPOSE 7002
+
+ENV PORT=7002
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Start in development mode with turbo
+CMD ["npm", "run", "dev"]

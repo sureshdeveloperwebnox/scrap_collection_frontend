@@ -1,6 +1,8 @@
 import axios, { InternalAxiosRequestConfig } from 'axios';
 import { useLoadingStore } from '@/lib/store/loading-store';
 
+import { API_CONFIG } from '@/config/api';
+
 // Extend axios config to include custom properties
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   showLoader?: boolean;
@@ -8,7 +10,7 @@ interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
 
 // Create axios instance with base configuration
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9645/api/v1',
+  baseURL: API_CONFIG.BASE_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',

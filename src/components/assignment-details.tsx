@@ -16,6 +16,8 @@ import {
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
+import { API_CONFIG } from '@/config/api';
+
 interface AssignmentDetailsProps {
     assignments: Array<{
         id: string;
@@ -191,13 +193,13 @@ export function AssignmentDetails({ assignments }: AssignmentDetailsProps) {
                                                     {assignment.completionPhotos.map((photo, photoIndex) => (
                                                         <a
                                                             key={photoIndex}
-                                                            href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9645'}/uploads/${photo}`}
+                                                            href={`${API_CONFIG.UPLOADS_URL}/${photo}`}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 hover:ring-2 hover:ring-cyan-500 transition-all"
                                                         >
                                                             <img
-                                                                src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9645'}/uploads/${photo}`}
+                                                                src={`${API_CONFIG.UPLOADS_URL}/${photo}`}
                                                                 alt={`Completion photo ${photoIndex + 1}`}
                                                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                                                             />

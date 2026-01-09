@@ -19,6 +19,8 @@ const jakarta = Plus_Jakarta_Sans({
   display: 'swap',
 })
 
+import { API_CONFIG } from '@/config/api';
+
 export const metadata: Metadata = {
   title: {
     default: 'Scrap Collection Admin - Manage Your Scrap Collection Business',
@@ -34,7 +36,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase: new URL(API_CONFIG.APP_URL),
   alternates: {
     canonical: '/',
   },

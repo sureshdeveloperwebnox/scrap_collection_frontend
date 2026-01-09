@@ -2,15 +2,9 @@
  * Image utility functions for handling image paths and URLs
  * Centralized logic for constructing full URLs from relative paths
  */
+import { API_CONFIG } from '@/config/api';
 
-// Base URL for images - should match backend BASE_URL (without trailing slash)
-// Derive API base URL from NEXT_PUBLIC_API_URL (e.g., http://localhost:9645/api/v1 -> http://localhost:9645)
-const getApiBaseUrl = () => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9645/api/v1';
-  return apiUrl.replace(/\/api\/v1\/?$/, '');
-};
-
-const BASE_URL = (process.env.NEXT_PUBLIC_IMAGE_BASE_URL || `${getApiBaseUrl()}/uploads`).trim().replace(/\/$/, '');
+const BASE_URL = (process.env.NEXT_PUBLIC_IMAGE_BASE_URL || API_CONFIG.UPLOADS_URL).trim().replace(/\/$/, '');
 
 /**
  * Get the base URL for images from environment variables
