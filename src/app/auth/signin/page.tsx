@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { AuthGuard } from '@/components/auth-guard';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { Eye, EyeOff } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
@@ -50,8 +51,10 @@ export default function SignInPage() {
 
     try {
       await signInMutation.mutateAsync({ email, password, role: "USER" });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign in error:', error);
+      const message = error?.message ?? error?.response?.data?.message ?? 'Invalid email or password';
+      toast.error('Login failed', { description: message });
     }
   };
 

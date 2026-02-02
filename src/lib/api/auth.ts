@@ -28,6 +28,7 @@ export interface AuthResponse {
       role: string;
       organizationId?: number;
     };
+    accessToken?: string;
   }
 }
 
@@ -37,12 +38,12 @@ export interface GoogleSignInRequest {
 
 export const authApi = {
   signIn: async (data: SignInRequest): Promise<AuthResponse> => {
-    const response = await apiClient.post('/auth/signIn', data);
+    const response = await apiClient.post('/auth/signin', data);
     return response.data;
   },
 
   signUp: async (data: SignUpRequest): Promise<AuthResponse> => {
-    const response = await apiClient.post('/auth/signUp', data);
+    const response = await apiClient.post('/auth/signup', data);
     return response.data;
   },
 

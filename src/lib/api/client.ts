@@ -1,5 +1,6 @@
 import axios, { InternalAxiosRequestConfig } from 'axios';
 import { useLoadingStore } from '@/lib/store/loading-store';
+import { useAuthStore } from '@/lib/store/auth-store';
 
 import { API_CONFIG } from '@/config/api';
 
@@ -18,12 +19,14 @@ export const apiClient = axios.create({
   withCredentials: true,
 });
 
-// Request interceptor to handle global loader
+// Request interceptor: add Bearer token (cross-origin; cookies not sent) and global loader
 apiClient.interceptors.request.use((config: CustomAxiosRequestConfig) => {
-  // By default, show global loader for mutations (POST, PUT, DELETE)
-  // GET requests are usually handled by skeletons, so skip them unless explicitly requested
-  const isMutation = ['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '');
+  const token = useAuthStore.getState().accessToken;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
 
+  const isMutation = ['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '');
   if (config.showLoader !== false && (isMutation || config.showLoader === true)) {
     useLoadingStore.getState().incrementApiLoading();
   }
@@ -69,10 +72,13 @@ apiClient.interceptors.response.use(
     }
 
     const originalRequest = error.config;
+    const requestUrl = (originalRequest?.url ?? '').toLowerCase();
 
-    // Skip auto-refresh for /refresh endpoint to prevent infinite loops
-    const skipRefreshUrls = ['/auth/refresh'];
-    const shouldSkipRefresh = skipRefreshUrls.some(url => originalRequest.url?.includes(url));
+    // Skip auto-refresh for auth endpoints where 401 is the normal response (login/signup failure)
+    const shouldSkipRefresh =
+      requestUrl.includes('/auth/refresh') ||
+      requestUrl.includes('/auth/signin') ||
+      requestUrl.includes('/auth/signup');
 
     // Handle 401 errors (Unauthorized)
     if (error.response?.status === 401 && !originalRequest._retry && !shouldSkipRefresh) {
