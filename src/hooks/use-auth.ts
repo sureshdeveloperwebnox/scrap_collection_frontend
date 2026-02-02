@@ -19,8 +19,8 @@ export const useSignIn = () => {
       console.log("Sign in response:", response);
 
       if (response?.data?.user) {
-        // Store only user data in Zustand store (tokens are in httpOnly cookies)
-        login(response.data.user);
+        // Store user and accessToken so Authorization header is set (cookies not sent cross-origin)
+        login(response.data.user, response.data.accessToken);
 
         toast.success('Login successful!', {
           description: 'You are now logged in',
@@ -100,7 +100,7 @@ export const useSignUp = () => {
     onSuccess: async (response) => {
       if (response?.data?.user) {
         // Store only user data in Zustand store (tokens are in httpOnly cookies)
-        login(response.data.user);
+        login(response.data.user, response.data.accessToken);
 
         toast.success('Registration successful!', {
           description: 'Your account has been created and you are now logged in',
@@ -221,7 +221,7 @@ export const useGoogleSignIn = () => {
 
       if (response?.data?.user) {
         // Store only user data in Zustand store (tokens are in httpOnly cookies)
-        login(response.data.user);
+        login(response.data.user, response.data.accessToken);
 
         toast.success('Google sign-in successful!', {
           description: 'You are now logged in',

@@ -14,30 +14,33 @@ interface User {
 
 interface AuthState {
   user: User | null;
+  accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   isHydrated: boolean;
-  login: (user: User) => void;
+  login: (user: User, accessToken?: string) => void;
   logout: () => void;
   updateUser: (user: Partial<User>) => void;
   setLoading: (loading: boolean) => void;
   setHydrated: (hydrated: boolean) => void;
+  setAccessToken: (token: string | null) => void;
   restoreSession: (user: User) => void;
   checkAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()((set, get) => ({
   user: null,
+  accessToken: null,
   isAuthenticated: false,
   isLoading: false,
   isHydrated: false,
 
-  login: (user: User) => {
-    // Construct name from firstName and lastName if not provided
+  login: (user: User, accessToken?: string) => {
     const name = user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
 
     set({
       user: { ...user, name },
+      accessToken: accessToken ?? get().accessToken,
       isAuthenticated: true,
       isLoading: false,
     });
@@ -46,9 +49,14 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   logout: () => {
     set({
       user: null,
+      accessToken: null,
       isAuthenticated: false,
       isLoading: false,
     });
+  },
+
+  setAccessToken: (token: string | null) => {
+    set({ accessToken: token });
   },
 
   updateUser: (userData) => {

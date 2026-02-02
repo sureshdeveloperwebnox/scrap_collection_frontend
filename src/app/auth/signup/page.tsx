@@ -164,13 +164,16 @@ export default function SignUpPage() {
     } catch (error: any) {
       console.error('Registration error:', error);
 
-      const errorMessage = error?.response?.data?.message || error?.message || 'Registration failed';
+      const data = error?.response?.data;
+      const validationErrors = Array.isArray(data?.validationErrors) ? data.validationErrors : [];
+      const firstValidation = validationErrors[0];
+      const detailMessage = firstValidation?.message ?? data?.message ?? error?.message ?? 'Registration failed';
       toast.error('Registration failed', {
-        description: errorMessage,
+        description: detailMessage,
       });
 
       // If user creation failed, go back to step 1
-      if (!error?.response?.data?.user) {
+      if (!data?.user) {
         setCurrentStep(1);
       }
     } finally {
