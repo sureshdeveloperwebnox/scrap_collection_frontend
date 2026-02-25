@@ -11,9 +11,16 @@ const BACKEND_PORT = process.env.NEXT_PUBLIC_BACKEND_PORT || '7001';
 const envApiBase = (process.env.NEXT_PUBLIC_API_URL || FALLBACK_API).replace(/\/$/, '');
 const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || FALLBACK_APP).replace(/\/$/, '');
 
-/** API base URL: in browser uses same host as page + backend port; on server uses env. */
+/** API base URL: in browser uses env when backend is on a different host (e.g. production); same host + port for local/IP. */
 export function getApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
+    try {
+      const envUrl = new URL(envApiBase);
+      // Production: frontend and backend on different hosts → use env API URL
+      if (envUrl.hostname !== window.location.hostname) return envApiBase;
+    } catch {
+      // envApiBase may be relative in some setups
+    }
     return `${window.location.protocol}//${window.location.hostname}:${BACKEND_PORT}/api/v1`;
   }
   return envApiBase;
