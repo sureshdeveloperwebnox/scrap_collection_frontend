@@ -121,7 +121,7 @@ export const Header = memo(({ onToggleSidebar }: HeaderProps) => {
         {/* Hamburger Menu Button */}
         <button
           onClick={handleToggle}
-          className="flex items-center justify-center w-10 h-10 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 flex-shrink-0"
+          className="flex items-center justify-center w-10 h-10 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all duration-50 flex-shrink-0"
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >

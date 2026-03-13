@@ -67,7 +67,7 @@ export default function DashboardLayout({
           "lg:pl-[var(--sidebar-width)]"
         )}>
           {/* THE STAGE: A single, solid off-white background container */}
-          <div className="flex-1 flex flex-col bg-[#F3F4F7] rounded-tl-[3.5rem] shadow-2xl relative overflow-hidden mt-0 transform-gpu transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform">
+          <div className="flex-1 flex flex-col bg-[#F3F4F7] rounded-tl-[3.5rem] shadow-2xl relative overflow-hidden mt-0 transform-gpu transition-all duration-200 ease-[cubic-bezier(0,0,0.2,1)] will-change-transform">
             <Header onToggleSidebar={handleToggleSidebar} />
             <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-5 lg:px-6 py-8 scrollbar-animate-pulse">
               <div className="min-h-full">
