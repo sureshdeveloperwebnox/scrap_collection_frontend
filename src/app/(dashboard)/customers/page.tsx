@@ -1037,27 +1037,31 @@ export default function CustomersPage() {
                   })
                 )}
               </div>
+              {/* Extra spacing at the bottom for mobile to account for sticky FAB */}
+              <div className="h-20 sm:hidden"></div>
             </>
           )}
         </CardContent>
 
         {/* Pagination Controls */}
         {!isLoading && pagination.totalPages > 0 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t">
-            <div className="flex items-center gap-4">
-              <RowsPerPage
-                value={rowsPerPage}
-                onChange={(value) => {
-                  setRowsPerPage(value);
-                  setCurrentPage(1);
-                }}
-                options={[5, 10, 20, 50, 100]}
-              />
-              <div className="text-xs text-gray-500 font-medium">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-4 px-4 sm:px-6 py-4 border-t bg-gray-50/30">
+            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full lg:w-auto">
+              <div className="flex items-center gap-2">
+                <RowsPerPage
+                  value={rowsPerPage}
+                  onChange={(value) => {
+                    setRowsPerPage(value);
+                    setCurrentPage(1);
+                  }}
+                  options={[5, 10, 20, 50, 100]}
+                />
+              </div>
+              <div className="text-[10px] sm:text-xs text-gray-500 font-medium whitespace-nowrap">
                 Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalCustomers)} of {totalCustomers} customers
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center w-full lg:w-auto">
               <Pagination
                 currentPage={currentPage}
                 totalPages={pagination.totalPages}
@@ -1068,9 +1072,13 @@ export default function CustomersPage() {
         )}
       </Card>
 
-      {/* Sticky Add button for mobile */}
-      <Button onClick={() => setIsFormOpen(true)} className="sm:hidden fixed bottom-6 right-6 rounded-full shadow-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white transform hover:scale-110 transition-all duration-200 hover:shadow-2xl">
-        <Plus className="mr-2 h-4 w-4" /> Add Customer
+      {/* Sticky Add button for mobile - Redesigned as FAB */}
+      <Button 
+        onClick={() => setIsFormOpen(true)} 
+        className="sm:hidden fixed bottom-6 right-6 rounded-full shadow-2xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white transform hover:scale-110 active:scale-95 transition-all duration-200 h-14 w-14 p-0 flex items-center justify-center z-50 border-2 border-white"
+        title="Add Customer"
+      >
+        <Plus className="h-7 w-7" />
       </Button>
 
       {/* Quick View Dialog */}

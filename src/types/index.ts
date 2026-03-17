@@ -153,6 +153,7 @@ export interface Customer {
   vehicleNumber?: string;
   vehicleYear?: number;
   vehicleCondition?: VehicleConditionEnum;
+  licenseUrl?: string;
   accountStatus: CustomerStatus;
   joinedDate: Date;
   organizationId: number;

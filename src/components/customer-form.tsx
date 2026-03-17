@@ -16,6 +16,7 @@ import 'react-phone-input-2/lib/style.css';
 import { validatePhoneNumber, getPhonePlaceholder } from '@/lib/phone-utils';
 import { CountryCode } from 'libphonenumber-js';
 import { GoogleMapPicker } from '@/components/google-map-picker';
+import { LicenseUpload } from '@/components/ui/license-upload';
 import { z } from 'zod';
 import { useAuthStore } from '@/lib/store/auth-store';
 
@@ -79,6 +80,7 @@ const createCustomerSchema = z.object({
         .optional()
         .nullable(),
     vehicleCondition: z.enum(['JUNK', 'DAMAGED', 'WRECKED', 'ACCIDENTAL', 'FULLY_SCRAP']).optional(),
+    licenseUrl: z.string().optional().nullable(),
     accountStatus: z.enum(['ACTIVE', 'INACTIVE', 'VIP', 'BLOCKED'], {
         message: 'Account status must be ACTIVE, INACTIVE, VIP, or BLOCKED'
     }),
@@ -183,6 +185,7 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
         vehicleNumber: '',
         vehicleYear: undefined as number | undefined,
         vehicleCondition: undefined as VehicleConditionEnum | undefined,
+        licenseUrl: '' as string | undefined,
         accountStatus: 'ACTIVE' as CustomerStatus,
     });
 
@@ -214,6 +217,7 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                 vehicleNumber: customer.vehicleNumber || '',
                 vehicleYear: customer.vehicleYear,
                 vehicleCondition: customer.vehicleCondition,
+                licenseUrl: customer.licenseUrl || '',
                 accountStatus: customer.accountStatus || 'ACTIVE',
             });
 
@@ -245,6 +249,7 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                 vehicleNumber: customer.vehicleNumber || '',
                 vehicleYear: customer.vehicleYear,
                 vehicleCondition: customer.vehicleCondition,
+                licenseUrl: customer.licenseUrl || '',
                 accountStatus: customer.accountStatus || 'ACTIVE',
             } : null;
 
@@ -271,6 +276,7 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                     vehicleNumber: '',
                     vehicleYear: undefined,
                     vehicleCondition: undefined,
+                    licenseUrl: '',
                     accountStatus: 'ACTIVE',
                 });
             }
@@ -402,6 +408,9 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
         }
         if (formData.vehicleCondition) {
             submitData.vehicleCondition = formData.vehicleCondition;
+        }
+        if (formData.licenseUrl && formData.licenseUrl.trim()) {
+            submitData.licenseUrl = formData.licenseUrl.trim();
         }
 
         try {
@@ -639,6 +648,20 @@ export function CustomerForm({ customer, isOpen, onClose, onSubmit, isConverting
                                             </Select>
                                             {validationErrors.accountStatus && (
                                                 <p className="text-sm text-red-600 mt-1">{validationErrors.accountStatus}</p>
+                                            )}
+                                        </div>
+
+                                        {/* License Upload Section */}
+                                        <div className="space-y-4 pt-4">
+                                            <Label className="text-sm font-semibold text-gray-900">Identification Documents</Label>
+                                            <LicenseUpload
+                                                value={formData.licenseUrl}
+                                                onChange={(url) => handleInputChange('licenseUrl', url)}
+                                                disabled={isLoading}
+                                                label="Upload Identity License / ID"
+                                            />
+                                            {validationErrors.licenseUrl && (
+                                                <p className="text-sm text-red-600 mt-1">{validationErrors.licenseUrl}</p>
                                             )}
                                         </div>
                                     </div>
